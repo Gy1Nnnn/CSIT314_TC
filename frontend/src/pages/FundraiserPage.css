@@ -1,0 +1,26 @@
+/* Use UserAccountPage styling as baseline */
+@import './UserAccountPage.css';
+
+/* Fundraiser-specific (optional) tweaks could go here */
+
+/* Ensure selects in this page match inputs */
+.mua-page .mup-field select {
+  width: 100%;
+  font: inherit;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.mua-page .mup-field select:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* Table columns for activities */
+.mua-page .mup-table .mup-row {
+  grid-template-columns: 6rem 1.8fr 1.1fr 9rem 9rem 12rem;
+}
+

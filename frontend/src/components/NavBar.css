@@ -1,0 +1,105 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+}
+
+.nav-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-brand {
+  font-weight: 600;
+  color: var(--text-h);
+  text-decoration: none;
+}
+
+.nav-brand:hover {
+  text-decoration: underline;
+}
+
+.nav-donate {
+  display: inline-flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--code-bg) 70%, var(--bg));
+  color: var(--text-h);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.nav-donate:hover {
+  filter: brightness(1.05);
+}
+
+.nav-donate:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+.nav-actions {
+  margin-left: auto;
+}
+
+.nav-auth {
+  display: inline-flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--text-h);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.btn-login {
+  display: inline-block;
+  appearance: none;
+  border: 2px solid transparent;
+  background: var(--accent);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: border-color 0.2s, filter 0.2s;
+}
+
+.btn-login:hover {
+  filter: brightness(1.05);
+}
+
+.btn-login:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-login {
+    color: var(--text-h);
+  }
+}

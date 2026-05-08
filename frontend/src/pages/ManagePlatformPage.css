@@ -1,0 +1,39 @@
+@import './UserProfilePage.css';
+
+/* Create tab only: 2-column form layout (label left, field right) */
+.mpp-create-panel .mup-form {
+  max-width: 56rem;
+}
+
+.mpp-create-panel .mup-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mpp-create-panel .mup-field .mup-label {
+  width: 14rem;
+  margin: 0;
+}
+
+.mpp-create-panel .mup-field input,
+.mpp-create-panel .mup-field textarea {
+  flex: 1 1 auto;
+}
+
+.mpp-create-panel .mup-field textarea {
+  align-self: start;
+}
+
+@media (max-width: 720px) {
+  .mpp-create-panel .mup-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .mpp-create-panel .mup-field .mup-label {
+    width: auto;
+  }
+}
+
