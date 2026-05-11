@@ -46,6 +46,16 @@ CREATE TABLE IF NOT EXISTS FRA (
     FOREIGN KEY (category_id) REFERENCES category (category_id),
     FOREIGN KEY (account_id) REFERENCES user_account (account_id)
 );
+
+CREATE TABLE IF NOT EXISTS donee_favorite (
+    favorite_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    activity_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(account_id, activity_id),
+    FOREIGN KEY (account_id) REFERENCES user_account (account_id),
+    FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
+);
 """
 
 
@@ -85,7 +95,35 @@ def _ensure_default_data(conn):
             ("User Admin", "admin@gmail.com", "qwertyui", user_admin_id),
         )
 
-    # Categories are managed by Platform Management (no auto-seeding).
+    row_donee = conn.execute(
+        "SELECT profile_id FROM user_profile WHERE profile_name = ?",
+        ("Donee",),
+    ).fetchone()
+    if not row_donee:
+        conn.execute(
+            """
+            INSERT INTO user_profile (profile_name, description, access_control)
+            VALUES (?, ?, ?)
+            """,
+            ("Donee", "Browse and save fundraising activities.", None),
+        )
+        donee_profile_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    else:
+        donee_profile_id = row_donee["profile_id"]
+
+    if not conn.execute(
+        "SELECT 1 FROM user_account WHERE email = ?",
+        ("donee@gmail.com",),
+    ).fetchone():
+        conn.execute(
+            """
+            INSERT INTO user_account (name, email, password, profile_id)
+            VALUES (?, ?, ?, ?)
+            """,
+            ("Demo Donee", "donee@gmail.com", "qwertyui", donee_profile_id),
+        )
+
+    # Categories are managed by Platform Manager (no auto-seeding).
 
 
 def init_db():
@@ -157,6 +195,19 @@ def init_db():
             conn.execute("ALTER TABLE FRA ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
         # Backward-compat: if older column 'category' exists, keep it (do not drop),
         # but new code will use category_id.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS donee_favorite (
+                favorite_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_id INTEGER NOT NULL,
+                activity_id INTEGER NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(account_id, activity_id),
+                FOREIGN KEY (account_id) REFERENCES user_account (account_id),
+                FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
+            )
+            """
+        )
         _ensure_default_data(conn)
         conn.commit()
     finally:

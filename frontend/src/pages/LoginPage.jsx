@@ -87,8 +87,10 @@ export default function LoginPage({ onLogin }) {
           navigate('/admin', { replace: true })
         } else if (role === 'fundraiser') {
           navigate('/fundraiser', { replace: true })
-        } else if (role === 'platform management') {
+        } else if (role === 'platform manager') {
           navigate('/platform', { replace: true })
+        } else if (role === 'donee') {
+          navigate('/donee', { replace: true })
         } else {
           navigate('/', { replace: true })
         }

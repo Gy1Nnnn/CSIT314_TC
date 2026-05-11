@@ -84,6 +84,9 @@ export class ApiClient {
   listCategories(search) {
     return this.request('/api/categories', { query: { search } })
   }
+  listCategoriesWithActivities() {
+    return this.request('/api/categories-with-activities')
+  }
   createCategory(payload) {
     return this.request('/api/categories', { method: 'POST', body: payload })
   }
@@ -113,6 +116,33 @@ export class ApiClient {
     return this.request(`/api/fundraising-activities/${activityId}/suspend`, {
       method: 'POST',
       body: payload,
+    })
+  }
+
+  // Public activities (donee / browse)
+  listPublicActivities(search) {
+    return this.request('/api/public/activities', { query: { search } })
+  }
+  viewPublicActivity(activityId) {
+    return this.request(`/api/public/activities/${activityId}`)
+  }
+
+  // Donee favorites
+  listDoneeFavorites(accountId, search) {
+    return this.request('/api/donee/favorites', {
+      query: { account_id: accountId, search },
+    })
+  }
+  addDoneeFavorite(accountId, activityId) {
+    return this.request('/api/donee/favorites', {
+      method: 'POST',
+      body: { account_id: accountId, activity_id: activityId },
+    })
+  }
+  removeDoneeFavorite(accountId, activityId) {
+    return this.request(`/api/donee/favorites/${activityId}`, {
+      method: 'DELETE',
+      query: { account_id: accountId },
     })
   }
 }

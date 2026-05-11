@@ -37,3 +37,81 @@
   }
 }
 
+/* —— Manage Platform: 4-column category table (shared mup-* grid is 5 cols for User Profile) —— */
+
+.mpp-page .mup-toolbar-split {
+  align-items: center;
+}
+
+.mpp-page .mup-toolbar-split .mup-banner {
+  margin: 0;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.mpp-page .mup-toolbar-split .mup-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.mpp-table .mup-row {
+  grid-template-columns: 4.5rem minmax(8rem, 1fr) 8.5rem minmax(12.5rem, auto);
+  gap: 0.65rem 1rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.mpp-table .mup-row.mup-head > div:nth-child(1),
+.mpp-table .mpp-col-id {
+  text-align: left;
+  justify-self: start;
+}
+
+.mpp-table .mup-row.mup-head > div:nth-child(2),
+.mpp-table .mpp-col-name {
+  text-align: left;
+  justify-self: stretch;
+  min-width: 0;
+}
+
+.mpp-table .mup-row.mup-head > div:nth-child(3),
+.mpp-table .mpp-col-status {
+  text-align: center;
+  justify-self: center;
+}
+
+.mpp-table .mup-row.mup-head > div:nth-child(4),
+.mpp-table .mpp-col-actions {
+  justify-self: end;
+  text-align: right;
+}
+
+.mpp-table .mpp-col-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .mpp-table .mup-row {
+    grid-template-columns: 4.25rem 1fr;
+    row-gap: 0.4rem;
+    align-items: start;
+  }
+
+  .mpp-table .mup-row > .mpp-col-status,
+  .mpp-table .mup-row > .mpp-col-actions {
+    grid-column: 2;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .mpp-table .mpp-col-actions {
+    justify-content: flex-start;
+  }
+}
+

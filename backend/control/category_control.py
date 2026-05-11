@@ -14,6 +14,9 @@ class CategoryService:
     def get_categories(self, search):
         return self._category.list_categories(search)
 
+    def get_categories_with_public_activities(self):
+        return self._category.list_categories_with_public_activities()
+
     def create(self, category_name, description):
         return self._category.create_category(category_name, description)
 

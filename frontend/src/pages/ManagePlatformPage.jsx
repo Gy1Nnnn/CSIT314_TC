@@ -168,7 +168,7 @@ export default function ManagePlatformPage() {
   const formInitial = formMode === 'edit' ? selected : {}
 
   return (
-    <main className="mup-page">
+    <main className="mup-page mpp-page">
       <header className="mup-header">
         <div>
           <h1>Manage Platform</h1>
@@ -258,7 +258,7 @@ export default function ManagePlatformPage() {
             </button>
           </div>
 
-          <div className="mup-table">
+          <div className="mup-table mpp-table">
             <div className="mup-row mup-head">
               <div>ID</div>
               <div>Name</div>
@@ -269,18 +269,18 @@ export default function ManagePlatformPage() {
               const suspended = Boolean(c.is_suspended)
               return (
                 <div key={c.category_id} className="mup-row">
-                  <div className="mup-muted">
+                  <div className="mup-muted mpp-col-id">
                     {String(c.category_id).padStart(3, '0')}
                   </div>
-                  <div className="mup-name">
+                  <div className="mup-name mpp-col-name">
                     <div className="mup-strong">{c.category_name}</div>
                   </div>
-                  <div>
+                  <div className="mpp-col-status">
                     <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
                       {suspended ? 'Suspended' : 'Active'}
                     </span>
                   </div>
-                  <div className="mup-actions-col">
+                  <div className="mup-actions-col mpp-col-actions">
                     <button type="button" className="mup-linkbtn" onClick={() => setViewing(c)}>
                       View
                     </button>
@@ -350,7 +350,7 @@ export default function ManagePlatformPage() {
             </button>
           </div>
 
-          <div className="mup-table">
+          <div className="mup-table mpp-table">
             <div className="mup-row mup-head">
               <div>ID</div>
               <div>Name</div>
@@ -361,18 +361,18 @@ export default function ManagePlatformPage() {
               const suspended = Boolean(c.is_suspended)
               return (
                 <div key={c.category_id} className="mup-row">
-                  <div className="mup-muted">
+                  <div className="mup-muted mpp-col-id">
                     {String(c.category_id).padStart(3, '0')}
                   </div>
-                  <div className="mup-name">
+                  <div className="mup-name mpp-col-name">
                     <div className="mup-strong">{c.category_name}</div>
                   </div>
-                  <div>
+                  <div className="mpp-col-status">
                     <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
                       {suspended ? 'Suspended' : 'Active'}
                     </span>
                   </div>
-                  <div className="mup-actions-col">
+                  <div className="mup-actions-col mpp-col-actions">
                     <button type="button" className="mup-linkbtn" onClick={() => setViewing(c)}>
                       View
                     </button>

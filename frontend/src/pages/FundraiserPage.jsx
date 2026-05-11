@@ -215,21 +215,6 @@ export default function FundraiserPage({ user }) {
     }
   }
 
-  async function refreshNextId() {
-    if (accountId == null) return
-    try {
-      const data = await api.listActivities({ accountId })
-      const list = Array.isArray(data.activities) ? data.activities : []
-      const maxId = list.reduce(
-        (acc, a) => Math.max(acc, Number(a.activity_id) || 0),
-        0,
-      )
-      setNextId(maxId + 1)
-    } catch {
-      // ignore
-    }
-  }
-
   useEffect(() => {
     if (accountId == null) return
     loadCategories()
@@ -246,7 +231,7 @@ export default function FundraiserPage({ user }) {
       setFormMode('create')
       setSelected({})
       setSuccess('A new fundraising activity is created successfully.')
-      await refreshNextId()
+      await loadActivities()
     } catch (e) {
       setError(e?.data?.message || e?.message || 'Network error creating activity.')
     } finally {

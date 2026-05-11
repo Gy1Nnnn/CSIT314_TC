@@ -149,8 +149,27 @@ class FRABoundary:
         body, status = self._service.suspend(activity_id, account_id, suspend)
         return jsonify(body), status
 
+    def list_public_activities(self):
+        search = (request.args.get("search") or "").strip()
+        body, status = self._service.list_public(search)
+        return jsonify(body), status
+
+    def view_public_activity(self, activity_id: int):
+        body, status = self._service.view_public(activity_id)
+        return jsonify(body), status
+
 
 _handler = FRABoundary()
+
+
+@fra_bp.get("/public/activities")
+def list_public_activities():
+    return _handler.list_public_activities()
+
+
+@fra_bp.get("/public/activities/<int:activity_id>")
+def view_public_activity(activity_id: int):
+    return _handler.view_public_activity(activity_id)
 
 
 @fra_bp.get("/fundraising-activities")

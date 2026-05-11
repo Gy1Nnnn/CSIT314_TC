@@ -20,6 +20,10 @@ class CategoryBoundary:
         body, status = self._service.get_categories(search)
         return jsonify(body), status
 
+    def list_categories_with_public_activities(self):
+        body, status = self._service.get_categories_with_public_activities()
+        return jsonify(body), status
+
     def create_category(self):
         data = request.get_json(silent=True) or {}
         category_name = (data.get("category_name") or "").strip()
@@ -55,6 +59,11 @@ _handler = CategoryBoundary()
 @category_bp.get("/categories")
 def list_categories():
     return _handler.list_categories()
+
+
+@category_bp.get("/categories-with-activities")
+def list_categories_with_public_activities():
+    return _handler.list_categories_with_public_activities()
 
 
 @category_bp.post("/categories")

@@ -14,6 +14,12 @@ class FRAService:
     def get_activities(self, account_id, search):
         return self._fra.list_activities(account_id, search)
 
+    def list_public(self, search):
+        return self._fra.list_public_activities(search)
+
+    def view_public(self, activity_id):
+        return self._fra.view_public_activity(activity_id)
+
     def create(
         self,
         account_id,

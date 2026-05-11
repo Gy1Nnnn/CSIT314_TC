@@ -1,0 +1,72 @@
+@import './UserProfilePage.css';
+
+.donee-page .mup-alert.success {
+  border-color: color-mix(in oklab, #15803d 38%, var(--panel-border));
+  background: color-mix(in oklab, #15803d 14%, var(--panel-bg));
+  color: var(--text-h);
+}
+
+@media (prefers-color-scheme: dark) {
+  .donee-page .mup-alert.success {
+    border-color: color-mix(in oklab, #86efac 35%, var(--panel-border));
+    background: color-mix(in oklab, #86efac 10%, var(--panel-bg));
+  }
+}
+
+.donee-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.donee-toolbar .mup-search {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
+.donee-table {
+  border-top: 1px solid var(--panel-border);
+}
+
+.donee-row {
+  display: grid;
+  grid-template-columns: 4rem minmax(8rem, 1.2fr) minmax(6rem, 0.9fr) minmax(6rem, 0.8fr) minmax(10rem, auto);
+  gap: 0.65rem 0.75rem;
+  padding: 0.85rem 0.4rem;
+  border-bottom: 1px solid var(--panel-border);
+  align-items: center;
+}
+
+.donee-row.donee-head {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  color: var(--text-h);
+  opacity: 0.88;
+  padding-top: 0.75rem;
+}
+
+.donee-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .donee-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .donee-row.donee-head {
+    display: none;
+  }
+
+  .donee-actions {
+    justify-content: flex-start;
+  }
+}

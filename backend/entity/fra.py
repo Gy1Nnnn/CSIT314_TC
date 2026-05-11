@@ -190,6 +190,79 @@ class FRA:
 
         return {"ok": True, "activity": dict(row) if row else None}, 200
 
+    def _public_activity_from_clause(self):
+        """JOIN/WHERE for activities visible to donees (active, not suspended)."""
+        return """
+            FROM FRA fr
+            INNER JOIN category c
+                ON c.category_id = fr.category_id AND c.is_suspended = 0
+            INNER JOIN user_account org
+                ON org.account_id = fr.account_id AND org.is_suspended = 0
+            WHERE fr.is_suspended = 0
+              AND LOWER(TRIM(fr.status)) = 'active'
+        """
+
+    def _public_activity_select(self):
+        return """
+            SELECT
+                fr.activity_id,
+                fr.activity_name,
+                fr.category_id,
+                c.category_name,
+                fr.description,
+                fr.start_date,
+                fr.end_date,
+                fr.duration,
+                fr.target_amount,
+                fr.status,
+                fr.account_id,
+                org.name AS organizer_name
+        """
+
+    def list_public_activities(self, search):
+        """List active, non-suspended FRAs in active categories (optional search)."""
+        where_sql = self._public_activity_from_clause()
+        params: list[object] = []
+        if search:
+            safe = search.replace("%", r"\%").replace("_", r"\_")
+            like = f"%{safe}%"
+            clause = "(fr.activity_name LIKE ? ESCAPE '\\' OR c.category_name LIKE ? ESCAPE '\\')"
+            params.extend([like, like])
+            if search.isdigit():
+                clause = f"({clause} OR fr.activity_id = ?)"
+                params.append(int(search))
+            where_sql += f" AND {clause}"
+
+        sql = (
+            self._public_activity_select()
+            + where_sql
+            + " ORDER BY fr.activity_name COLLATE NOCASE, fr.activity_id ASC"
+        )
+
+        conn = get_connection()
+        try:
+            rows = conn.execute(sql, params).fetchall()
+            return {"ok": True, "activities": [dict(r) for r in rows]}, 200
+        finally:
+            conn.close()
+
+    def view_public_activity(self, activity_id):
+        """Single activity if publicly available; else 404."""
+        sql = (
+            self._public_activity_select()
+            + self._public_activity_from_clause()
+            + " AND fr.activity_id = ?"
+        )
+        conn = get_connection()
+        try:
+            row = conn.execute(sql, (activity_id,)).fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return {"ok": False, "message": "Activity not found or not available."}, 404
+        return {"ok": True, "activity": dict(row)}, 200
+
     def suspend_activity(self, activity_id, account_id, suspend):
         """activity_id: int, account_id: int, suspend: bool."""
         suspend_val = 1 if suspend else 0

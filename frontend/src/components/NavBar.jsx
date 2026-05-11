@@ -27,9 +27,14 @@ export default function NavBar({ user, onLogout }) {
                   Fundraiser
                 </Link>
               ) : null}
-              {role === 'platform management' ? (
+              {role === 'platform manager' ? (
                 <Link className="nav-link" to="/platform">
-                  Platform
+                  Platform Manager
+                </Link>
+              ) : null}
+              {role === 'donee' ? (
+                <Link className="nav-link" to="/donee">
+                  Donee
                 </Link>
               ) : null}
               <button type="button" className="btn-login" onClick={onLogout}>
