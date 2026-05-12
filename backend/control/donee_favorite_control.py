@@ -15,3 +15,4 @@ class DoneeFavoriteService:
 
     def remove_favorite(self, account_id, activity_id):
         return self._favorites.remove_favorite(account_id, activity_id)
+

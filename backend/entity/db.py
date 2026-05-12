@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS FRA (
     status TEXT NOT NULL DEFAULT 'active',
     account_id INTEGER NOT NULL,
     is_suspended INTEGER NOT NULL DEFAULT 0,
+    view_count INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES category (category_id),
     FOREIGN KEY (account_id) REFERENCES user_account (account_id)
 );
@@ -193,6 +194,10 @@ def init_db():
             conn.execute("ALTER TABLE FRA ADD COLUMN target_amount REAL")
         if "status" not in fra_cols:
             conn.execute("ALTER TABLE FRA ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+        if "view_count" not in fra_cols:
+            conn.execute(
+                "ALTER TABLE FRA ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0"
+            )
         # Backward-compat: if older column 'category' exists, keep it (do not drop),
         # but new code will use category_id.
         conn.execute(

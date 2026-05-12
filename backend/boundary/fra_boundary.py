@@ -27,9 +27,9 @@ class FRABoundary:
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
         if account_id <= 0:
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
 
         body, status = self._service.get_activities(account_id, search)
         return jsonify(body), status
@@ -51,18 +51,18 @@ class FRABoundary:
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return ({"ok": False, "message": "account_id is required."}, 400), None
+            return ({"message": "account_id is required."}, 400), None
         if account_id <= 0:
-            return ({"ok": False, "message": "account_id is required."}, 400), None
+            return ({"message": "account_id is required."}, 400), None
 
         if not activity_name:
-            return ({"ok": False, "message": "activity_name is required."}, 400), None
+            return ({"message": "activity_name is required."}, 400), None
         if status_in not in STATUSES:
-            return ({"ok": False, "message": "Invalid status."}, 400), None
+            return ({"message": "Invalid status."}, 400), None
         try:
             category_id = int(category_id_raw)
         except (TypeError, ValueError):
-            return ({"ok": False, "message": "category_id is required."}, 400), None
+            return ({"message": "category_id is required."}, 400), None
 
         start_date = None
         end_date = None
@@ -72,18 +72,18 @@ class FRABoundary:
             if end_date_raw:
                 end_date = date.fromisoformat(end_date_raw).isoformat()
         except ValueError:
-            return ({"ok": False, "message": "Invalid start_date or end_date."}, 400), None
+            return ({"message": "Invalid start_date or end_date."}, 400), None
         if start_date and end_date and start_date > end_date:
-            return ({"ok": False, "message": "start_date must be <= end_date."}, 400), None
+            return ({"message": "start_date must be <= end_date."}, 400), None
 
         target_amount = None
         if target_amount_raw not in (None, ""):
             try:
                 target_amount = float(target_amount_raw)
             except (TypeError, ValueError):
-                return ({"ok": False, "message": "target_amount must be a number."}, 400), None
+                return ({"message": "target_amount must be a number."}, 400), None
             if target_amount < 0:
-                return ({"ok": False, "message": "target_amount must be >= 0."}, 400), None
+                return ({"message": "target_amount must be >= 0."}, 400), None
 
         return None, {
             "account_id": account_id,
@@ -141,9 +141,9 @@ class FRABoundary:
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
         if account_id <= 0:
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
 
         suspend = bool(data.get("suspend", True))
         body, status = self._service.suspend(activity_id, account_id, suspend)

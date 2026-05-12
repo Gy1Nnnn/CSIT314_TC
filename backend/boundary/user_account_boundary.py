@@ -32,15 +32,15 @@ class UserAccountBoundary:
         profile_id_raw = data.get("profile_id")
 
         if not name:
-            return jsonify({"ok": False, "message": "name is required."}), 400
+            return jsonify({"message": "name is required."}), 400
         if not email:
-            return jsonify({"ok": False, "message": "email is required."}), 400
+            return jsonify({"message": "email is required."}), 400
         if not password:
-            return jsonify({"ok": False, "message": "password is required."}), 400
+            return jsonify({"message": "password is required."}), 400
         try:
             profile_id = int(profile_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "profile_id must be an integer."}), 400
+            return jsonify({"message": "profile_id must be an integer."}), 400
 
         body, status = self._service.create(name, email, password, profile_id)
         return jsonify(body), status
@@ -53,15 +53,15 @@ class UserAccountBoundary:
         profile_id_raw = data.get("profile_id")
 
         if not name:
-            return jsonify({"ok": False, "message": "name is required."}), 400
+            return jsonify({"message": "name is required."}), 400
         if not email:
-            return jsonify({"ok": False, "message": "email is required."}), 400
+            return jsonify({"message": "email is required."}), 400
         if not password:
-            return jsonify({"ok": False, "message": "password is required."}), 400
+            return jsonify({"message": "password is required."}), 400
         try:
             profile_id = int(profile_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "profile_id must be an integer."}), 400
+            return jsonify({"message": "profile_id must be an integer."}), 400
 
         body, status = self._service.update(account_id, name, email, password, profile_id)
         return jsonify(body), status

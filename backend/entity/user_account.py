@@ -13,13 +13,6 @@ class UserAccount:
         """profile_id: int, email: str (non-empty), password: str (non-empty)."""
         conn = get_connection()
         try:
-            profile_ok = conn.execute(
-                "SELECT 1 FROM user_profile WHERE profile_id = ?",
-                (profile_id,),
-            ).fetchone()
-            if not profile_ok:
-                return {"ok": False, "message": "Unknown profile."}, 400
-
             row = conn.execute(
                 """
                 SELECT
@@ -37,13 +30,11 @@ class UserAccount:
             ).fetchone()
             if not row:
                 return {
-                    "ok": False,
                     "message": "Invalid email, password, or profile combination.",
                 }, 401
 
             user = dict(row)
             return {
-                "ok": True,
                 "message": "Login successful.",
                 "user": {
                     "account_id": user["account_id"],
@@ -91,7 +82,7 @@ class UserAccount:
         conn = get_connection()
         try:
             rows = conn.execute(sql, params).fetchall()
-            return {"ok": True, "accounts": [dict(r) for r in rows]}, 200
+            return {"accounts": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
@@ -119,8 +110,8 @@ class UserAccount:
             conn.close()
 
         if not row:
-            return {"ok": False, "message": "Account not found."}, 404
-        return {"ok": True, "account": dict(row)}, 200
+            return {"message": "Account not found."}, 404
+        return {"account": dict(row)}, 200
 
     def create_account(self, name, email, password, profile_id):
         """All inputs already validated and trimmed by the Boundary."""
@@ -154,7 +145,7 @@ class UserAccount:
         finally:
             conn.close()
 
-        return {"ok": True, "account": dict(row) if row else None}, 201
+        return {"account": dict(row) if row else None}, 201
 
     def update_account(self, account_id, name, email, password, profile_id):
         """All inputs already validated by the Boundary."""
@@ -165,7 +156,7 @@ class UserAccount:
                 (account_id,),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Account not found."}, 404
+                return {"message": "Account not found."}, 404
 
             conn.execute(
                 """
@@ -195,7 +186,7 @@ class UserAccount:
         finally:
             conn.close()
 
-        return {"ok": True, "account": dict(row) if row else None}, 200
+        return {"account": dict(row) if row else None}, 200
 
     def suspend_account(self, account_id, suspend):
         """account_id: int, suspend: bool."""
@@ -207,7 +198,7 @@ class UserAccount:
                 (account_id,),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Account not found."}, 404
+                return {"message": "Account not found."}, 404
 
             conn.execute(
                 "UPDATE user_account SET is_suspended = ? WHERE account_id = ?",
@@ -233,4 +224,4 @@ class UserAccount:
         finally:
             conn.close()
 
-        return {"ok": True, "account": dict(row) if row else None}, 200
+        return {"account": dict(row) if row else None}, 200

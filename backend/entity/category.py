@@ -36,7 +36,7 @@ class Category:
         conn = get_connection()
         try:
             rows = conn.execute(sql, params).fetchall()
-            return {"ok": True, "categories": [dict(r) for r in rows]}, 200
+            return {"categories": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
@@ -95,7 +95,7 @@ class Category:
                     }
                 )
 
-        return {"ok": True, "categories": out}, 200
+        return {"categories": out}, 200
 
     def create_category(self, category_name, description):
         """category_name: non-empty str. description: optional."""
@@ -121,7 +121,7 @@ class Category:
         finally:
             conn.close()
 
-        return {"ok": True, "category": dict(row) if row else None}, 201
+        return {"category": dict(row) if row else None}, 201
 
     def update_category(self, category_id, category_name, description):
         """All inputs already validated by the Boundary."""
@@ -132,7 +132,7 @@ class Category:
                 (category_id,),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Category not found."}, 404
+                return {"message": "Category not found."}, 404
 
             conn.execute(
                 """
@@ -154,7 +154,7 @@ class Category:
         finally:
             conn.close()
 
-        return {"ok": True, "category": dict(row) if row else None}, 200
+        return {"category": dict(row) if row else None}, 200
 
     def suspend_category(self, category_id, suspend):
         """category_id: int, suspend: bool."""
@@ -166,7 +166,7 @@ class Category:
                 (category_id,),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Category not found."}, 404
+                return {"message": "Category not found."}, 404
 
             conn.execute(
                 "UPDATE category SET is_suspended = ? WHERE category_id = ?",
@@ -184,4 +184,4 @@ class Category:
         finally:
             conn.close()
 
-        return {"ok": True, "category": dict(row) if row else None}, 200
+        return {"category": dict(row) if row else None}, 200

@@ -30,7 +30,7 @@ class CategoryBoundary:
         description = (data.get("description") or "").strip() or None
 
         if not category_name:
-            return jsonify({"ok": False, "message": "category_name is required."}), 400
+            return jsonify({"message": "category_name is required."}), 400
 
         body, status = self._service.create(category_name, description)
         return jsonify(body), status
@@ -41,7 +41,7 @@ class CategoryBoundary:
         description = (data.get("description") or "").strip() or None
 
         if not category_name:
-            return jsonify({"ok": False, "message": "category_name is required."}), 400
+            return jsonify({"message": "category_name is required."}), 400
 
         body, status = self._service.update(category_id, category_name, description)
         return jsonify(body), status

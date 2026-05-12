@@ -17,9 +17,9 @@ class DoneeFavoriteBoundary:
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
         if account_id <= 0:
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
 
         body, status = self._service.list_favorites(account_id, search)
         return jsonify(body), status
@@ -32,9 +32,15 @@ class DoneeFavoriteBoundary:
             account_id = int(account_id_raw)
             activity_id = int(activity_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "account_id and activity_id are required."}), 400
+            return (
+                jsonify({"message": "account_id and activity_id are required."}),
+                400,
+            )
         if account_id <= 0 or activity_id <= 0:
-            return jsonify({"ok": False, "message": "account_id and activity_id are required."}), 400
+            return (
+                jsonify({"message": "account_id and activity_id are required."}),
+                400,
+            )
 
         body, status = self._service.add_favorite(account_id, activity_id)
         return jsonify(body), status
@@ -44,9 +50,9 @@ class DoneeFavoriteBoundary:
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
         if account_id <= 0:
-            return jsonify({"ok": False, "message": "account_id is required."}), 400
+            return jsonify({"message": "account_id is required."}), 400
 
         body, status = self._service.remove_favorite(account_id, activity_id)
         return jsonify(body), status
@@ -68,3 +74,4 @@ def add_donee_favorite():
 @donee_favorite_bp.delete("/donee/favorites/<int:activity_id>")
 def remove_donee_favorite(activity_id: int):
     return _handler.remove_favorite(activity_id)
+

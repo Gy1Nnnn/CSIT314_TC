@@ -19,7 +19,7 @@ class UserProfile:
                 ORDER BY profile_name COLLATE NOCASE
                 """
             ).fetchall()
-            return {"ok": True, "profiles": [dict(r) for r in rows]}, 200
+            return {"profiles": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
@@ -49,7 +49,7 @@ class UserProfile:
         conn = get_connection()
         try:
             rows = conn.execute(sql, params).fetchall()
-            return {"ok": True, "profiles": [dict(r) for r in rows]}, 200
+            return {"profiles": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
@@ -69,8 +69,8 @@ class UserProfile:
             conn.close()
 
         if not row:
-            return {"ok": False, "message": "Profile not found."}, 404
-        return {"ok": True, "profile": dict(row)}, 200
+            return {"message": "Profile not found."}, 404
+        return {"profile": dict(row)}, 200
 
     def create_profile(self, profile_name, description, access_control):
         """profile_name: non-empty str. description/access_control: optional."""
@@ -96,7 +96,7 @@ class UserProfile:
         finally:
             conn.close()
 
-        return {"ok": True, "profile": dict(row) if row else None}, 201
+        return {"profile": dict(row) if row else None}, 201
 
     def update_profile(self, profile_id, profile_name, description, access_control):
         """All inputs already validated by the Boundary."""
@@ -107,7 +107,7 @@ class UserProfile:
                 (profile_id,),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Profile not found."}, 404
+                return {"message": "Profile not found."}, 404
 
             conn.execute(
                 """
@@ -129,7 +129,7 @@ class UserProfile:
         finally:
             conn.close()
 
-        return {"ok": True, "profile": dict(row) if row else None}, 200
+        return {"profile": dict(row) if row else None}, 200
 
     def suspend_profile(self, profile_id, suspend):
         """profile_id: int, suspend: bool."""
@@ -141,7 +141,7 @@ class UserProfile:
                 (profile_id,),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Profile not found."}, 404
+                return {"message": "Profile not found."}, 404
 
             conn.execute(
                 "UPDATE user_profile SET is_suspended = ? WHERE profile_id = ?",
@@ -159,4 +159,4 @@ class UserProfile:
         finally:
             conn.close()
 
-        return {"ok": True, "profile": dict(row) if row else None}, 200
+        return {"profile": dict(row) if row else None}, 200

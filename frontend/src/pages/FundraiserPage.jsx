@@ -371,7 +371,8 @@ export default function FundraiserPage({ user }) {
               <div>Activity</div>
               <div>Category</div>
               <div>Status</div>
-              <div>Suspension</div>
+              <div>Views</div>
+              <div>Favorites</div>
               <div className="mup-actions-col">Actions</div>
             </div>
             {activities.map((a) => {
@@ -385,11 +386,22 @@ export default function FundraiserPage({ user }) {
                     <div className="mup-strong">{a.activity_name}</div>
                   </div>
                   <div className="mup-muted">{a.category_name || '-'}</div>
-                  <div className="mup-muted">{a.status || '-'}</div>
-                  <div>
-                    <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
-                      {suspended ? 'Suspended' : 'Active'}
-                    </span>
+                  <div className="fra-table-status">
+                    {suspended ? (
+                      <span className="mup-tag danger" title={`Workflow status: ${a.status || '—'}`}>
+                        Suspended
+                      </span>
+                    ) : (
+                      <span className="mup-muted" style={{ textTransform: 'capitalize' }}>
+                        {a.status || '-'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mup-muted" title="Public detail views">
+                    {Number(a.view_count ?? 0).toLocaleString()}
+                  </div>
+                  <div className="mup-muted" title="Donee saves">
+                    {Number(a.favorite_count ?? 0).toLocaleString()}
                   </div>
                   <div className="mup-actions-col">
                     <button type="button" className="mup-linkbtn" onClick={() => setViewing(a)}>
@@ -467,7 +479,8 @@ export default function FundraiserPage({ user }) {
               <div>Activity</div>
               <div>Category</div>
               <div>Status</div>
-              <div>Suspension</div>
+              <div>Views</div>
+              <div>Favorites</div>
               <div className="mup-actions-col">Actions</div>
             </div>
             {activities.map((a) => {
@@ -481,11 +494,22 @@ export default function FundraiserPage({ user }) {
                     <div className="mup-strong">{a.activity_name}</div>
                   </div>
                   <div className="mup-muted">{a.category_name || '-'}</div>
-                  <div className="mup-muted">{a.status || '-'}</div>
-                  <div>
-                    <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
-                      {suspended ? 'Suspended' : 'Active'}
-                    </span>
+                  <div className="fra-table-status">
+                    {suspended ? (
+                      <span className="mup-tag danger" title={`Workflow status: ${a.status || '—'}`}>
+                        Suspended
+                      </span>
+                    ) : (
+                      <span className="mup-muted" style={{ textTransform: 'capitalize' }}>
+                        {a.status || '-'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mup-muted" title="Public detail views">
+                    {Number(a.view_count ?? 0).toLocaleString()}
+                  </div>
+                  <div className="mup-muted" title="Donee saves">
+                    {Number(a.favorite_count ?? 0).toLocaleString()}
                   </div>
                   <div className="mup-actions-col">
                     <button type="button" className="mup-linkbtn" onClick={() => setViewing(a)}>
@@ -556,7 +580,17 @@ export default function FundraiserPage({ user }) {
               </div>
               <div className="mup-modal-item">
                 <div className="mup-modal-label">Status</div>
-                <div className="mup-muted">{viewing.status || '-'}</div>
+                <div>
+                  {viewing.is_suspended ? (
+                    <span className="mup-tag danger" title={`Workflow status: ${viewing.status || '—'}`}>
+                      Suspended
+                    </span>
+                  ) : (
+                    <span className="mup-muted" style={{ textTransform: 'capitalize' }}>
+                      {viewing.status || '-'}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="mup-modal-item mup-modal-item-full">
                 <div className="mup-modal-label">Description</div>
@@ -579,12 +613,12 @@ export default function FundraiserPage({ user }) {
                 </div>
               </div>
               <div className="mup-modal-item">
-                <div className="mup-modal-label">Status</div>
-                <div>
-                  <span className={`mup-tag ${viewing.is_suspended ? 'danger' : 'ok'}`}>
-                    {viewing.is_suspended ? 'Suspended' : 'Active'}
-                  </span>
-                </div>
+                <div className="mup-modal-label">Public views</div>
+                <div className="mup-muted">{Number(viewing.view_count ?? 0).toLocaleString()}</div>
+              </div>
+              <div className="mup-modal-item">
+                <div className="mup-modal-label">Favorites (donees)</div>
+                <div className="mup-muted">{Number(viewing.favorite_count ?? 0).toLocaleString()}</div>
               </div>
             </div>
 

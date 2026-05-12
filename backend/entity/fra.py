@@ -24,6 +24,9 @@ class FRA:
                 params.append(int(search))
             where.append(clause)
 
+        fav_sub = (
+            "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
+        )
         where_sql = f"WHERE {' AND '.join(where)}"
         sql = f"""
             SELECT
@@ -37,7 +40,9 @@ class FRA:
                 fr.target_amount,
                 fr.status,
                 fr.account_id,
-                fr.is_suspended
+                fr.is_suspended,
+                fr.view_count,
+                {fav_sub} AS favorite_count
             FROM FRA fr
             LEFT JOIN category c ON c.category_id = fr.category_id
             {where_sql}
@@ -47,7 +52,7 @@ class FRA:
         conn = get_connection()
         try:
             rows = conn.execute(sql, params).fetchall()
-            return {"ok": True, "activities": [dict(r) for r in rows]}, 200
+            return {"activities": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
@@ -93,8 +98,11 @@ class FRA:
             )
             activity_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             conn.commit()
+            fav_sub = (
+                "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
+            )
             row = conn.execute(
-                """
+                f"""
                 SELECT
                     fr.activity_id,
                     fr.activity_name,
@@ -106,7 +114,9 @@ class FRA:
                     fr.target_amount,
                     fr.status,
                     fr.account_id,
-                    fr.is_suspended
+                    fr.is_suspended,
+                    fr.view_count,
+                    {fav_sub} AS favorite_count
                 FROM FRA fr
                 LEFT JOIN category c ON c.category_id = fr.category_id
                 WHERE fr.activity_id = ?
@@ -116,7 +126,7 @@ class FRA:
         finally:
             conn.close()
 
-        return {"ok": True, "activity": dict(row) if row else None}, 201
+        return {"activity": dict(row) if row else None}, 201
 
     def update_activity(
         self,
@@ -138,7 +148,7 @@ class FRA:
                 (activity_id, account_id),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Activity not found."}, 404
+                return {"message": "Activity not found."}, 404
 
             conn.execute(
                 """
@@ -165,8 +175,11 @@ class FRA:
                 ),
             )
             conn.commit()
+            fav_sub = (
+                "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
+            )
             row = conn.execute(
-                """
+                f"""
                 SELECT
                     fr.activity_id,
                     fr.activity_name,
@@ -178,7 +191,9 @@ class FRA:
                     fr.target_amount,
                     fr.status,
                     fr.account_id,
-                    fr.is_suspended
+                    fr.is_suspended,
+                    fr.view_count,
+                    {fav_sub} AS favorite_count
                 FROM FRA fr
                 LEFT JOIN category c ON c.category_id = fr.category_id
                 WHERE fr.activity_id = ? AND fr.account_id = ?
@@ -188,7 +203,7 @@ class FRA:
         finally:
             conn.close()
 
-        return {"ok": True, "activity": dict(row) if row else None}, 200
+        return {"activity": dict(row) if row else None}, 200
 
     def _public_activity_from_clause(self):
         """JOIN/WHERE for activities visible to donees (active, not suspended)."""
@@ -216,6 +231,7 @@ class FRA:
                 fr.target_amount,
                 fr.status,
                 fr.account_id,
+                fr.view_count,
                 org.name AS organizer_name
         """
 
@@ -242,12 +258,12 @@ class FRA:
         conn = get_connection()
         try:
             rows = conn.execute(sql, params).fetchall()
-            return {"ok": True, "activities": [dict(r) for r in rows]}, 200
+            return {"activities": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
     def view_public_activity(self, activity_id):
-        """Single activity if publicly available; else 404."""
+        """Single activity if publicly available; else 404. Counts a public view."""
         sql = (
             self._public_activity_select()
             + self._public_activity_from_clause()
@@ -256,12 +272,19 @@ class FRA:
         conn = get_connection()
         try:
             row = conn.execute(sql, (activity_id,)).fetchone()
+            if not row:
+                return {"message": "Activity not found or not available."}, 404
+
+            conn.execute(
+                "UPDATE FRA SET view_count = view_count + 1 WHERE activity_id = ?",
+                (activity_id,),
+            )
+            conn.commit()
+            row = conn.execute(sql, (activity_id,)).fetchone()
         finally:
             conn.close()
 
-        if not row:
-            return {"ok": False, "message": "Activity not found or not available."}, 404
-        return {"ok": True, "activity": dict(row)}, 200
+        return {"activity": dict(row) if row else None}, 200
 
     def suspend_activity(self, activity_id, account_id, suspend):
         """activity_id: int, account_id: int, suspend: bool."""
@@ -273,7 +296,7 @@ class FRA:
                 (activity_id, account_id),
             ).fetchone()
             if not existing:
-                return {"ok": False, "message": "Activity not found."}, 404
+                return {"message": "Activity not found."}, 404
 
             conn.execute(
                 """
@@ -284,8 +307,11 @@ class FRA:
                 (suspend_val, activity_id, account_id),
             )
             conn.commit()
+            fav_sub = (
+                "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
+            )
             row = conn.execute(
-                """
+                f"""
                 SELECT
                     fr.activity_id,
                     fr.activity_name,
@@ -297,7 +323,9 @@ class FRA:
                     fr.target_amount,
                     fr.status,
                     fr.account_id,
-                    fr.is_suspended
+                    fr.is_suspended,
+                    fr.view_count,
+                    {fav_sub} AS favorite_count
                 FROM FRA fr
                 LEFT JOIN category c ON c.category_id = fr.category_id
                 WHERE fr.activity_id = ? AND fr.account_id = ?
@@ -307,4 +335,4 @@ class FRA:
         finally:
             conn.close()
 
-        return {"ok": True, "activity": dict(row) if row else None}, 200
+        return {"activity": dict(row) if row else None}, 200

@@ -31,7 +31,7 @@ class UserProfileBoundary:
         access_control = (data.get("access_control") or "").strip() or None
 
         if not profile_name:
-            return jsonify({"ok": False, "message": "profile_name is required."}), 400
+            return jsonify({"message": "profile_name is required."}), 400
 
         body, status = self._service.create(profile_name, description, access_control)
         return jsonify(body), status
@@ -43,7 +43,7 @@ class UserProfileBoundary:
         access_control = (data.get("access_control") or "").strip() or None
 
         if not profile_name:
-            return jsonify({"ok": False, "message": "profile_name is required."}), 400
+            return jsonify({"message": "profile_name is required."}), 400
 
         body, status = self._service.update(profile_id, profile_name, description, access_control)
         return jsonify(body), status

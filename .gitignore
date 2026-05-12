@@ -1,0 +1,18 @@
+## Python
+__pycache__/
+*.py[cod]
+*.pyd
+.Python
+
+## Virtual environments
+.venv/
+backend/.venv/
+venv/
+
+## Flask / SQLite artifacts
+backend/app.sqlite
+
+## Node
+node_modules/
+dist/
+

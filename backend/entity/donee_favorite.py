@@ -1,3 +1,4 @@
+
 """Entity layer: donee favorites (saved fundraising activities)."""
 
 from backend.entity.db import get_connection
@@ -24,7 +25,7 @@ class DoneeFavorite:
         conn = get_connection()
         try:
             if not _is_donee_account(conn, account_id):
-                return {"ok": False, "message": "Not a donee account."}, 403
+                return {"message": "Not a donee account."}, 403
 
             where_extra = ""
             params: list[object] = [account_id]
@@ -70,7 +71,7 @@ class DoneeFavorite:
                 ORDER BY df.created_at DESC, fr.activity_id ASC
             """
             rows = conn.execute(sql, params).fetchall()
-            return {"ok": True, "favorites": [dict(r) for r in rows]}, 200
+            return {"favorites": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
 
@@ -78,7 +79,7 @@ class DoneeFavorite:
         conn = get_connection()
         try:
             if not _is_donee_account(conn, account_id):
-                return {"ok": False, "message": "Not a donee account."}, 403
+                return {"message": "Not a donee account."}, 403
 
             row = conn.execute(
                 """
@@ -108,7 +109,6 @@ class DoneeFavorite:
             ).fetchone()
             if not row:
                 return {
-                    "ok": False,
                     "message": "Activity not found or not available to save.",
                 }, 404
 
@@ -120,7 +120,7 @@ class DoneeFavorite:
                 (account_id, activity_id),
             ).fetchone()
             if dup:
-                return {"ok": False, "message": "Already in your favorites."}, 409
+                return {"message": "Already in your favorites."}, 409
 
             conn.execute(
                 """
@@ -144,13 +144,13 @@ class DoneeFavorite:
         if fav:
             out["favorite_id"] = fav["favorite_id"]
             out["created_at"] = fav["created_at"]
-        return {"ok": True, "activity": out}, 201
+        return {"activity": out}, 201
 
     def remove_favorite(self, account_id: int, activity_id: int):
         conn = get_connection()
         try:
             if not _is_donee_account(conn, account_id):
-                return {"ok": False, "message": "Not a donee account."}, 403
+                return {"message": "Not a donee account."}, 403
 
             cur = conn.execute(
                 """
@@ -161,8 +161,9 @@ class DoneeFavorite:
             )
             conn.commit()
             if cur.rowcount == 0:
-                return {"ok": False, "message": "Favorite not found."}, 404
+                return {"message": "Favorite not found."}, 404
         finally:
             conn.close()
 
-        return {"ok": True, "message": "Removed from favorites."}, 200
+        return {"message": "Removed from favorites."}, 200
+

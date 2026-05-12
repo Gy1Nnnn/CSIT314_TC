@@ -269,7 +269,11 @@ export default function DoneePage({ user }) {
                   <div className="mup-muted">{a.category_name || '—'}</div>
                   <div className="mup-muted">{a.organizer_name || '—'}</div>
                   <div className="donee-actions">
-                    <button type="button" className="mup-linkbtn" onClick={() => openDetail(a.activity_id)}>
+                    <button
+                      type="button"
+                      className="mup-linkbtn"
+                      onClick={() => openDetail(a.activity_id)}
+                    >
                       View
                     </button>
                     <button
@@ -350,7 +354,9 @@ export default function DoneePage({ user }) {
                   <div className="mup-muted">{String(f.activity_id).padStart(3, '0')}</div>
                   <div className="mup-strong">{f.activity_name}</div>
                   <div className="mup-muted">{f.category_name || '—'}</div>
-                  <div className="mup-muted">{f.created_at ? formatDate(f.created_at.split(' ')[0]) : '—'}</div>
+                  <div className="mup-muted">
+                    {f.created_at ? formatDate(f.created_at.split(' ')[0]) : '—'}
+                  </div>
                   <div className="donee-actions">
                     <button type="button" className="mup-linkbtn" onClick={() => openDetail(f.activity_id)}>
                       View
