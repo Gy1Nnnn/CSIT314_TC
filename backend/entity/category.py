@@ -42,6 +42,8 @@ class Category:
 
     def list_categories_with_public_activities(self):
         """Active categories each with non-suspended FRAs (for public home)."""
+        from backend.entity.fra import apply_fra_completed_past_end_date
+
         sql = """
             SELECT
                 c.category_id,
@@ -58,11 +60,13 @@ class Category:
             LEFT JOIN FRA fr
                 ON fr.category_id = c.category_id
                 AND fr.is_suspended = 0
+                AND LOWER(TRIM(COALESCE(fr.status, 'active'))) = 'active'
             WHERE c.is_suspended = 0
             ORDER BY c.category_name COLLATE NOCASE, fr.activity_id
         """
         conn = get_connection()
         try:
+            apply_fra_completed_past_end_date(conn)
             rows = conn.execute(sql).fetchall()
         finally:
             conn.close()

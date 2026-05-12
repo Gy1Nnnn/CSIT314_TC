@@ -106,6 +106,29 @@ export class ApiClient {
       query: { account_id: accountId, search },
     })
   }
+  listCompletedActivityHistory({
+    accountId,
+    search,
+    categoryId,
+    dateFrom,
+    dateTo,
+  } = {}) {
+    return this.request('/api/fundraising-activities/history', {
+      query: {
+        account_id: accountId,
+        search,
+        category_id: categoryId,
+        date_from: dateFrom,
+        date_to: dateTo,
+      },
+    })
+  }
+  /** Owner detail; includes ``view_count`` and ``favorite_count`` (does not increment views). */
+  viewMyActivity(activityId, accountId) {
+    return this.request(`/api/fundraising-activities/${activityId}`, {
+      query: { account_id: accountId },
+    })
+  }
   createActivity(payload) {
     return this.request('/api/fundraising-activities', { method: 'POST', body: payload })
   }

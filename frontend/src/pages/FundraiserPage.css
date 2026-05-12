@@ -1,119 +1,52 @@
-/* Use UserAccountPage styling as baseline */
 @import './UserAccountPage.css';
 
-/* Fundraiser-specific (optional) tweaks could go here */
-
-/* Ensure selects in this page match inputs */
-.mua-page .mup-field select {
-  width: 100%;
-  font: inherit;
-  padding: 0.65rem 0.8rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-h);
-}
-
-.mua-page .mup-field select:focus-visible {
-  outline: none;
-  box-shadow: var(--ring);
-}
-
-/* Activity table: 7 columns — ID, Activity, Category, Status, Views, Favorites, Actions */
-.mua-page .mup-table .mup-row {
-  grid-template-columns:
-    5.25rem
-    minmax(9rem, 1.55fr)
-    minmax(7rem, 1fr)
-    minmax(7.5rem, 9.5rem)
-    4.25rem
-    4.75rem
-    minmax(11rem, 14rem);
-  column-gap: 0.65rem;
-}
-
-.mua-page .mup-table .mup-row .mup-name {
-  min-width: 0;
-}
-
-.mua-page .mup-table .mup-row .fra-table-status {
-  min-width: 0;
-}
-
-/* Numeric columns: align with headers */
-.mua-page .mup-table .mup-row > :nth-child(5),
-.mua-page .mup-table .mup-row > :nth-child(6) {
+.data-table th.num,
+.data-table td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: 1%;
 }
 
-.mua-page .mup-table .mup-row.mup-head > :nth-child(5),
-.mua-page .mup-table .mup-row.mup-head > :nth-child(6) {
-  text-align: right;
+.fra-history-card {
+  margin-top: 0;
 }
 
-.mua-page .mup-table .mup-actions-col {
+.page-header-actions {
+  display: flex;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
   justify-content: flex-end;
-  align-content: center;
-  gap: 0.55rem 0.75rem;
 }
 
-@media (max-width: 1100px) {
-  .mua-page .mup-table .mup-row {
-    grid-template-columns:
-      4.75rem
-      minmax(8rem, 1.35fr)
-      minmax(6.5rem, 0.9fr)
-      minmax(7rem, 8.5rem)
-      3.75rem
-      4rem
-      minmax(9.5rem, 1fr);
-  }
+.fra-history-intro {
+  margin-top: 0.35rem;
+  margin-bottom: 0;
 }
 
-@media (max-width: 720px) {
-  .mua-page .mup-table .mup-row:not(.mup-head) {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(1) {
-    grid-column: 1;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(2) {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(3),
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(4),
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(5),
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(6),
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(7) {
-    grid-column: 1;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(3) {
-    grid-row: 2;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(4) {
-    grid-row: 3;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(5) {
-    grid-row: 4;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(6) {
-    grid-row: 5;
-  }
-
-  .mua-page .mup-table .mup-row:not(.mup-head) > :nth-child(7) {
-    grid-row: 6;
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
+.fra-history-alert {
+  margin: 0 1.25rem 0.75rem;
 }
+
+.fra-history-toolbar {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.fra-history-field {
+  margin: 0;
+  min-width: 10rem;
+}
+
+.fra-history-field .select,
+.fra-history-field .input {
+  min-width: 0;
+}
+
+.fra-history-search {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+}
+

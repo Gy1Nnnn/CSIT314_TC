@@ -3,31 +3,32 @@ import './AdminPage.css'
 
 export default function AdminPage({ user }) {
   return (
-    <main className="admin-page">
-      <header className="admin-header">
+    <main className="page">
+      <div className="page-header">
         <div>
-          <h1>Admin</h1>
-          <p className="admin-sub">
-            Signed in as <strong>{user?.name || 'User'}</strong>
+          <h1>User Admin Dashboard</h1>
+          <p className="page-sub">
+            Signed in as <strong>{user?.name || 'User'}</strong>. Manage user
+            accounts and user profiles.
           </p>
         </div>
-        <Link className="admin-back" to="/">
-          Back to home
-        </Link>
-      </header>
+      </div>
 
       <section className="admin-grid" aria-label="Admin tools">
-        <Link className="admin-card admin-card-link" to="/admin/user-profiles">
-          <h2>Manage User Profile</h2>
-          <p>Create, view, update, suspend, and search user profiles.</p>
+        <Link className="admin-tile" to="/admin/user-accounts">
+          <div className="admin-tile-icon" aria-hidden="true">UA</div>
+          <h2>User Accounts</h2>
+          <p>Create, view, update, suspend, and search user accounts.</p>
+          <span className="admin-tile-cta">Open →</span>
         </Link>
 
-        <Link className="admin-card admin-card-link" to="/admin/user-accounts">
-          <h2>Manage User Account</h2>
-          <p>Create, update, and assign accounts to profiles.</p>
+        <Link className="admin-tile" to="/admin/user-profiles">
+          <div className="admin-tile-icon" aria-hidden="true">UP</div>
+          <h2>User Profiles</h2>
+          <p>Create, view, update, suspend, and search user profiles.</p>
+          <span className="admin-tile-cta">Open →</span>
         </Link>
       </section>
     </main>
   )
 }
-

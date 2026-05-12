@@ -14,6 +14,16 @@ class FRAService:
     def get_activities(self, account_id, search):
         return self._fra.list_activities(account_id, search)
 
+    def list_completed_history(
+        self, account_id, search, category_id, date_from, date_to
+    ):
+        return self._fra.list_completed_history(
+            account_id, search, category_id, date_from, date_to
+        )
+
+    def get_activity(self, activity_id, account_id):
+        return self._fra.get_activity(activity_id, account_id)
+
     def list_public(self, search):
         return self._fra.list_public_activities(search)
 

@@ -10,17 +10,15 @@ export default function DoneePage({ user }) {
 
   const [browseInput, setBrowseInput] = useState('')
   const [browseApplied, setBrowseApplied] = useState('')
-  const [browseReload, setBrowseReload] = useState(0)
   const [browseList, setBrowseList] = useState([])
   const [browseLoading, setBrowseLoading] = useState(false)
 
   const [favInput, setFavInput] = useState('')
   const [favApplied, setFavApplied] = useState('')
-  const [favReload, setFavReload] = useState(0)
   const [favList, setFavList] = useState([])
   const [favLoading, setFavLoading] = useState(false)
 
-  const [favoriteActivityIds, setFavoriteActivityIds] = useState(() => new Set())
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set())
 
   const [detail, setDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -34,15 +32,13 @@ export default function DoneePage({ user }) {
     try {
       const data = await api.listDoneeFavorites(accountId, '')
       const list = Array.isArray(data.favorites) ? data.favorites : []
-      setFavoriteActivityIds(new Set(list.map((f) => f.activity_id)))
+      setFavoriteIds(new Set(list.map((f) => f.activity_id)))
     } catch {
-      setFavoriteActivityIds(new Set())
+      setFavoriteIds(new Set())
     }
   }, [accountId])
 
-  useEffect(() => {
-    refreshFavoriteIds()
-  }, [refreshFavoriteIds])
+  useEffect(() => { refreshFavoriteIds() }, [refreshFavoriteIds])
 
   useEffect(() => {
     if (accountId == null || tab !== 'browse') return
@@ -64,10 +60,8 @@ export default function DoneePage({ user }) {
       }
     }
     load()
-    return () => {
-      cancelled = true
-    }
-  }, [accountId, browseApplied, browseReload, tab])
+    return () => { cancelled = true }
+  }, [accountId, browseApplied, tab])
 
   useEffect(() => {
     if (accountId == null || tab !== 'favorites') return
@@ -89,10 +83,8 @@ export default function DoneePage({ user }) {
       }
     }
     load()
-    return () => {
-      cancelled = true
-    }
-  }, [accountId, favApplied, favReload, tab])
+    return () => { cancelled = true }
+  }, [accountId, favApplied, tab])
 
   async function openDetail(activityId) {
     setDetail(null)
@@ -117,7 +109,7 @@ export default function DoneePage({ user }) {
     try {
       await api.addDoneeFavorite(accountId, activityId)
       setSuccess('Saved to your favorites.')
-      setFavoriteActivityIds((prev) => new Set([...prev, activityId]))
+      setFavoriteIds((prev) => new Set([...prev, activityId]))
       if (tab === 'favorites') {
         const data = await api.listDoneeFavorites(accountId, favApplied.trim())
         setFavList(Array.isArray(data.favorites) ? data.favorites : [])
@@ -137,7 +129,7 @@ export default function DoneePage({ user }) {
     try {
       await api.removeDoneeFavorite(accountId, activityId)
       setSuccess('Removed from favorites.')
-      setFavoriteActivityIds((prev) => {
+      setFavoriteIds((prev) => {
         const n = new Set(prev)
         n.delete(activityId)
         return n
@@ -151,320 +143,267 @@ export default function DoneePage({ user }) {
     }
   }
 
-  function formatDate(iso) {
+  function fmtDate(iso) {
     if (!iso) return '—'
-    try {
-      return new Date(iso + 'T12:00:00').toLocaleDateString()
-    } catch {
-      return iso
-    }
+    try { return new Date(iso + 'T12:00:00').toLocaleDateString() } catch { return iso }
   }
 
   return (
-    <main className="mup-page donee-page">
-      <header className="mup-header">
+    <main className="page">
+      <div className="page-header">
         <div>
-          <h1>Donee</h1>
-          <p className="mup-sub">
-            Search fundraising activities, view details, and save campaigns to your favorites.
+          <h1>Browse Fundraising Activities</h1>
+          <p className="page-sub">
+            Search active campaigns, view details, and save the ones you want to support.
           </p>
         </div>
-      </header>
+      </div>
 
-      {error ? (
-        <div className="mup-alert" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {success ? (
-        <div className="mup-alert success" role="status" aria-live="polite">
-          {success}
-        </div>
-      ) : null}
-
-      <nav className="mup-tabs" role="tablist" aria-label="Donee sections">
+      <div className="tabs" role="tablist" aria-label="Donee sections">
         <button
-          type="button"
           role="tab"
           aria-selected={tab === 'browse'}
-          className={`mup-tab ${tab === 'browse' ? 'active' : ''}`}
-          onClick={() => {
-            setTab('browse')
-            setSuccess(null)
-          }}
+          className={tab === 'browse' ? 'active' : ''}
+          onClick={() => { setTab('browse'); setSuccess(null) }}
         >
           Search activities
         </button>
         <button
-          type="button"
           role="tab"
           aria-selected={tab === 'favorites'}
-          className={`mup-tab ${tab === 'favorites' ? 'active' : ''}`}
-          onClick={() => {
-            setTab('favorites')
-            setSuccess(null)
-          }}
+          className={tab === 'favorites' ? 'active' : ''}
+          onClick={() => { setTab('favorites'); setSuccess(null) }}
         >
-          My favorites
+          My favourites
         </button>
-      </nav>
+      </div>
 
-      {tab === 'browse' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Search fundraising activities">
-          <div className="mup-panel-header">
-            <h2>Available activities</h2>
-          </div>
-          <div className="donee-toolbar">
-            <label className="mup-search mup-search-compact">
-              <span className="mup-label">Search</span>
-              <input
-                value={browseInput}
-                onChange={(e) => setBrowseInput(e.target.value)}
-                placeholder="Name, category, or activity ID"
-              />
-            </label>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                setBrowseApplied(browseInput.trim())
-                setBrowseReload((n) => n + 1)
-              }}
-              disabled={browseLoading}
-            >
-              Search
-            </button>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                setBrowseInput('')
-                setBrowseApplied('')
-                setBrowseReload((n) => n + 1)
-              }}
-              disabled={browseLoading}
-            >
-              Clear
-            </button>
-          </div>
+      {error ? <div className="alert error" style={{ marginTop: '1rem' }}>{error}</div> : null}
+      {success ? <div className="alert success" style={{ marginTop: '1rem' }}>{success}</div> : null}
 
-          <div className="donee-table">
-            <div className="donee-row donee-head" aria-hidden="true">
-              <div>ID</div>
-              <div>Activity</div>
-              <div>Category</div>
-              <div>Organizer</div>
-              <div className="donee-actions">Actions</div>
+      <div className="card" style={{ marginTop: '1rem' }}>
+        {tab === 'browse' ? (
+          <>
+            <div className="toolbar">
+              <div className="search">
+                <input
+                  value={browseInput}
+                  onChange={(e) => setBrowseInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setBrowseApplied(browseInput.trim()) }}
+                  placeholder="Search by name, category, or activity ID…"
+                />
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setBrowseApplied(browseInput.trim())}
+                disabled={browseLoading}
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => { setBrowseInput(''); setBrowseApplied('') }}
+                disabled={browseLoading}
+              >
+                Clear
+              </button>
             </div>
-            {browseLoading ? (
-              <p className="mup-muted" style={{ padding: '1rem 0.4rem' }}>
-                Loading…
-              </p>
-            ) : null}
-            {!browseLoading &&
-              browseList.map((a) => (
-                <div key={a.activity_id} className="donee-row">
-                  <div className="mup-muted">{String(a.activity_id).padStart(3, '0')}</div>
-                  <div className="mup-strong">{a.activity_name}</div>
-                  <div className="mup-muted">{a.category_name || '—'}</div>
-                  <div className="mup-muted">{a.organizer_name || '—'}</div>
-                  <div className="donee-actions">
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => openDetail(a.activity_id)}
-                    >
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving || favoriteActivityIds.has(a.activity_id)}
-                      onClick={() => addFavorite(a.activity_id)}
-                    >
-                      {favoriteActivityIds.has(a.activity_id) ? 'Saved' : 'Save'}
-                    </button>
-                  </div>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Activity</th>
+                    <th>Category</th>
+                    <th>Organizer</th>
+                    <th>Status</th>
+                    <th className="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {browseList.map((a) => (
+                    <tr key={a.activity_id}>
+                      <td>{a.activity_name}</td>
+                      <td className="muted">{a.category_name || '—'}</td>
+                      <td className="muted">{a.organizer_name || '—'}</td>
+                      <td>
+                        <span className="pill ok">{a.status || 'Active'}</span>
+                      </td>
+                      <td className="actions">
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => openDetail(a.activity_id)}
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-link"
+                          disabled={saving || favoriteIds.has(a.activity_id)}
+                          onClick={() => addFavorite(a.activity_id)}
+                        >
+                          {favoriteIds.has(a.activity_id) ? 'Saved' : 'Save'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!browseLoading && browseList.length === 0 ? (
+                <div className="data-empty">
+                  No matching activities. Try another search or clear filters.
                 </div>
-              ))}
-            {!browseLoading && browseList.length === 0 ? (
-              <p className="mup-muted" style={{ padding: '1rem 0.4rem' }}>
-                No matching activities. Try another search or clear filters.
-              </p>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {tab === 'favorites' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="My favorite activities">
-          <div className="mup-panel-header">
-            <h2>Favorites</h2>
-          </div>
-          <div className="donee-toolbar">
-            <label className="mup-search mup-search-compact">
-              <span className="mup-label">Search favorites</span>
-              <input
-                value={favInput}
-                onChange={(e) => setFavInput(e.target.value)}
-                placeholder="Name, category, or activity ID"
-              />
-            </label>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                setFavApplied(favInput.trim())
-                setFavReload((n) => n + 1)
-              }}
-              disabled={favLoading}
-            >
-              Search
-            </button>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                setFavInput('')
-                setFavApplied('')
-                setFavReload((n) => n + 1)
-              }}
-              disabled={favLoading}
-            >
-              Clear
-            </button>
-          </div>
-
-          <div className="donee-table">
-            <div className="donee-row donee-head" aria-hidden="true">
-              <div>ID</div>
-              <div>Activity</div>
-              <div>Category</div>
-              <div>Saved</div>
-              <div className="donee-actions">Actions</div>
+              ) : null}
+              {browseLoading ? <div className="data-empty">Loading…</div> : null}
             </div>
-            {favLoading ? (
-              <p className="mup-muted" style={{ padding: '1rem 0.4rem' }}>
-                Loading…
-              </p>
-            ) : null}
-            {!favLoading &&
-              favList.map((f) => (
-                <div key={`${f.favorite_id}-${f.activity_id}`} className="donee-row">
-                  <div className="mup-muted">{String(f.activity_id).padStart(3, '0')}</div>
-                  <div className="mup-strong">{f.activity_name}</div>
-                  <div className="mup-muted">{f.category_name || '—'}</div>
-                  <div className="mup-muted">
-                    {f.created_at ? formatDate(f.created_at.split(' ')[0]) : '—'}
-                  </div>
-                  <div className="donee-actions">
-                    <button type="button" className="mup-linkbtn" onClick={() => openDetail(f.activity_id)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => removeFavorite(f.activity_id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
+          </>
+        ) : null}
+
+        {tab === 'favorites' ? (
+          <>
+            <div className="toolbar">
+              <div className="search">
+                <input
+                  value={favInput}
+                  onChange={(e) => setFavInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setFavApplied(favInput.trim()) }}
+                  placeholder="Search your favourites…"
+                />
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setFavApplied(favInput.trim())}
+                disabled={favLoading}
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => { setFavInput(''); setFavApplied('') }}
+                disabled={favLoading}
+              >
+                Clear
+              </button>
+            </div>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Activity</th>
+                    <th>Category</th>
+                    <th>Saved</th>
+                    <th className="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {favList.map((f) => (
+                    <tr key={`${f.favorite_id}-${f.activity_id}`}>
+                      <td>{f.activity_name}</td>
+                      <td className="muted">{f.category_name || '—'}</td>
+                      <td className="muted">
+                        {f.created_at ? fmtDate(f.created_at.split(' ')[0]) : '—'}
+                      </td>
+                      <td className="actions">
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => openDetail(f.activity_id)}
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-link danger"
+                          disabled={saving}
+                          onClick={() => removeFavorite(f.activity_id)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!favLoading && favList.length === 0 ? (
+                <div className="data-empty">
+                  No favourites yet. Save activities from the search tab.
                 </div>
-              ))}
-            {!favLoading && favList.length === 0 ? (
-              <p className="mup-muted" style={{ padding: '1rem 0.4rem' }}>
-                No favorites yet. Save activities from the Search tab.
-              </p>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
+              ) : null}
+              {favLoading ? <div className="data-empty">Loading…</div> : null}
+            </div>
+          </>
+        ) : null}
+      </div>
 
       {detail != null || detailLoading ? (
         <div
-          className="mup-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Activity details"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setDetail(null)
-          }}
+          className="modal-root"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setDetail(null) }}
         >
-          <div className="mup-modal-card">
-            <div className="mup-modal-head">
+          <div
+            className="modal-card lg"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Activity details"
+          >
+            <div className="modal-head">
               <h2>Activity details</h2>
-              <button type="button" className="mup-linkbtn" onClick={() => setDetail(null)}>
-                Close
-              </button>
+              <button type="button" className="modal-close" onClick={() => setDetail(null)} aria-label="Close">×</button>
             </div>
             {detailLoading ? (
-              <p className="mup-muted">Loading…</p>
+              <p className="modal-body">Loading…</p>
             ) : detail ? (
               <>
-                <div className="mup-modal-grid">
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Activity ID</div>
-                    <div className="mup-strong">{String(detail.activity_id).padStart(3, '0')}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Name</div>
-                    <div className="mup-strong">{detail.activity_name}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Category</div>
-                    <div className="mup-muted">{detail.category_name || '—'}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Organizer</div>
-                    <div className="mup-muted">{detail.organizer_name || '—'}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Status</div>
-                    <div className="mup-muted">{detail.status || '—'}</div>
-                  </div>
-                  <div className="mup-modal-item mup-modal-item-full">
-                    <div className="mup-modal-label">Description</div>
-                    <div className="mup-muted">{detail.description || '—'}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Start</div>
-                    <div className="mup-muted">{detail.start_date || '—'}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">End</div>
-                    <div className="mup-muted">{detail.end_date || '—'}</div>
-                  </div>
-                  <div className="mup-modal-item">
-                    <div className="mup-modal-label">Target amount</div>
-                    <div className="mup-muted">
-                      {detail.target_amount === 0 || detail.target_amount
-                        ? Number(detail.target_amount).toLocaleString()
-                        : '—'}
-                    </div>
-                  </div>
-                </div>
-                <div className="mup-actions">
-                  <button type="button" className="mup-btn secondary" onClick={() => setDetail(null)}>
-                    Back
+                <dl className="detail-list" style={{ marginTop: '0.5rem' }}>
+                  <dt>Campaign</dt>
+                  <dd>{detail.activity_name}</dd>
+                  <dt>Category</dt>
+                  <dd>{detail.category_name || '—'}</dd>
+                  <dt>Organizer</dt>
+                  <dd>{detail.organizer_name || '—'}</dd>
+                  <dt>Status</dt>
+                  <dd>
+                    <span className="pill ok">{detail.status || 'Active'}</span>
+                  </dd>
+                  <dt>Start</dt>
+                  <dd>{fmtDate(detail.start_date)}</dd>
+                  <dt>End</dt>
+                  <dd>{fmtDate(detail.end_date)}</dd>
+                  <dt>Target amount</dt>
+                  <dd>
+                    {detail.target_amount === 0 || detail.target_amount
+                      ? Number(detail.target_amount).toLocaleString()
+                      : '—'}
+                  </dd>
+                  <dt>Description</dt>
+                  <dd>{detail.description || '—'}</dd>
+                </dl>
+                <div className="modal-actions">
+                  <button type="button" className="btn" onClick={() => setDetail(null)}>
+                    Close
                   </button>
-                  {favoriteActivityIds.has(detail.activity_id) ? (
+                  {favoriteIds.has(detail.activity_id) ? (
                     <button
                       type="button"
-                      className="mup-btn secondary"
+                      className="btn danger"
                       disabled={saving}
                       onClick={() => removeFavorite(detail.activity_id)}
                     >
-                      Remove from favorites
+                      Remove from favourites
                     </button>
                   ) : (
                     <button
                       type="button"
-                      className="mup-btn primary"
+                      className="btn primary"
                       disabled={saving}
                       onClick={() => addFavorite(detail.activity_id)}
                     >
-                      Save to favorites
+                      Save to favourites
                     </button>
                   )}
                 </div>

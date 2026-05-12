@@ -1,115 +1,146 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
+import ConfirmModal from '../components/ConfirmModal.jsx'
 import './UserAccountPage.css'
 
-function AccountForm({ mode, initial, nextId, profiles, onCancel, onSubmit, busy }) {
-  const [name, setName] = useState(initial.name || '')
-  const [email, setEmail] = useState(initial.email || '')
-  const [password, setPassword] = useState(initial.password || '')
+const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
+
+function AccountForm({ mode, initial, profiles, onCancel, onSubmit, busy }) {
+  const [name, setName] = useState(initial?.name || '')
+  const [email, setEmail] = useState(initial?.email || '')
+  const [password, setPassword] = useState('')
   const [profileId, setProfileId] = useState(
-    initial.profile_id ? String(initial.profile_id) : '',
+    initial?.profile_id ? String(initial.profile_id) : '',
   )
+  const [suspended, setSuspended] = useState(Boolean(initial?.is_suspended))
 
-  useEffect(() => {
-    setName(initial.name || '')
-    setEmail(initial.email || '')
-    setPassword(initial.password || '')
-    setProfileId(initial.profile_id ? String(initial.profile_id) : '')
-  }, [initial])
-
+  const isEdit = mode === 'update'
   const canSubmit =
     name.trim().length > 0 &&
     email.trim().length > 0 &&
-    password.trim().length > 0 &&
+    (isEdit || password.trim().length > 0) &&
     String(profileId || '').trim().length > 0 &&
     !busy
 
-  const displayId =
-    mode === 'edit'
-      ? String(initial.account_id || '').padStart(3, '0')
-      : String(nextId || '').padStart(3, '0')
-
   return (
     <form
-      className="mup-form"
       onSubmit={(e) => {
         e.preventDefault()
         if (!canSubmit) return
-        onSubmit({
+        const payload = {
           name: name.trim(),
           email: email.trim(),
-          password: password,
           profile_id: Number(profileId),
-        })
+        }
+        if (password.trim()) payload.password = password
+        payload.is_suspended = suspended
+        onSubmit(payload)
       }}
     >
-      <div className="mup-form-header">
-        <h2>{mode === 'edit' ? 'Update account' : 'Create account'}</h2>
-        {mode === 'edit' ? (
-          <span className="mup-pill">Editing #{initial.account_id}</span>
-        ) : null}
+      <div className="form-grid">
+        <div className="field">
+          <label className="field-label" htmlFor="ac-username">
+            Username <span className="req">*</span>
+          </label>
+          <input
+            id="ac-username"
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., alextan"
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="ac-email">
+            Email <span className="req">*</span>
+          </label>
+          <input
+            id="ac-email"
+            className="input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="e.g., alex@example.com"
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="ac-password">
+            {isEdit ? 'Reset Password' : (
+              <>
+                Password <span className="req">*</span>
+              </>
+            )}
+          </label>
+          <input
+            id="ac-password"
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={isEdit ? 'Leave blank to keep' : '••••••••'}
+            required={!isEdit}
+          />
+          {isEdit ? (
+            <span className="field-hint">Leave blank to keep the current password.</span>
+          ) : null}
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="ac-profile">
+            Profile <span className="req">*</span>
+          </label>
+          <select
+            id="ac-profile"
+            className="select"
+            value={profileId}
+            onChange={(e) => setProfileId(e.target.value)}
+            required
+          >
+            <option value="" disabled>Select a profile</option>
+            {profiles.map((p) => (
+              <option key={p.profile_id} value={String(p.profile_id)}>
+                {p.profile_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field full">
+          <label className="field-label">Status</label>
+          <div className="status-toggle">
+            <label className={`status-opt ${!suspended ? 'active' : ''}`}>
+              <input
+                type="radio"
+                name="status"
+                checked={!suspended}
+                onChange={() => setSuspended(false)}
+              />
+              Active
+            </label>
+            <label className={`status-opt ${suspended ? 'active' : ''}`}>
+              <input
+                type="radio"
+                name="status"
+                checked={suspended}
+                onChange={() => setSuspended(true)}
+              />
+              Suspended
+            </label>
+          </div>
+        </div>
       </div>
 
-      <label className="mup-field">
-        <span className="mup-label">Account ID (Auto)</span>
-        <input value={displayId} readOnly aria-readonly="true" />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Name *</span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. John Tan"
-          required
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Email *</span>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="e.g. user@gmail.com"
-          required
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Password *</span>
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Profile *</span>
-        <select
-          value={profileId}
-          onChange={(e) => setProfileId(e.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Select a profile
-          </option>
-          {profiles.map((p) => (
-            <option key={p.profile_id} value={String(p.profile_id)}>
-              {p.profile_name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="mup-actions">
-        <button type="button" className="mup-btn secondary" onClick={onCancel}>
+      <div className="form-actions">
+        <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="mup-btn primary" disabled={!canSubmit}>
-          {busy ? 'Saving…' : mode === 'edit' ? 'Update' : 'Create'}
+        <button type="submit" className="btn primary" disabled={!canSubmit}>
+          {busy ? 'Saving…' : isEdit ? 'Save' : 'Create'}
         </button>
       </div>
     </form>
@@ -117,70 +148,39 @@ function AccountForm({ mode, initial, nextId, profiles, onCancel, onSubmit, busy
 }
 
 export default function UserAccountPage() {
-  const [searchInput, setSearchInput] = useState('')
-  const [searchApplied, setSearchApplied] = useState('')
-
+  const [view, setView] = useState(VIEWS.LIST)
   const [accounts, setAccounts] = useState([])
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [nextId, setNextId] = useState(1)
-
-  const [formMode, setFormMode] = useState('create') // create | edit
-  const [selected, setSelected] = useState({})
-  const [viewing, setViewing] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [tab, setTab] = useState('create') // create | list | search
 
-  const queryString = useMemo(() => {
-    const qs = new URLSearchParams()
-    if (tab === 'search' && searchApplied.trim()) qs.set('search', searchApplied.trim())
-    return qs.toString()
-  }, [searchApplied, tab])
+  const [search, setSearch] = useState('')
+  const [applied, setApplied] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [confirm, setConfirm] = useState(null) // {mode:'suspend'|'reinstate', account}
 
   async function loadProfiles() {
     try {
       const data = await api.listUserProfiles('')
-      const list = Array.isArray(data.profiles) ? data.profiles : []
-      setProfiles(list)
+      setProfiles(Array.isArray(data.profiles) ? data.profiles : [])
     } catch {
-      // ignore: accounts still usable without profile names
+      // ignore
     }
   }
 
   async function loadAccounts() {
-    setError(null)
-    setSuccess(null)
     setLoading(true)
+    setError(null)
     try {
-      const data = await api.listUserAccounts(tab === 'search' ? searchApplied.trim() : '')
-      const list = Array.isArray(data.accounts) ? data.accounts : []
-      setAccounts(list)
-      const maxId = list.reduce(
-        (acc, a) => Math.max(acc, Number(a.account_id) || 0),
-        0,
-      )
-      setNextId(maxId + 1)
+      const data = await api.listUserAccounts(applied)
+      setAccounts(Array.isArray(data.accounts) ? data.accounts : [])
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error loading accounts. Is the backend running?')
+      setError(e?.data?.message || e?.message || 'Could not load accounts.')
       setAccounts([])
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function refreshNextId() {
-    try {
-      const data = await api.listUserAccounts('')
-      const list = Array.isArray(data.accounts) ? data.accounts : []
-      const maxId = list.reduce(
-        (acc, a) => Math.max(acc, Number(a.account_id) || 0),
-        0,
-      )
-      setNextId(maxId + 1)
-    } catch {
-      // ignore
     }
   }
 
@@ -191,383 +191,334 @@ export default function UserAccountPage() {
   useEffect(() => {
     loadAccounts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryString])
+  }, [applied])
 
-  async function createAccount(payload) {
-    setSaving(true)
+  function clearMessages() {
     setError(null)
     setSuccess(null)
+  }
+
+  async function handleCreate(payload) {
+    setSaving(true)
+    clearMessages()
     try {
       await api.createUserAccount(payload)
-      setFormMode('create')
-      setSelected({})
-      setSuccess('A new account is created successfully.')
-      await refreshNextId()
-    } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error creating account.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function updateAccount(accountId, payload) {
-    setSaving(true)
-    setError(null)
-    setSuccess(null)
-    try {
-      await api.updateUserAccount(accountId, payload)
-      setFormMode('create')
-      setSelected({})
-      await loadAccounts()
-      setTab('list')
-    } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error updating account.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function setSuspended(accountId, suspend) {
-    setSaving(true)
-    setError(null)
-    setSuccess(null)
-    try {
-      await api.suspendUserAccount(accountId, suspend)
+      setSuccess('Account created successfully.')
+      setView(VIEWS.LIST)
       await loadAccounts()
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error updating suspension state.')
+      setError(e?.data?.message || e?.message || 'Could not create account.')
     } finally {
       setSaving(false)
     }
   }
 
-  const formInitial = formMode === 'edit' ? selected : {}
+  async function handleUpdate(payload) {
+    if (!selected) return
+    setSaving(true)
+    clearMessages()
+    try {
+      await api.updateUserAccount(selected.account_id, payload)
+      setSuccess('Account updated successfully.')
+      setView(VIEWS.LIST)
+      setSelected(null)
+      await loadAccounts()
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not update account.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function performSuspend() {
+    if (!confirm) return
+    setSaving(true)
+    clearMessages()
+    const target = confirm.account
+    const wantSuspend = confirm.mode === 'suspend'
+    try {
+      await api.suspendUserAccount(target.account_id, wantSuspend)
+      setSuccess(
+        wantSuspend ? 'Account suspended.' : 'Account reinstated.',
+      )
+      setConfirm(null)
+      await loadAccounts()
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not update suspension.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function formatUpdated(value) {
+    if (!value) return '—'
+    try {
+      return new Date(value).toLocaleDateString()
+    } catch {
+      return value
+    }
+  }
+
+  if (view === VIEWS.CREATE) {
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => setView(VIEWS.LIST)}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>Create User Account</h1>
+            <p className="page-sub">Create credentials for a user.</p>
+          </div>
+        </div>
+        {error ? <div className="alert error">{error}</div> : null}
+        <div className="card">
+          <div className="card-section">
+            <AccountForm
+              mode="create"
+              initial={null}
+              profiles={profiles}
+              busy={saving}
+              onCancel={() => setView(VIEWS.LIST)}
+              onSubmit={handleCreate}
+            />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (view === VIEWS.UPDATE && selected) {
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>Update User Account</h1>
+            <p className="page-sub">Update account credentials (prefilled).</p>
+          </div>
+        </div>
+        {error ? <div className="alert error">{error}</div> : null}
+        <div className="card">
+          <div className="card-section">
+            <AccountForm
+              mode="update"
+              initial={selected}
+              profiles={profiles}
+              busy={saving}
+              onCancel={() => { setView(VIEWS.LIST); setSelected(null) }}
+              onSubmit={handleUpdate}
+            />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (view === VIEWS.VIEW && selected) {
+    const suspended = Boolean(selected.is_suspended)
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>View User Account</h1>
+            <p className="page-sub">Read-only account details.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setView(VIEWS.UPDATE)}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              className={`btn ${suspended ? 'primary' : 'danger'}`}
+              onClick={() => setConfirm({ mode: suspended ? 'reinstate' : 'suspend', account: selected })}
+            >
+              {suspended ? 'Reinstate' : 'Suspend'}
+            </button>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-section">
+            <h2 className="card-title">Account details</h2>
+            <dl className="detail-list" style={{ marginTop: '1rem' }}>
+              <dt>Account ID</dt>
+              <dd>{String(selected.account_id).padStart(3, '0')}</dd>
+              <dt>Username</dt>
+              <dd>{selected.name}</dd>
+              <dt>Email</dt>
+              <dd>{selected.email}</dd>
+              <dt>Profile</dt>
+              <dd>{selected.profile_name || '—'}</dd>
+              <dt>Status</dt>
+              <dd>
+                <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                  {suspended ? 'Suspended' : 'Active'}
+                </span>
+              </dd>
+              <dt>Last updated</dt>
+              <dd>{formatUpdated(selected.updated_at || selected.created_at)}</dd>
+            </dl>
+          </div>
+        </div>
+        <ConfirmModal
+          open={Boolean(confirm)}
+          variant={confirm?.mode === 'suspend' ? 'danger' : 'primary'}
+          title={confirm?.mode === 'suspend' ? 'Suspend user account?' : 'Reinstate user account?'}
+          message={
+            confirm?.mode === 'suspend'
+              ? 'User will not be able to log in while suspended.'
+              : 'This user will be able to log in again.'
+          }
+          confirmLabel={confirm?.mode === 'suspend' ? 'Suspend' : 'Reinstate'}
+          withReason={confirm?.mode === 'suspend'}
+          busy={saving}
+          onCancel={() => setConfirm(null)}
+          onConfirm={performSuspend}
+        />
+      </main>
+    )
+  }
 
   return (
-    <main className="mup-page mua-page">
-      <header className="mup-header">
+    <main className="page">
+      <div className="page-header">
         <div>
-          <h1>Manage User Account</h1>
+          <h1>User Accounts</h1>
+          <p className="page-sub">
+            Create, view, update, search, and suspend user accounts.
+          </p>
         </div>
-      </header>
-
-      {error ? (
-        <div className="mup-alert" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      {success ? (
-        <div className="mup-alert success" role="status" aria-live="polite">
-          {success}
-        </div>
-      ) : null}
-
-      <nav className="mup-tabs" role="tablist" aria-label="User account tabs">
         <button
           type="button"
-          role="tab"
-          aria-selected={tab === 'create'}
-          className={`mup-tab ${tab === 'create' ? 'active' : ''}`}
-          onClick={() => {
-            setFormMode('create')
-            setSelected({})
-            setTab('create')
-          }}
+          className="btn primary"
+          onClick={() => { clearMessages(); setSelected(null); setView(VIEWS.CREATE) }}
         >
-          Create
+          + Create Account
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'list'}
-          className={`mup-tab ${tab === 'list' ? 'active' : ''}`}
-          onClick={() => setTab('list')}
-        >
-          Show all accounts
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'search'}
-          className={`mup-tab ${tab === 'search' ? 'active' : ''}`}
-          onClick={() => setTab('search')}
-        >
-          Search
-        </button>
-      </nav>
+      </div>
 
-      {tab === 'create' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Create user account">
-          <AccountForm
-            mode={formMode}
-            initial={formInitial}
-            nextId={nextId}
-            profiles={profiles}
-            busy={saving}
-            onCancel={() => {
-              setFormMode('create')
-              setSelected({})
-              setTab('list')
-            }}
-            onSubmit={(payload) => {
-              if (formMode === 'edit') return updateAccount(selected.account_id, payload)
-              return createAccount(payload)
-            }}
-          />
-        </section>
-      ) : null}
+      {error ? <div className="alert error">{error}</div> : null}
+      {success ? <div className="alert success">{success}</div> : null}
 
-      {tab === 'list' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Show all accounts">
-          <div className="mup-panel-header">
-            <h2>Show Accounts</h2>
-          </div>
-
-          <div className="mup-toolbar mup-toolbar-split">
-            <p className="mup-muted mup-banner">All the accounts are here!</p>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={loadAccounts}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-          </div>
-
-          <div className="mup-table">
-            <div className="mup-row mup-head">
-              <div>ID</div>
-              <div>Name</div>
-              <div>Email</div>
-              <div>Profile</div>
-              <div>Status</div>
-              <div className="mup-actions-col">Actions</div>
-            </div>
-            {accounts.map((a) => {
-              const suspended = Boolean(a.is_suspended)
-              return (
-                <div key={a.account_id} className="mup-row">
-                  <div className="mup-muted">
-                    {String(a.account_id).padStart(3, '0')}
-                  </div>
-                  <div className="mup-name">
-                    <div className="mup-strong">{a.name}</div>
-                  </div>
-                  <div className="mup-muted">{a.email}</div>
-                  <div className="mup-muted">{a.profile_name || '-'}</div>
-                  <div>
-                    <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
-                      {suspended ? 'Suspended' : 'Active'}
-                    </span>
-                  </div>
-                  <div className="mup-actions-col">
-                    <button type="button" className="mup-linkbtn" onClick={() => setViewing(a)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => {
-                        setFormMode('edit')
-                        setSelected(a)
-                        setTab('create')
-                      }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => setSuspended(a.account_id, !suspended)}
-                    >
-                      {suspended ? 'Unsuspend' : 'Suspend'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-            {!loading && accounts.length === 0 ? (
-              <div className="mup-empty">No accounts found.</div>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {tab === 'search' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Search accounts">
-          <div className="mup-panel-header">
-            <h2>Search</h2>
-          </div>
-
-          <div className="mup-toolbar">
-            <label className="mup-search mup-search-compact">
-              <span className="mup-label">Search</span>
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="e.g. John or user@gmail.com or 003"
-              />
-            </label>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={loadAccounts}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                if (searchApplied === searchInput) loadAccounts()
-                else setSearchApplied(searchInput)
+      <div className="card">
+        <div className="toolbar">
+          <div className="search">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setApplied(search.trim())
               }}
-              disabled={loading}
-            >
-              Search
-            </button>
+              placeholder="Search by name, email, or status…"
+            />
           </div>
-
-          <div className="mup-table">
-            <div className="mup-row mup-head">
-              <div>ID</div>
-              <div>Name</div>
-              <div>Email</div>
-              <div>Profile</div>
-              <div>Status</div>
-              <div className="mup-actions-col">Actions</div>
-            </div>
-            {accounts.map((a) => {
-              const suspended = Boolean(a.is_suspended)
-              return (
-                <div key={a.account_id} className="mup-row">
-                  <div className="mup-muted">
-                    {String(a.account_id).padStart(3, '0')}
-                  </div>
-                  <div className="mup-name">
-                    <div className="mup-strong">{a.name}</div>
-                  </div>
-                  <div className="mup-muted">{a.email}</div>
-                  <div className="mup-muted">{a.profile_name || '-'}</div>
-                  <div>
-                    <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
-                      {suspended ? 'Suspended' : 'Active'}
-                    </span>
-                  </div>
-                  <div className="mup-actions-col">
-                    <button type="button" className="mup-linkbtn" onClick={() => setViewing(a)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => {
-                        setFormMode('edit')
-                        setSelected(a)
-                        setTab('create')
-                      }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => setSuspended(a.account_id, !suspended)}
-                    >
-                      {suspended ? 'Unsuspend' : 'Suspend'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-            {!loading && accounts.length === 0 ? (
-              <div className="mup-empty">No accounts found.</div>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {viewing ? (
-        <div
-          className="mup-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="View account"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setViewing(null)
-          }}
-        >
-          <div className="mup-modal-card">
-            <div className="mup-modal-head">
-              <h2>View account</h2>
-              <button type="button" className="mup-linkbtn" onClick={() => setViewing(null)}>
-                Close
-              </button>
-            </div>
-
-            <div className="mup-modal-grid">
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Account ID</div>
-                <div className="mup-strong">
-                  {String(viewing.account_id).padStart(3, '0')}
-                </div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Name</div>
-                <div className="mup-strong">{viewing.name}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Email</div>
-                <div className="mup-muted">{viewing.email}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Profile</div>
-                <div className="mup-muted">{viewing.profile_name || '-'}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Status</div>
-                <div>
-                  <span className={`mup-tag ${viewing.is_suspended ? 'danger' : 'ok'}`}>
-                    {viewing.is_suspended ? 'Suspended' : 'Active'}
-                  </span>
-                </div>
-              </div>
-              <div className="mup-modal-item mup-modal-item-full">
-                <div className="mup-modal-label">Password</div>
-                <div className="mup-muted">{viewing.password || '-'}</div>
-              </div>
-            </div>
-
-            <div className="mup-actions">
-              <button
-                type="button"
-                className="mup-btn secondary"
-                onClick={() => setViewing(null)}
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                className="mup-btn primary"
-                onClick={() => {
-                  setFormMode('edit')
-                  setSelected(viewing)
-                  setViewing(null)
-                  setTab('create')
-                }}
-              >
-                Edit
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setApplied(search.trim())}
+            disabled={loading}
+          >
+            Search
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => { setSearch(''); setApplied('') }}
+            disabled={loading}
+          >
+            Clear
+          </button>
         </div>
-      ) : null}
+
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Profile</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th className="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((a) => {
+                const suspended = Boolean(a.is_suspended)
+                return (
+                  <tr key={a.account_id}>
+                    <td>{a.name}</td>
+                    <td className="muted">{a.email}</td>
+                    <td className="muted">{a.profile_name || '—'}</td>
+                    <td>
+                      <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                        {suspended ? 'Suspended' : 'Active'}
+                      </span>
+                    </td>
+                    <td className="muted">
+                      {formatUpdated(a.updated_at || a.created_at)}
+                    </td>
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn-link ${suspended ? '' : 'danger'}`}
+                        onClick={() => setConfirm({ mode: suspended ? 'reinstate' : 'suspend', account: a })}
+                      >
+                        {suspended ? 'Reinstate' : 'Suspend'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {!loading && accounts.length === 0 ? (
+            <div className="data-empty">
+              No accounts found. Try a different search or create a new account.
+            </div>
+          ) : null}
+          {loading ? <div className="data-empty">Loading…</div> : null}
+        </div>
+      </div>
+
+      <ConfirmModal
+        open={Boolean(confirm)}
+        variant={confirm?.mode === 'suspend' ? 'danger' : 'primary'}
+        title={confirm?.mode === 'suspend' ? 'Suspend user account?' : 'Reinstate user account?'}
+        message={
+          confirm?.mode === 'suspend'
+            ? 'User will not be able to log in while suspended.'
+            : 'This user will be able to log in again.'
+        }
+        confirmLabel={confirm?.mode === 'suspend' ? 'Suspend' : 'Reinstate'}
+        withReason={confirm?.mode === 'suspend'}
+        busy={saving}
+        onCancel={() => setConfirm(null)}
+        onConfirm={performSuspend}
+      />
     </main>
   )
 }
-

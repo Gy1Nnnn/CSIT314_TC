@@ -1,0 +1,5 @@
+.reports-page .reports-placeholder {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--color-muted, #5c5c5c);
+}

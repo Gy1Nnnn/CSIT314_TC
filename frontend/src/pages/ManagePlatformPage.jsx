@@ -1,73 +1,78 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
+import ConfirmModal from '../components/ConfirmModal.jsx'
 import './ManagePlatformPage.css'
 
-function CategoryForm({ mode, initial, nextId, onCancel, onSubmit, busy }) {
-  const [categoryName, setCategoryName] = useState(initial.category_name || '')
-  const [description, setDescription] = useState(initial.description || '')
+const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
 
-  useEffect(() => {
-    setCategoryName(initial.category_name || '')
-    setDescription(initial.description || '')
-  }, [initial])
+function CategoryForm({ mode, initial, onCancel, onSubmit, busy }) {
+  const [name, setName] = useState(initial?.category_name || '')
+  const [code, setCode] = useState(initial?.code || '')
+  const [description, setDescription] = useState(initial?.description || '')
 
-  const canSubmit = categoryName.trim().length > 0 && !busy
-  const displayId =
-    mode === 'edit'
-      ? String(initial.category_id || '').padStart(3, '0')
-      : String(nextId || '').padStart(3, '0')
+  const isEdit = mode === 'update'
+  const canSubmit = name.trim().length > 0 && !busy
 
   return (
     <form
-      className="mup-form"
       onSubmit={(e) => {
         e.preventDefault()
         if (!canSubmit) return
         onSubmit({
-          category_name: categoryName.trim(),
+          category_name: name.trim(),
+          code: code.trim() || null,
           description: description.trim(),
         })
       }}
     >
-      <div className="mup-form-header">
-        <h2>{mode === 'edit' ? 'Update category' : 'Create category'}</h2>
-        {mode === 'edit' ? (
-          <span className="mup-pill">Editing #{initial.category_id}</span>
-        ) : null}
+      <div className="form-grid">
+        <div className="field">
+          <label className="field-label" htmlFor="cat-name">
+            Name <span className="req">*</span>
+          </label>
+          <input
+            id="cat-name"
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Food Relief"
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="cat-code">
+            Code
+          </label>
+          <input
+            id="cat-code"
+            className="input"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="e.g., FR-001"
+          />
+        </div>
+
+        <div className="field full">
+          <label className="field-label" htmlFor="cat-desc">Description</label>
+          <textarea
+            id="cat-desc"
+            className="textarea"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Optional description…"
+            rows={4}
+          />
+        </div>
       </div>
 
-      <label className="mup-field">
-        <span className="mup-label">Category ID (Auto)</span>
-        <input value={displayId} readOnly aria-readonly="true" />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Category name *</span>
-        <input
-          value={categoryName}
-          onChange={(e) => setCategoryName(e.target.value)}
-          placeholder="e.g. Medical"
-          required
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Description</span>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Short description"
-          rows={3}
-        />
-      </label>
-
-      <div className="mup-actions">
-        <button type="button" className="mup-btn secondary" onClick={onCancel}>
+      <div className="form-actions">
+        <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="mup-btn primary" disabled={!canSubmit}>
-          {busy ? 'Saving…' : mode === 'edit' ? 'Update' : 'Create'}
+        <button type="submit" className="btn primary" disabled={!canSubmit}>
+          {busy ? 'Saving…' : isEdit ? 'Save' : 'Create'}
         </button>
       </div>
     </form>
@@ -75,40 +80,26 @@ function CategoryForm({ mode, initial, nextId, onCancel, onSubmit, busy }) {
 }
 
 export default function ManagePlatformPage() {
-  const [searchInput, setSearchInput] = useState('')
-  const [searchApplied, setSearchApplied] = useState('')
-
+  const [view, setView] = useState(VIEWS.LIST)
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [nextId, setNextId] = useState(1)
-
-  const [formMode, setFormMode] = useState('create') // create | edit
-  const [selected, setSelected] = useState({})
-  const [viewing, setViewing] = useState(null)
+  const [success, setSuccess] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [tab, setTab] = useState('create') // create | list | search
 
-  const queryString = useMemo(() => {
-    const qs = new URLSearchParams()
-    if (tab === 'search' && searchApplied.trim()) qs.set('search', searchApplied.trim())
-    return qs.toString()
-  }, [searchApplied, tab])
+  const [search, setSearch] = useState('')
+  const [applied, setApplied] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [confirm, setConfirm] = useState(null) // {mode:'delete'|'reinstate', category}
 
   async function loadCategories() {
-    setError(null)
     setLoading(true)
+    setError(null)
     try {
-      const data = await api.listCategories(tab === 'search' ? searchApplied.trim() : '')
-      const list = Array.isArray(data.categories) ? data.categories : []
-      setCategories(list)
-      const maxId = list.reduce(
-        (acc, c) => Math.max(acc, Number(c.category_id) || 0),
-        0,
-      )
-      setNextId(maxId + 1)
+      const data = await api.listCategories(applied)
+      setCategories(Array.isArray(data.categories) ? data.categories : [])
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error loading categories. Is the backend running?')
+      setError(e?.data?.message || e?.message || 'Could not load categories.')
       setCategories([])
     } finally {
       setLoading(false)
@@ -118,362 +109,305 @@ export default function ManagePlatformPage() {
   useEffect(() => {
     loadCategories()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryString])
+  }, [applied])
 
-  async function createCategory(payload) {
+  function clearMessages() { setError(null); setSuccess(null) }
+
+  async function handleCreate(payload) {
     setSaving(true)
-    setError(null)
+    clearMessages()
     try {
       await api.createCategory(payload)
-      setFormMode('create')
-      setSelected({})
+      setSuccess('Category created successfully.')
+      setView(VIEWS.LIST)
       await loadCategories()
-      setTab('list')
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error creating category.')
+      setError(e?.data?.message || e?.message || 'Could not create category.')
     } finally {
       setSaving(false)
     }
   }
 
-  async function updateCategory(categoryId, payload) {
+  async function handleUpdate(payload) {
+    if (!selected) return
     setSaving(true)
-    setError(null)
+    clearMessages()
     try {
-      await api.updateCategory(categoryId, payload)
-      setFormMode('create')
-      setSelected({})
+      await api.updateCategory(selected.category_id, payload)
+      setSuccess('Category updated successfully.')
+      setView(VIEWS.LIST)
+      setSelected(null)
       await loadCategories()
-      setTab('list')
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error updating category.')
+      setError(e?.data?.message || e?.message || 'Could not update category.')
     } finally {
       setSaving(false)
     }
   }
 
-  async function setSuspended(categoryId, suspend) {
+  async function performConfirm() {
+    if (!confirm) return
     setSaving(true)
-    setError(null)
+    clearMessages()
+    const target = confirm.category
+    const wantSuspend = confirm.mode === 'delete'
     try {
-      await api.suspendCategory(categoryId, suspend)
+      await api.suspendCategory(target.category_id, wantSuspend)
+      setSuccess(wantSuspend ? 'Category deleted.' : 'Category restored.')
+      setConfirm(null)
+      if (view === VIEWS.VIEW) { setView(VIEWS.LIST); setSelected(null) }
       await loadCategories()
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error updating suspension state.')
+      setError(e?.data?.message || e?.message || 'Could not update category.')
     } finally {
       setSaving(false)
     }
   }
 
-  const formInitial = formMode === 'edit' ? selected : {}
+  function formatUpdated(value) {
+    if (!value) return '—'
+    try { return new Date(value).toLocaleDateString() } catch { return value }
+  }
+
+  if (view === VIEWS.CREATE) {
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => setView(VIEWS.LIST)}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>Create FRA Category</h1>
+            <p className="page-sub">Add a new category.</p>
+          </div>
+        </div>
+        {error ? <div className="alert error">{error}</div> : null}
+        <div className="card">
+          <div className="card-section">
+            <CategoryForm
+              mode="create"
+              initial={null}
+              busy={saving}
+              onCancel={() => setView(VIEWS.LIST)}
+              onSubmit={handleCreate}
+            />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (view === VIEWS.UPDATE && selected) {
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>Update FRA Category</h1>
+            <p className="page-sub">Update category information (prefilled).</p>
+          </div>
+        </div>
+        {error ? <div className="alert error">{error}</div> : null}
+        <div className="card">
+          <div className="card-section">
+            <CategoryForm
+              mode="update"
+              initial={selected}
+              busy={saving}
+              onCancel={() => { setView(VIEWS.LIST); setSelected(null) }}
+              onSubmit={handleUpdate}
+            />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (view === VIEWS.VIEW && selected) {
+    const suspended = Boolean(selected.is_suspended)
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>View FRA Category</h1>
+            <p className="page-sub">Monitor category data.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
+              Edit
+            </button>
+            <button
+              type="button"
+              className={`btn ${suspended ? 'primary' : 'danger'}`}
+              onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', category: selected })}
+            >
+              {suspended ? 'Restore' : 'Delete'}
+            </button>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-section">
+            <h2 className="card-title">Category details</h2>
+            <dl className="detail-list" style={{ marginTop: '1rem' }}>
+              <dt>ID</dt>
+              <dd>{String(selected.category_id).padStart(3, '0')}</dd>
+              <dt>Name</dt>
+              <dd>{selected.category_name}</dd>
+              <dt>Code</dt>
+              <dd>{selected.code || '—'}</dd>
+              <dt>Description</dt>
+              <dd>{selected.description || '—'}</dd>
+              <dt>Status</dt>
+              <dd>
+                <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                  {suspended ? 'Deleted' : 'Active'}
+                </span>
+              </dd>
+              <dt>Last updated</dt>
+              <dd>{formatUpdated(selected.updated_at || selected.created_at)}</dd>
+            </dl>
+          </div>
+        </div>
+        <ConfirmModal
+          open={Boolean(confirm)}
+          variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
+          title={confirm?.mode === 'delete' ? 'Delete category?' : 'Restore category?'}
+          message={
+            confirm?.mode === 'delete'
+              ? 'This action cannot be undone.'
+              : 'The category will be available for activities again.'
+          }
+          confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+          busy={saving}
+          onCancel={() => setConfirm(null)}
+          onConfirm={performConfirm}
+        />
+      </main>
+    )
+  }
 
   return (
-    <main className="mup-page mpp-page">
-      <header className="mup-header">
+    <main className="page">
+      <div className="page-header">
         <div>
-          <h1>Manage Platform</h1>
-          <p className="mup-sub">Create, view, update, suspend, and search FRA categories.</p>
+          <h1>FRA Categories</h1>
+          <p className="page-sub">Browse categories and open one to view, update, or delete.</p>
         </div>
-      </header>
-
-      {error ? (
-        <div className="mup-alert" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      <nav className="mup-tabs" role="tablist" aria-label="Category tabs">
         <button
           type="button"
-          role="tab"
-          aria-selected={tab === 'create'}
-          className={`mup-tab ${tab === 'create' ? 'active' : ''}`}
-          onClick={() => {
-            setFormMode('create')
-            setSelected({})
-            setTab('create')
-          }}
+          className="btn primary"
+          onClick={() => { clearMessages(); setSelected(null); setView(VIEWS.CREATE) }}
         >
-          Create
+          + Create Category
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'list'}
-          className={`mup-tab ${tab === 'list' ? 'active' : ''}`}
-          onClick={() => setTab('list')}
-        >
-          Show all categories
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'search'}
-          className={`mup-tab ${tab === 'search' ? 'active' : ''}`}
-          onClick={() => setTab('search')}
-        >
-          Search
-        </button>
-      </nav>
+      </div>
 
-      {tab === 'create' ? (
-        <section
-          className="mup-panel mpp-create-panel"
-          role="tabpanel"
-          aria-label="Create category"
-        >
-          <CategoryForm
-            mode={formMode}
-            initial={formInitial}
-            nextId={nextId}
-            busy={saving}
-            onCancel={() => {
-              setFormMode('create')
-              setSelected({})
-              setTab('list')
-            }}
-            onSubmit={(payload) => {
-              if (formMode === 'edit') return updateCategory(selected.category_id, payload)
-              return createCategory(payload)
-            }}
-          />
-        </section>
-      ) : null}
+      {error ? <div className="alert error">{error}</div> : null}
+      {success ? <div className="alert success">{success}</div> : null}
 
-      {tab === 'list' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Show all categories">
-          <div className="mup-panel-header">
-            <h2>Show Categories</h2>
+      <div className="card">
+        <div className="toolbar">
+          <div className="search">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setApplied(search.trim()) }}
+              placeholder="Search by name / code / description…"
+            />
           </div>
-
-          <div className="mup-toolbar mup-toolbar-split">
-            <p className="mup-muted mup-banner">All the categories are here!</p>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={loadCategories}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-          </div>
-
-          <div className="mup-table mpp-table">
-            <div className="mup-row mup-head">
-              <div>ID</div>
-              <div>Name</div>
-              <div>Status</div>
-              <div className="mup-actions-col">Actions</div>
-            </div>
-            {categories.map((c) => {
-              const suspended = Boolean(c.is_suspended)
-              return (
-                <div key={c.category_id} className="mup-row">
-                  <div className="mup-muted mpp-col-id">
-                    {String(c.category_id).padStart(3, '0')}
-                  </div>
-                  <div className="mup-name mpp-col-name">
-                    <div className="mup-strong">{c.category_name}</div>
-                  </div>
-                  <div className="mpp-col-status">
-                    <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
-                      {suspended ? 'Suspended' : 'Active'}
-                    </span>
-                  </div>
-                  <div className="mup-actions-col mpp-col-actions">
-                    <button type="button" className="mup-linkbtn" onClick={() => setViewing(c)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => {
-                        setFormMode('edit')
-                        setSelected(c)
-                        setTab('create')
-                      }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => setSuspended(c.category_id, !suspended)}
-                    >
-                      {suspended ? 'Unsuspend' : 'Suspend'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-            {!loading && categories.length === 0 ? (
-              <div className="mup-empty">No categories found.</div>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {tab === 'search' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Search categories">
-          <div className="mup-panel-header">
-            <h2>Search</h2>
-          </div>
-
-          <div className="mup-toolbar">
-            <label className="mup-search mup-search-compact">
-              <span className="mup-label">Search</span>
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="e.g. Medical or 003"
-              />
-            </label>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={loadCategories}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                if (searchApplied === searchInput) loadCategories()
-                else setSearchApplied(searchInput)
-              }}
-              disabled={loading}
-            >
-              Search
-            </button>
-          </div>
-
-          <div className="mup-table mpp-table">
-            <div className="mup-row mup-head">
-              <div>ID</div>
-              <div>Name</div>
-              <div>Status</div>
-              <div className="mup-actions-col">Actions</div>
-            </div>
-            {categories.map((c) => {
-              const suspended = Boolean(c.is_suspended)
-              return (
-                <div key={c.category_id} className="mup-row">
-                  <div className="mup-muted mpp-col-id">
-                    {String(c.category_id).padStart(3, '0')}
-                  </div>
-                  <div className="mup-name mpp-col-name">
-                    <div className="mup-strong">{c.category_name}</div>
-                  </div>
-                  <div className="mpp-col-status">
-                    <span className={`mup-tag ${suspended ? 'danger' : 'ok'}`}>
-                      {suspended ? 'Suspended' : 'Active'}
-                    </span>
-                  </div>
-                  <div className="mup-actions-col mpp-col-actions">
-                    <button type="button" className="mup-linkbtn" onClick={() => setViewing(c)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => {
-                        setFormMode('edit')
-                        setSelected(c)
-                        setTab('create')
-                      }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => setSuspended(c.category_id, !suspended)}
-                    >
-                      {suspended ? 'Unsuspend' : 'Suspend'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-            {!loading && categories.length === 0 ? (
-              <div className="mup-empty">No categories found.</div>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {viewing ? (
-        <div
-          className="mup-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="View category"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setViewing(null)
-          }}
-        >
-          <div className="mup-modal-card">
-            <div className="mup-modal-head">
-              <h2>View category</h2>
-              <button type="button" className="mup-linkbtn" onClick={() => setViewing(null)}>
-                Close
-              </button>
-            </div>
-
-            <div className="mup-modal-grid">
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Category ID</div>
-                <div className="mup-strong">
-                  {String(viewing.category_id).padStart(3, '0')}
-                </div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Category name</div>
-                <div className="mup-strong">{viewing.category_name}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Status</div>
-                <div>
-                  <span className={`mup-tag ${viewing.is_suspended ? 'danger' : 'ok'}`}>
-                    {viewing.is_suspended ? 'Suspended' : 'Active'}
-                  </span>
-                </div>
-              </div>
-              <div className="mup-modal-item mup-modal-item-full">
-                <div className="mup-modal-label">Description</div>
-                <div className="mup-muted">{viewing.description || '-'}</div>
-              </div>
-            </div>
-
-            <div className="mup-actions">
-              <button
-                type="button"
-                className="mup-btn secondary"
-                onClick={() => setViewing(null)}
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                className="mup-btn primary"
-                onClick={() => {
-                  setFormMode('edit')
-                  setSelected(viewing)
-                  setViewing(null)
-                  setTab('create')
-                }}
-              >
-                Edit
-              </button>
-            </div>
-          </div>
+          <button type="button" className="btn" onClick={() => setApplied(search.trim())} disabled={loading}>
+            Search
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => { setSearch(''); setApplied('') }}
+            disabled={loading}
+          >
+            Clear
+          </button>
         </div>
-      ) : null}
+
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th className="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((c) => {
+                const suspended = Boolean(c.is_suspended)
+                return (
+                  <tr key={c.category_id}>
+                    <td>{c.category_name}</td>
+                    <td className="muted">{c.code || '—'}</td>
+                    <td className="muted">{c.description ? c.description.slice(0, 60) + (c.description.length > 60 ? '…' : '') : '—'}</td>
+                    <td>
+                      <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                        {suspended ? 'Deleted' : 'Active'}
+                      </span>
+                    </td>
+                    <td className="muted">{formatUpdated(c.updated_at || c.created_at)}</td>
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(c); setView(VIEWS.VIEW) }}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(c); setView(VIEWS.UPDATE) }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn-link ${suspended ? '' : 'danger'}`}
+                        onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', category: c })}
+                      >
+                        {suspended ? 'Restore' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {!loading && categories.length === 0 ? (
+            <div className="data-empty">No categories found.</div>
+          ) : null}
+          {loading ? <div className="data-empty">Loading…</div> : null}
+        </div>
+      </div>
+
+      <ConfirmModal
+        open={Boolean(confirm)}
+        variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
+        title={confirm?.mode === 'delete' ? 'Delete category?' : 'Restore category?'}
+        message={
+          confirm?.mode === 'delete'
+            ? 'This action cannot be undone.'
+            : 'The category will be available for activities again.'
+        }
+        confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+        busy={saving}
+        onCancel={() => setConfirm(null)}
+        onConfirm={performConfirm}
+      />
     </main>
   )
 }
-

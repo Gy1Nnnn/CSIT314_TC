@@ -13,7 +13,7 @@ from backend.control.fra_control import FRAService
 
 fra_bp = Blueprint("fundraising_activity", __name__, url_prefix="/api")
 
-STATUSES = {"active", "expired", "completed", "cancelled"}
+STATUSES = {"active", "completed", "suspended"}
 
 
 class FRABoundary:
@@ -32,6 +32,60 @@ class FRABoundary:
             return jsonify({"message": "account_id is required."}), 400
 
         body, status = self._service.get_activities(account_id, search)
+        return jsonify(body), status
+
+    def list_completed_history(self):
+        """Completed FRAs for owner with optional category + end-date range + name search."""
+        account_id_raw = (request.args.get("account_id") or "").strip()
+        search = (request.args.get("search") or "").strip()
+        category_id_raw = (request.args.get("category_id") or "").strip()
+        date_from_raw = (request.args.get("date_from") or "").strip()
+        date_to_raw = (request.args.get("date_to") or "").strip()
+
+        try:
+            account_id = int(account_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"message": "account_id is required."}), 400
+        if account_id <= 0:
+            return jsonify({"message": "account_id is required."}), 400
+
+        category_id = None
+        if category_id_raw:
+            try:
+                category_id = int(category_id_raw)
+            except (TypeError, ValueError):
+                return jsonify({"message": "category_id must be a number."}), 400
+            if category_id <= 0:
+                return jsonify({"message": "category_id must be positive."}), 400
+
+        date_from = None
+        date_to = None
+        try:
+            if date_from_raw:
+                date_from = date.fromisoformat(date_from_raw).isoformat()
+            if date_to_raw:
+                date_to = date.fromisoformat(date_to_raw).isoformat()
+        except ValueError:
+            return jsonify({"message": "Invalid date_from or date_to."}), 400
+        if date_from and date_to and date_from > date_to:
+            return jsonify({"message": "date_from must be <= date_to."}), 400
+
+        body, status = self._service.list_completed_history(
+            account_id, search, category_id, date_from, date_to
+        )
+        return jsonify(body), status
+
+    def get_fundraising_activity(self, activity_id: int):
+        """Owner-only detail: includes ``view_count`` and ``favorite_count``."""
+        account_id_raw = (request.args.get("account_id") or "").strip()
+        try:
+            account_id = int(account_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"message": "account_id is required."}), 400
+        if account_id <= 0:
+            return jsonify({"message": "account_id is required."}), 400
+
+        body, status = self._service.get_activity(activity_id, account_id)
         return jsonify(body), status
 
     def _parse_activity_payload(self, data):
@@ -175,6 +229,16 @@ def view_public_activity(activity_id: int):
 @fra_bp.get("/fundraising-activities")
 def list_fundraising_activities():
     return _handler.list_fundraising_activities()
+
+
+@fra_bp.get("/fundraising-activities/history")
+def list_fundraising_activity_history():
+    return _handler.list_completed_history()
+
+
+@fra_bp.get("/fundraising-activities/<int:activity_id>")
+def get_fundraising_activity(activity_id: int):
+    return _handler.get_fundraising_activity(activity_id)
 
 
 @fra_bp.post("/fundraising-activities")

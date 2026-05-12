@@ -1,73 +1,29 @@
-/* Keep UserAccountPage styling consistent with UserProfilePage,
-   while allowing independent overrides later. */
-@import './UserProfilePage.css';
-
-/* Account-specific polish */
-
-/* Add a subtle subtitle spacing even if no subtitle is shown */
-.mup-header {
-  margin-bottom: 1.15rem;
+.status-toggle {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-/* Make the profile <select> match the input styling */
-.mup-field select {
-  width: 100%;
-  font: inherit;
-  padding: 0.65rem 0.8rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-h);
-}
-
-.mup-field select:focus-visible {
-  outline: none;
-  box-shadow: var(--ring);
-}
-
-/* Slightly tighter table columns for accounts */
-.mup-table .mup-row {
-  grid-template-columns: 6rem 1.2fr 1.5fr 1.1fr 8.5rem 12rem;
-}
-
-/* Success message */
-.mua-page .mup-alert.success {
-  border-color: color-mix(in oklab, #22c55e 55%, var(--border));
-  background: color-mix(in oklab, #22c55e 12%, var(--bg));
-  color: var(--text-h);
-}
-
-/* Create tab: 2-column form layout (label left, field right) */
-.mua-page .mup-form {
-  max-width: 56rem;
-}
-
-.mua-page .mup-field {
-  flex-direction: row;
+.status-opt {
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
 }
 
-.mua-page .mup-field .mup-label {
-  width: 14rem;
+.status-opt input {
   margin: 0;
 }
 
-.mua-page .mup-field input,
-.mua-page .mup-field textarea,
-.mua-page .mup-field select {
-  flex: 1 1 auto;
+.status-opt.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
 }
-
-@media (max-width: 720px) {
-  .mua-page .mup-field {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.35rem;
-  }
-
-  .mua-page .mup-field .mup-label {
-    width: auto;
-  }
-}
-

@@ -198,6 +198,22 @@ def init_db():
             conn.execute(
                 "ALTER TABLE FRA ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0"
             )
+        # FRA status: only active | completed | suspended (migrate legacy values).
+        conn.execute(
+            """
+            UPDATE FRA
+            SET status = 'completed'
+            WHERE LOWER(TRIM(COALESCE(status, ''))) = 'expired'
+            """
+        )
+        conn.execute(
+            """
+            UPDATE FRA
+            SET status = 'suspended'
+            WHERE LOWER(TRIM(COALESCE(status, ''))) = 'cancelled'
+            """
+        )
+
         # Backward-compat: if older column 'category' exists, keep it (do not drop),
         # but new code will use category_id.
         conn.execute(
@@ -214,6 +230,9 @@ def init_db():
             """
         )
         _ensure_default_data(conn)
+        from backend.entity.fra import apply_fra_completed_past_end_date
+
+        apply_fra_completed_past_end_date(conn)
         conn.commit()
     finally:
         conn.close()

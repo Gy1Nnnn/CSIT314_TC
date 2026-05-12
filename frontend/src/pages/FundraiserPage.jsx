@@ -1,154 +1,153 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
+import ConfirmModal from '../components/ConfirmModal.jsx'
 import './FundraiserPage.css'
 
-function ActivityForm({
-  mode,
-  initial,
-  nextId,
-  categories,
-  onCancel,
-  onSubmit,
-  busy,
-}) {
-  const [activityName, setActivityName] = useState(initial.activity_name || '')
-  const [categoryId, setCategoryId] = useState(
-    initial.category_id ? String(initial.category_id) : '',
-  )
-  const [description, setDescription] = useState(initial.description || '')
-  const [startDate, setStartDate] = useState(initial.start_date || '')
-  const [endDate, setEndDate] = useState(initial.end_date || '')
-  const [targetAmount, setTargetAmount] = useState(
-    initial.target_amount === 0 || initial.target_amount ? String(initial.target_amount) : '',
-  )
-  const [status, setStatus] = useState(initial.status || 'active')
+const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
 
-  useEffect(() => {
-    setActivityName(initial.activity_name || '')
-    setCategoryId(initial.category_id ? String(initial.category_id) : '')
-    setDescription(initial.description || '')
-    setStartDate(initial.start_date || '')
-    setEndDate(initial.end_date || '')
-    setTargetAmount(
-      initial.target_amount === 0 || initial.target_amount ? String(initial.target_amount) : '',
-    )
-    setStatus(initial.status || 'active')
-  }, [initial])
+const STATUSES = ['active', 'completed', 'suspended']
 
+function ActivityForm({ mode, initial, categories, onCancel, onSubmit, busy }) {
+  const [name, setName] = useState(initial?.activity_name || '')
+  const [categoryId, setCategoryId] = useState(initial?.category_id ? String(initial.category_id) : '')
+  const [description, setDescription] = useState(initial?.description || '')
+  const [startDate, setStartDate] = useState(initial?.start_date || '')
+  const [endDate, setEndDate] = useState(initial?.end_date || '')
+  const [target, setTarget] = useState(
+    initial?.target_amount === 0 || initial?.target_amount
+      ? String(initial.target_amount)
+      : '',
+  )
+  const [status, setStatus] = useState(initial?.status || 'active')
+
+  const isEdit = mode === 'update'
   const canSubmit =
-    activityName.trim().length > 0 &&
+    name.trim().length > 0 &&
     String(categoryId || '').trim().length > 0 &&
     status.trim().length > 0 &&
     !busy
-  const displayId =
-    mode === 'edit'
-      ? String(initial.activity_id || '').padStart(3, '0')
-      : String(nextId || '').padStart(3, '0')
 
   return (
     <form
-      className="mup-form"
       onSubmit={(e) => {
         e.preventDefault()
         if (!canSubmit) return
         onSubmit({
-          activity_name: activityName.trim(),
+          activity_name: name.trim(),
           category_id: Number(categoryId),
           description: description.trim(),
           start_date: startDate || null,
           end_date: endDate || null,
-          target_amount: targetAmount.trim() ? Number(targetAmount) : null,
+          target_amount: target.trim() ? Number(target) : null,
           status,
         })
       }}
     >
-      <div className="mup-form-header">
-        <h2>{mode === 'edit' ? 'Update activity' : 'Create activity'}</h2>
-        {mode === 'edit' ? (
-          <span className="mup-pill">Editing #{initial.activity_id}</span>
-        ) : null}
+      <div className="form-grid">
+        <div className="field">
+          <label className="field-label" htmlFor="act-name">
+            Campaign Name <span className="req">*</span>
+          </label>
+          <input
+            id="act-name"
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Winter Appeal"
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="act-status">Status</label>
+          <select
+            id="act-status"
+            className="select"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="act-category">
+            Category <span className="req">*</span>
+          </label>
+          <select
+            id="act-category"
+            className="select"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+          >
+            <option value="" disabled>Select a category</option>
+            {categories.map((c) => (
+              <option key={c.category_id} value={String(c.category_id)}>
+                {c.category_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="act-target">Target amount</label>
+          <input
+            id="act-target"
+            className="input"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            placeholder="e.g., 5000"
+            inputMode="decimal"
+          />
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="act-start">Start Date</label>
+          <input
+            id="act-start"
+            className="input"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="act-end">End Date</label>
+          <input
+            id="act-end"
+            className="input"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
+
+        <div className="field full">
+          <label className="field-label" htmlFor="act-desc">Description</label>
+          <textarea
+            id="act-desc"
+            className="textarea"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Optional details about your campaign…"
+            rows={4}
+          />
+        </div>
       </div>
 
-      <label className="mup-field">
-        <span className="mup-label">Activity ID (Auto)</span>
-        <input value={displayId} readOnly aria-readonly="true" />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Activity name *</span>
-        <input
-          value={activityName}
-          onChange={(e) => setActivityName(e.target.value)}
-          placeholder="e.g. Donation Drive"
-          required
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Category *</span>
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Select a category
-          </option>
-          {categories.map((c) => (
-            <option key={c.category_id} value={String(c.category_id)}>
-              {c.category_name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Description</span>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Short description"
-          rows={3}
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Start date</span>
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">End date</span>
-        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Target amount</span>
-        <input
-          value={targetAmount}
-          onChange={(e) => setTargetAmount(e.target.value)}
-          placeholder="e.g. 5000"
-          inputMode="decimal"
-        />
-      </label>
-
-      <label className="mup-field">
-        <span className="mup-label">Status *</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-          <option value="active">active</option>
-          <option value="expired">expired</option>
-          <option value="completed">completed</option>
-          <option value="cancelled">cancelled</option>
-        </select>
-      </label>
-
-      <div className="mup-actions">
-        <button type="button" className="mup-btn secondary" onClick={onCancel}>
+      <div className="form-actions">
+        <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="mup-btn primary" disabled={!canSubmit}>
-          {busy ? 'Saving…' : mode === 'edit' ? 'Update' : 'Create'}
+        <button type="submit" className="btn primary" disabled={!canSubmit}>
+          {busy ? 'Saving…' : isEdit ? 'Save' : 'Create'}
         </button>
       </div>
     </form>
@@ -158,495 +157,620 @@ function ActivityForm({
 export default function FundraiserPage({ user }) {
   const accountId = user?.account_id
 
-  const [searchInput, setSearchInput] = useState('')
-  const [searchApplied, setSearchApplied] = useState('')
-
+  const [view, setView] = useState(VIEWS.LIST)
   const [activities, setActivities] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [nextId, setNextId] = useState(1)
-
-  const [formMode, setFormMode] = useState('create') // create | edit
-  const [selected, setSelected] = useState({})
-  const [viewing, setViewing] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [tab, setTab] = useState('create') // create | list | search
 
-  const queryString = useMemo(() => {
-    const qs = new URLSearchParams()
-    if (accountId != null) qs.set('account_id', String(accountId))
-    if (tab === 'search' && searchApplied.trim()) qs.set('search', searchApplied.trim())
-    return qs.toString()
-  }, [accountId, searchApplied, tab])
+  const [search, setSearch] = useState('')
+  const [applied, setApplied] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [confirm, setConfirm] = useState(null) // {mode:'delete'|'restore', activity}
+
+  const [histActivities, setHistActivities] = useState([])
+  const [histLoading, setHistLoading] = useState(false)
+  const [histError, setHistError] = useState(null)
+  const [histSearchInp, setHistSearchInp] = useState('')
+  const [histCatInp, setHistCatInp] = useState('')
+  const [histFromInp, setHistFromInp] = useState('')
+  const [histToInp, setHistToInp] = useState('')
+  const [histApplied, setHistApplied] = useState({
+    search: '',
+    categoryId: '',
+    dateFrom: '',
+    dateTo: '',
+  })
+  const [listSection, setListSection] = useState('campaigns')
+
+  async function loadCategories() {
+    try {
+      const data = await api.listCategories('')
+      setCategories(Array.isArray(data.categories) ? data.categories : [])
+    } catch {
+      // ignore
+    }
+  }
 
   async function loadActivities() {
-    setError(null)
-    setSuccess(null)
     setLoading(true)
+    setError(null)
     try {
-      const data = await api.listActivities({
-        accountId,
-        search: tab === 'search' ? searchApplied.trim() : '',
-      })
-      const list = Array.isArray(data.activities) ? data.activities : []
-      setActivities(list)
-      const maxId = list.reduce(
-        (acc, a) => Math.max(acc, Number(a.activity_id) || 0),
-        0,
-      )
-      setNextId(maxId + 1)
+      const data = await api.listActivities({ accountId, search: applied })
+      setActivities(Array.isArray(data.activities) ? data.activities : [])
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error loading activities. Is the backend running?')
+      setError(e?.data?.message || e?.message || 'Could not load activities.')
       setActivities([])
     } finally {
       setLoading(false)
     }
   }
 
-  async function loadCategories() {
+  async function loadHistory() {
+    if (accountId == null) return
+    setHistLoading(true)
+    setHistError(null)
     try {
-      const data = await api.listCategories('')
-      const list = Array.isArray(data.categories) ? data.categories : []
-      setCategories(list)
-    } catch {
-      // ignore
+      const data = await api.listCompletedActivityHistory({
+        accountId,
+        search: histApplied.search || undefined,
+        categoryId: histApplied.categoryId || undefined,
+        dateFrom: histApplied.dateFrom || undefined,
+        dateTo: histApplied.dateTo || undefined,
+      })
+      setHistActivities(Array.isArray(data.activities) ? data.activities : [])
+    } catch (e) {
+      setHistError(e?.data?.message || e?.message || 'Could not load completed history.')
+      setHistActivities([])
+    } finally {
+      setHistLoading(false)
     }
   }
 
   useEffect(() => {
     if (accountId == null) return
     loadCategories()
+  }, [accountId])
+
+  useEffect(() => {
+    if (accountId == null) return
     loadActivities()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryString])
+  }, [applied, accountId])
 
-  async function createActivity(payload) {
+  useEffect(() => {
+    if (accountId == null) return
+    if (listSection !== 'history') return
+    loadHistory()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, histApplied, listSection])
+
+  function clearMessages() { setError(null); setSuccess(null) }
+
+  async function handleCreate(payload) {
     setSaving(true)
-    setError(null)
-    setSuccess(null)
+    clearMessages()
     try {
       await api.createActivity({ ...payload, account_id: accountId })
-      setFormMode('create')
-      setSelected({})
-      setSuccess('A new fundraising activity is created successfully.')
+      setSuccess('Activity created successfully.')
+      setView(VIEWS.LIST)
+      setListSection('campaigns')
       await loadActivities()
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error creating activity.')
+      setError(e?.data?.message || e?.message || 'Could not create activity.')
     } finally {
       setSaving(false)
     }
   }
 
-  async function updateActivity(activityId, payload) {
+  async function handleUpdate(payload) {
+    if (!selected) return
     setSaving(true)
-    setError(null)
-    setSuccess(null)
+    clearMessages()
     try {
-      await api.updateActivity(activityId, { ...payload, account_id: accountId })
-      setFormMode('create')
-      setSelected({})
+      await api.updateActivity(selected.activity_id, { ...payload, account_id: accountId })
+      setSuccess('Activity updated successfully.')
+      setView(VIEWS.LIST)
+      setSelected(null)
+      setListSection('campaigns')
       await loadActivities()
-      setTab('list')
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error updating activity.')
+      setError(e?.data?.message || e?.message || 'Could not update activity.')
     } finally {
       setSaving(false)
     }
   }
 
-  async function setSuspended(activityId, suspend) {
+  async function performConfirm() {
+    if (!confirm) return
     setSaving(true)
-    setError(null)
-    setSuccess(null)
+    clearMessages()
+    const target = confirm.activity
+    const wantSuspend = confirm.mode === 'delete'
     try {
-      await api.suspendActivity(activityId, { account_id: accountId, suspend })
+      await api.suspendActivity(target.activity_id, { account_id: accountId, suspend: wantSuspend })
+      setSuccess(wantSuspend ? 'Activity deleted.' : 'Activity restored.')
+      setConfirm(null)
+      if (view === VIEWS.VIEW) { setView(VIEWS.LIST); setSelected(null) }
       await loadActivities()
+      if (listSection === 'history') await loadHistory()
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Network error updating suspension state.')
+      setError(e?.data?.message || e?.message || 'Could not update activity.')
     } finally {
       setSaving(false)
     }
   }
 
-  const formInitial = formMode === 'edit' ? selected : {}
+  function fmtDate(value) {
+    if (!value) return '—'
+    try {
+      return new Date(value + 'T12:00:00').toLocaleDateString()
+    } catch {
+      return value
+    }
+  }
+
+  if (view === VIEWS.CREATE) {
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => setView(VIEWS.LIST)}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>Create Fundraising Activity</h1>
+            <p className="page-sub">Start a new campaign.</p>
+          </div>
+        </div>
+        {error ? <div className="alert error">{error}</div> : null}
+        <div className="card">
+          <div className="card-section">
+            <ActivityForm
+              mode="create"
+              initial={null}
+              categories={categories}
+              busy={saving}
+              onCancel={() => setView(VIEWS.LIST)}
+              onSubmit={handleCreate}
+            />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (view === VIEWS.UPDATE && selected) {
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>Update Fundraising Activity</h1>
+            <p className="page-sub">Update campaign information (prefilled).</p>
+          </div>
+        </div>
+        {error ? <div className="alert error">{error}</div> : null}
+        <div className="card">
+          <div className="card-section">
+            <ActivityForm
+              mode="update"
+              initial={selected}
+              categories={categories}
+              busy={saving}
+              onCancel={() => { setView(VIEWS.LIST); setSelected(null) }}
+              onSubmit={handleUpdate}
+            />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (view === VIEWS.VIEW && selected) {
+    const suspended = Boolean(selected.is_suspended)
+    return (
+      <main className="page">
+        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+          Back to list
+        </button>
+        <div className="page-header">
+          <div>
+            <h1>View Fundraising Activity</h1>
+            <p className="page-sub">Monitor campaign information.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
+              Edit
+            </button>
+            <button
+              type="button"
+              className={`btn ${suspended ? 'primary' : 'danger'}`}
+              onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', activity: selected })}
+            >
+              {suspended ? 'Restore' : 'Delete'}
+            </button>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-section">
+            <h2 className="card-title">Activity details</h2>
+            <dl className="detail-list" style={{ marginTop: '1rem' }}>
+              <dt>Campaign ID</dt>
+              <dd>{String(selected.activity_id).padStart(3, '0')}</dd>
+              <dt>Campaign</dt>
+              <dd>{selected.activity_name}</dd>
+              <dt>Category</dt>
+              <dd>{selected.category_name || '—'}</dd>
+              <dt>Status</dt>
+              <dd>
+                <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                  {suspended ? 'Deleted' : selected.status || 'Active'}
+                </span>
+              </dd>
+              <dt>Views</dt>
+              <dd>{Number(selected.view_count ?? 0).toLocaleString()}</dd>
+              <dt>Favorites</dt>
+              <dd>{Number(selected.favorite_count ?? 0).toLocaleString()}</dd>
+              <dt>Start</dt>
+              <dd>{fmtDate(selected.start_date)}</dd>
+              <dt>End</dt>
+              <dd>{fmtDate(selected.end_date)}</dd>
+              <dt>Target amount</dt>
+              <dd>
+                {selected.target_amount === 0 || selected.target_amount
+                  ? Number(selected.target_amount).toLocaleString()
+                  : '—'}
+              </dd>
+              <dt>Description</dt>
+              <dd>{selected.description || '—'}</dd>
+            </dl>
+          </div>
+        </div>
+        <ConfirmModal
+          open={Boolean(confirm)}
+          variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
+          title={confirm?.mode === 'delete' ? 'Delete activity?' : 'Restore activity?'}
+          message={
+            confirm?.mode === 'delete'
+              ? 'This action cannot be undone.'
+              : 'The activity will be visible to donors again.'
+          }
+          confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+          busy={saving}
+          onCancel={() => setConfirm(null)}
+          onConfirm={performConfirm}
+        />
+      </main>
+    )
+  }
 
   return (
-    <main className="mup-page mua-page">
-      <header className="mup-header">
+    <main className="page">
+      <div className="page-header">
         <div>
-          <h1>Fundraiser</h1>
+          {listSection === 'campaigns' ? (
+            <>
+              <h1>Fundraising Activities</h1>
+              <p className="page-sub">Browse activities and open one to view, edit, or delete.</p>
+            </>
+          ) : (
+            <>
+              <h1>Completed campaigns (history)</h1>
+              <p className="page-sub">
+                Filter by category (service area), campaign end date range, or name — then search
+                to review past completed activities.
+              </p>
+            </>
+          )}
         </div>
-      </header>
-
-      {error ? (
-        <div className="mup-alert" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      {success ? (
-        <div className="mup-alert success" role="status" aria-live="polite">
-          {success}
-        </div>
-      ) : null}
-
-      <nav className="mup-tabs" role="tablist" aria-label="Fundraising activity tabs">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'create'}
-          className={`mup-tab ${tab === 'create' ? 'active' : ''}`}
-          onClick={() => {
-            setFormMode('create')
-            setSelected({})
-            setTab('create')
-          }}
-        >
-          Create
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'list'}
-          className={`mup-tab ${tab === 'list' ? 'active' : ''}`}
-          onClick={() => setTab('list')}
-        >
-          Show all activities
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'search'}
-          className={`mup-tab ${tab === 'search' ? 'active' : ''}`}
-          onClick={() => setTab('search')}
-        >
-          Search
-        </button>
-      </nav>
-
-      {tab === 'create' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Create fundraising activity">
-          <ActivityForm
-            mode={formMode}
-            initial={formInitial}
-            nextId={nextId}
-            categories={categories}
-            busy={saving}
-            onCancel={() => {
-              setFormMode('create')
-              setSelected({})
-              setTab('list')
-            }}
-            onSubmit={(payload) => {
-              if (formMode === 'edit') return updateActivity(selected.activity_id, payload)
-              return createActivity(payload)
-            }}
-          />
-        </section>
-      ) : null}
-
-      {tab === 'list' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Show all activities">
-          <div className="mup-panel-header">
-            <h2>Show Activities</h2>
-          </div>
-
-          <div className="mup-toolbar mup-toolbar-split">
-            <p className="mup-muted mup-banner">All the activities are here!</p>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={loadActivities}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-          </div>
-
-          <div className="mup-table">
-            <div className="mup-row mup-head">
-              <div>ID</div>
-              <div>Activity</div>
-              <div>Category</div>
-              <div>Status</div>
-              <div>Views</div>
-              <div>Favorites</div>
-              <div className="mup-actions-col">Actions</div>
-            </div>
-            {activities.map((a) => {
-              const suspended = Boolean(a.is_suspended)
-              return (
-                <div key={a.activity_id} className="mup-row">
-                  <div className="mup-muted">
-                    {String(a.activity_id).padStart(3, '0')}
-                  </div>
-                  <div className="mup-name">
-                    <div className="mup-strong">{a.activity_name}</div>
-                  </div>
-                  <div className="mup-muted">{a.category_name || '-'}</div>
-                  <div className="fra-table-status">
-                    {suspended ? (
-                      <span className="mup-tag danger" title={`Workflow status: ${a.status || '—'}`}>
-                        Suspended
-                      </span>
-                    ) : (
-                      <span className="mup-muted" style={{ textTransform: 'capitalize' }}>
-                        {a.status || '-'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="mup-muted" title="Public detail views">
-                    {Number(a.view_count ?? 0).toLocaleString()}
-                  </div>
-                  <div className="mup-muted" title="Donee saves">
-                    {Number(a.favorite_count ?? 0).toLocaleString()}
-                  </div>
-                  <div className="mup-actions-col">
-                    <button type="button" className="mup-linkbtn" onClick={() => setViewing(a)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => {
-                        setFormMode('edit')
-                        setSelected(a)
-                        setTab('create')
-                      }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => setSuspended(a.activity_id, !suspended)}
-                    >
-                      {suspended ? 'Unsuspend' : 'Suspend'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-            {!loading && activities.length === 0 ? (
-              <div className="mup-empty">No activities found.</div>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {tab === 'search' ? (
-        <section className="mup-panel" role="tabpanel" aria-label="Search activities">
-          <div className="mup-panel-header">
-            <h2>Search</h2>
-          </div>
-
-          <div className="mup-toolbar">
-            <label className="mup-search mup-search-compact">
-              <span className="mup-label">Search</span>
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="e.g. Donation or 003"
-              />
-            </label>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={loadActivities}
-              disabled={loading}
-            >
-              Refresh
-            </button>
-            <button
-              type="button"
-              className="mup-btn secondary"
-              onClick={() => {
-                if (searchApplied === searchInput) loadActivities()
-                else setSearchApplied(searchInput)
-              }}
-              disabled={loading}
-            >
-              Search
-            </button>
-          </div>
-
-          <div className="mup-table">
-            <div className="mup-row mup-head">
-              <div>ID</div>
-              <div>Activity</div>
-              <div>Category</div>
-              <div>Status</div>
-              <div>Views</div>
-              <div>Favorites</div>
-              <div className="mup-actions-col">Actions</div>
-            </div>
-            {activities.map((a) => {
-              const suspended = Boolean(a.is_suspended)
-              return (
-                <div key={a.activity_id} className="mup-row">
-                  <div className="mup-muted">
-                    {String(a.activity_id).padStart(3, '0')}
-                  </div>
-                  <div className="mup-name">
-                    <div className="mup-strong">{a.activity_name}</div>
-                  </div>
-                  <div className="mup-muted">{a.category_name || '-'}</div>
-                  <div className="fra-table-status">
-                    {suspended ? (
-                      <span className="mup-tag danger" title={`Workflow status: ${a.status || '—'}`}>
-                        Suspended
-                      </span>
-                    ) : (
-                      <span className="mup-muted" style={{ textTransform: 'capitalize' }}>
-                        {a.status || '-'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="mup-muted" title="Public detail views">
-                    {Number(a.view_count ?? 0).toLocaleString()}
-                  </div>
-                  <div className="mup-muted" title="Donee saves">
-                    {Number(a.favorite_count ?? 0).toLocaleString()}
-                  </div>
-                  <div className="mup-actions-col">
-                    <button type="button" className="mup-linkbtn" onClick={() => setViewing(a)}>
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      onClick={() => {
-                        setFormMode('edit')
-                        setSelected(a)
-                        setTab('create')
-                      }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="mup-linkbtn"
-                      disabled={saving}
-                      onClick={() => setSuspended(a.activity_id, !suspended)}
-                    >
-                      {suspended ? 'Unsuspend' : 'Suspend'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-            {!loading && activities.length === 0 ? (
-              <div className="mup-empty">No activities found.</div>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {viewing ? (
-        <div
-          className="mup-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="View activity"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setViewing(null)
-          }}
-        >
-          <div className="mup-modal-card">
-            <div className="mup-modal-head">
-              <h2>View activity</h2>
-              <button type="button" className="mup-linkbtn" onClick={() => setViewing(null)}>
-                Close
-              </button>
-            </div>
-
-            <div className="mup-modal-grid">
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Activity ID</div>
-                <div className="mup-strong">
-                  {String(viewing.activity_id).padStart(3, '0')}
-                </div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Activity name</div>
-                <div className="mup-strong">{viewing.activity_name}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Category</div>
-                <div className="mup-muted">{viewing.category_name || '-'}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Status</div>
-                <div>
-                  {viewing.is_suspended ? (
-                    <span className="mup-tag danger" title={`Workflow status: ${viewing.status || '—'}`}>
-                      Suspended
-                    </span>
-                  ) : (
-                    <span className="mup-muted" style={{ textTransform: 'capitalize' }}>
-                      {viewing.status || '-'}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="mup-modal-item mup-modal-item-full">
-                <div className="mup-modal-label">Description</div>
-                <div className="mup-muted">{viewing.description || '-'}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Start date</div>
-                <div className="mup-muted">{viewing.start_date || '-'}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">End date</div>
-                <div className="mup-muted">{viewing.end_date || '-'}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Target amount</div>
-                <div className="mup-muted">
-                  {viewing.target_amount === 0 || viewing.target_amount
-                    ? String(viewing.target_amount)
-                    : '-'}
-                </div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Public views</div>
-                <div className="mup-muted">{Number(viewing.view_count ?? 0).toLocaleString()}</div>
-              </div>
-              <div className="mup-modal-item">
-                <div className="mup-modal-label">Favorites (donees)</div>
-                <div className="mup-muted">{Number(viewing.favorite_count ?? 0).toLocaleString()}</div>
-              </div>
-            </div>
-
-            <div className="mup-actions">
+        <div className="page-header-actions">
+          {listSection === 'campaigns' ? (
+            <>
               <button
                 type="button"
-                className="mup-btn secondary"
-                onClick={() => setViewing(null)}
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                className="mup-btn primary"
+                className="btn primary"
                 onClick={() => {
-                  setFormMode('edit')
-                  setSelected(viewing)
-                  setViewing(null)
-                  setTab('create')
+                  clearMessages()
+                  setSelected(null)
+                  setView(VIEWS.CREATE)
                 }}
               >
-                Edit
+                + New Activity
               </button>
-            </div>
-          </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setListSection('history')}
+              >
+                History
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="btn" onClick={() => setListSection('campaigns')}>
+                ← All activities
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => {
+                  clearMessages()
+                  setSelected(null)
+                  setView(VIEWS.CREATE)
+                }}
+              >
+                + New Activity
+              </button>
+            </>
+          )}
         </div>
+      </div>
+
+      {error ? <div className="alert error">{error}</div> : null}
+      {success ? <div className="alert success">{success}</div> : null}
+
+      {listSection === 'campaigns' ? (
+      <div className="card">
+        <div className="toolbar">
+          <div className="search">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setApplied(search.trim()) }}
+              placeholder="Search by name / status / category…"
+            />
+          </div>
+          <button type="button" className="btn" onClick={() => setApplied(search.trim())} disabled={loading}>
+            Search
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => { setSearch(''); setApplied('') }}
+            disabled={loading}
+          >
+            Clear
+          </button>
+        </div>
+
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th className="num">ID</th>
+                <th>Campaign</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th className="num">Views</th>
+                <th className="num">Favorites</th>
+                <th className="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activities.map((a) => {
+                const suspended = Boolean(a.is_suspended)
+                return (
+                  <tr key={a.activity_id}>
+                    <td className="muted num">{String(a.activity_id).padStart(3, '0')}</td>
+                    <td>{a.activity_name}</td>
+                    <td className="muted">{a.category_name || '—'}</td>
+                    <td>
+                      <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                        {suspended ? 'Deleted' : a.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="muted num">{Number(a.view_count ?? 0).toLocaleString()}</td>
+                    <td className="muted num">{Number(a.favorite_count ?? 0).toLocaleString()}</td>
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn-link ${suspended ? '' : 'danger'}`}
+                        onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', activity: a })}
+                      >
+                        {suspended ? 'Restore' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {!loading && activities.length === 0 ? (
+            <div className="data-empty">No activities yet. Create your first campaign.</div>
+          ) : null}
+          {loading ? <div className="data-empty">Loading…</div> : null}
+        </div>
+      </div>
       ) : null}
+
+      {listSection === 'history' ? (
+      <div className="card fra-history-card">
+        {histError ? <div className="alert error fra-history-alert">{histError}</div> : null}
+        <div className="toolbar fra-history-toolbar">
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="hist-cat">
+              Category
+            </label>
+            <select
+              id="hist-cat"
+              className="select"
+              value={histCatInp}
+              onChange={(e) => setHistCatInp(e.target.value)}
+            >
+              <option value="">All categories</option>
+              {categories
+                .filter((c) => !c.is_suspended)
+                .map((c) => (
+                  <option key={c.category_id} value={String(c.category_id)}>
+                    {c.category_name}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="hist-from">
+              End date from
+            </label>
+            <input
+              id="hist-from"
+              className="input"
+              type="date"
+              value={histFromInp}
+              onChange={(e) => setHistFromInp(e.target.value)}
+            />
+          </div>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="hist-to">
+              End date to
+            </label>
+            <input
+              id="hist-to"
+              className="input"
+              type="date"
+              value={histToInp}
+              onChange={(e) => setHistToInp(e.target.value)}
+            />
+          </div>
+          <div className="search fra-history-search">
+            <input
+              value={histSearchInp}
+              onChange={(e) => setHistSearchInp(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setHistApplied({
+                    search: histSearchInp.trim(),
+                    categoryId: histCatInp,
+                    dateFrom: histFromInp,
+                    dateTo: histToInp,
+                  })
+                }
+              }}
+              placeholder="Campaign name or ID…"
+            />
+          </div>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={histLoading}
+            onClick={() =>
+              setHistApplied({
+                search: histSearchInp.trim(),
+                categoryId: histCatInp,
+                dateFrom: histFromInp,
+                dateTo: histToInp,
+              })
+            }
+          >
+            Search history
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            disabled={histLoading}
+            onClick={() => {
+              setHistSearchInp('')
+              setHistCatInp('')
+              setHistFromInp('')
+              setHistToInp('')
+              setHistApplied({ search: '', categoryId: '', dateFrom: '', dateTo: '' })
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th className="num">ID</th>
+                <th>Campaign</th>
+                <th>Category</th>
+                <th>End</th>
+                <th className="num">Views</th>
+                <th className="num">Favorites</th>
+                <th className="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {histActivities.map((a) => {
+                const suspended = Boolean(a.is_suspended)
+                return (
+                  <tr key={`hist-${a.activity_id}`}>
+                    <td className="muted num">{String(a.activity_id).padStart(3, '0')}</td>
+                    <td>{a.activity_name}</td>
+                    <td className="muted">{a.category_name || '—'}</td>
+                    <td className="muted">{fmtDate(a.end_date)}</td>
+                    <td className="muted num">{Number(a.view_count ?? 0).toLocaleString()}</td>
+                    <td className="muted num">{Number(a.favorite_count ?? 0).toLocaleString()}</td>
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn-link ${suspended ? '' : 'danger'}`}
+                        onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', activity: a })}
+                      >
+                        {suspended ? 'Restore' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {!histLoading && histActivities.length === 0 ? (
+            <div className="data-empty">No completed campaigns match these filters.</div>
+          ) : null}
+          {histLoading ? <div className="data-empty">Loading history…</div> : null}
+        </div>
+      </div>
+      ) : null}
+
+      <ConfirmModal
+        open={Boolean(confirm)}
+        variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
+        title={confirm?.mode === 'delete' ? 'Delete activity?' : 'Restore activity?'}
+        message={
+          confirm?.mode === 'delete'
+            ? 'This action cannot be undone.'
+            : 'The activity will be visible to donors again.'
+        }
+        confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+        busy={saving}
+        onCancel={() => setConfirm(null)}
+        onConfirm={performConfirm}
+      />
     </main>
   )
 }
-
