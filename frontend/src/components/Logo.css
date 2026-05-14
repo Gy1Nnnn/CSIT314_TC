@@ -3,7 +3,7 @@
   align-items: baseline;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-text, #1a1a1a);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -22,7 +22,7 @@
   width: 1.75em;
   height: 1.75em;
   border-radius: 0.35em;
-  background: linear-gradient(135deg, #0d6efd, #6f42c1);
+  background: var(--color-primary);
   color: #fff;
   font-size: 0.85em;
   line-height: 1;

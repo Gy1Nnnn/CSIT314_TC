@@ -498,8 +498,3 @@
   border-top: 1px solid var(--color-border);
   background: var(--color-surface-2);
 }
-
-/* Shell: match tokenized background */
-.app-shell-main {
-  background: var(--color-bg);
-}

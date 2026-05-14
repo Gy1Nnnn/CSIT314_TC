@@ -24,7 +24,6 @@ export default function DoneePage({ user }) {
   const [histLoading, setHistLoading] = useState(false)
 
   const [donationAmount, setDonationAmount] = useState('')
-  const [donationDate, setDonationDate] = useState('')
   const [donationSaving, setDonationSaving] = useState(false)
 
   const [browseInput, setBrowseInput] = useState('')
@@ -108,7 +107,6 @@ export default function DoneePage({ user }) {
   useEffect(() => {
     if (detail == null) {
       setDonationAmount('')
-      setDonationDate('')
     }
   }, [detail])
 
@@ -265,11 +263,9 @@ export default function DoneePage({ user }) {
         accountId,
         activityId: detail.activity_id,
         amount: amt,
-        donatedAt: donationDate.trim() || undefined,
       })
       setSuccess('Saved to your donation history.')
       setDonationAmount('')
-      setDonationDate('')
       if (tab === 'history') {
         setHistApplied((h) => ({ ...h }))
       }
@@ -288,7 +284,7 @@ export default function DoneePage({ user }) {
           <p className="page-sub">
             Search active campaigns, view details, save favourites, and keep a personal record of
             what you gave. Courage does not process payments—log amounts after you support a cause
-            elsewhere, or from the home page <strong>Support</strong> button. Filter your history by
+            elsewhere, or from the home page <strong>Donate</strong> button. Filter your history by
             category and date below.
           </p>
         </div>
@@ -357,9 +353,10 @@ export default function DoneePage({ user }) {
               <table className="data-table">
                 <thead>
                   <tr>
+                    <th className="activity-id-col">Activity ID</th>
                     <th>Activity</th>
                     <th>Category</th>
-                    <th>Organizer</th>
+                    <th>Fundraiser</th>
                     <th>Status</th>
                     <th className="actions">Actions</th>
                   </tr>
@@ -367,6 +364,9 @@ export default function DoneePage({ user }) {
                 <tbody>
                   {browseList.map((a) => (
                     <tr key={a.activity_id}>
+                      <td className="muted activity-id-col">
+                        {a.activity_id != null ? String(a.activity_id).padStart(3, '0') : '—'}
+                      </td>
                       <td>{a.activity_name}</td>
                       <td className="muted">{a.category_name || '—'}</td>
                       <td className="muted">{a.organizer_name || '—'}</td>
@@ -436,6 +436,7 @@ export default function DoneePage({ user }) {
               <table className="data-table">
                 <thead>
                   <tr>
+                    <th className="activity-id-col">Activity ID</th>
                     <th>Activity</th>
                     <th>Category</th>
                     <th>Saved</th>
@@ -445,6 +446,9 @@ export default function DoneePage({ user }) {
                 <tbody>
                   {favList.map((f) => (
                     <tr key={`${f.favorite_id}-${f.activity_id}`}>
+                      <td className="muted activity-id-col">
+                        {f.activity_id != null ? String(f.activity_id).padStart(3, '0') : '—'}
+                      </td>
                       <td>{f.activity_name}</td>
                       <td className="muted">{f.category_name || '—'}</td>
                       <td className="muted">
@@ -553,16 +557,20 @@ export default function DoneePage({ user }) {
                 <thead>
                   <tr>
                     <th>Date</th>
+                    <th className="activity-id-col">Activity ID</th>
                     <th>Amount (logged)</th>
                     <th>Activity</th>
                     <th>Category</th>
-                    <th>Organizer</th>
+                    <th>Fundraiser</th>
                   </tr>
                 </thead>
                 <tbody>
                   {histList.map((d) => (
                     <tr key={d.donation_id}>
                       <td className="muted">{fmtDonatedAt(d.donated_at)}</td>
+                      <td className="muted activity-id-col">
+                        {d.activity_id != null ? String(d.activity_id).padStart(3, '0') : '—'}
+                      </td>
                       <td>{fmtMoney(d.amount)}</td>
                       <td>{d.activity_name}</td>
                       <td className="muted">{d.category_name || '—'}</td>
@@ -574,7 +582,7 @@ export default function DoneePage({ user }) {
               {!histLoading && histList.length === 0 ? (
                 <div className="data-empty">
                   No contributions match these filters. Add one from an activity&apos;s detail view,
-                  try the home page <strong>Support</strong> flow, or widen category or dates.
+                  try the home page <strong>Donate</strong> flow, or widen category or dates.
                 </div>
               ) : null}
               {histLoading ? <div className="data-empty">Loading…</div> : null}
@@ -608,7 +616,7 @@ export default function DoneePage({ user }) {
                   <dd>{detail.activity_name}</dd>
                   <dt>Category</dt>
                   <dd>{detail.category_name || '—'}</dd>
-                  <dt>Organizer</dt>
+                  <dt>Fundraiser</dt>
                   <dd>{detail.organizer_name || '—'}</dd>
                   <dt>Status</dt>
                   <dd>
@@ -624,15 +632,16 @@ export default function DoneePage({ user }) {
                       ? Number(detail.target_amount).toLocaleString()
                       : '—'}
                   </dd>
+                  <dt>Raised</dt>
+                  <dd>
+                    {detail.amount_raised === 0 || detail.amount_raised
+                      ? Number(detail.amount_raised).toLocaleString()
+                      : '0'}
+                  </dd>
                   <dt>Description</dt>
                   <dd>{detail.description || '—'}</dd>
                 </dl>
                 <div className="donee-donation-box">
-                  <h3 className="donee-donation-title">Log a contribution</h3>
-                  <p className="donee-donation-help">
-                    This app does not move money. After you give through your bank, cash, or another
-                    channel, enter the amount here so it appears in your donation history.
-                  </p>
                   <div className="donee-donation-row">
                     <label className="donee-filter">
                       <span className="donee-filter-label">Amount</span>
@@ -642,16 +651,7 @@ export default function DoneePage({ user }) {
                         value={donationAmount}
                         onChange={(e) => setDonationAmount(e.target.value)}
                         placeholder="e.g. 50"
-                        aria-label="Contribution amount"
-                      />
-                    </label>
-                    <label className="donee-filter">
-                      <span className="donee-filter-label">Date (optional)</span>
-                      <input
-                        type="date"
-                        value={donationDate}
-                        onChange={(e) => setDonationDate(e.target.value)}
-                        aria-label="Contribution date"
+                        aria-label="Amount"
                       />
                     </label>
                     <button
@@ -660,7 +660,7 @@ export default function DoneePage({ user }) {
                       disabled={donationSaving || saving}
                       onClick={recordDonation}
                     >
-                      {donationSaving ? 'Saving…' : 'Save to history'}
+                      {donationSaving ? 'Donating…' : 'Donate'}
                     </button>
                   </div>
                 </div>

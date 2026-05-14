@@ -1,5 +1,12 @@
 @import './UserAccountPage.css';
 
+.data-table th.profile-id-col,
+.data-table td.profile-id-col {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: 1%;
+}
+
 .access-control {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);

@@ -8,7 +8,6 @@ const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
 
 function CategoryForm({ mode, initial, onCancel, onSubmit, busy }) {
   const [name, setName] = useState(initial?.category_name || '')
-  const [code, setCode] = useState(initial?.code || '')
   const [description, setDescription] = useState(initial?.description || '')
 
   const isEdit = mode === 'update'
@@ -21,7 +20,6 @@ function CategoryForm({ mode, initial, onCancel, onSubmit, busy }) {
         if (!canSubmit) return
         onSubmit({
           category_name: name.trim(),
-          code: code.trim() || null,
           description: description.trim(),
         })
       }}
@@ -38,19 +36,6 @@ function CategoryForm({ mode, initial, onCancel, onSubmit, busy }) {
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Food Relief"
             required
-          />
-        </div>
-
-        <div className="field">
-          <label className="field-label" htmlFor="cat-code">
-            Code
-          </label>
-          <input
-            id="cat-code"
-            className="input"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="e.g., FR-001"
           />
         </div>
 
@@ -90,7 +75,7 @@ export default function ManagePlatformPage() {
   const [search, setSearch] = useState('')
   const [applied, setApplied] = useState('')
   const [selected, setSelected] = useState(null)
-  const [confirm, setConfirm] = useState(null) // { mode: 'hide'|'hardDelete'|'restore', category }
+  const [confirm, setConfirm] = useState(null) // { mode: 'hardDelete', category }
 
   async function loadCategories() {
     setLoading(true)
@@ -146,51 +131,24 @@ export default function ManagePlatformPage() {
   }
 
   async function performConfirm() {
-    if (!confirm) return
+    if (!confirm || confirm.mode !== 'hardDelete') return
     setSaving(true)
     clearMessages()
     const target = confirm.category
     try {
-      if (confirm.mode === 'hardDelete') {
-        await api.deleteCategory(target.category_id)
-        setSuccess('Category deleted.')
-        setConfirm(null)
-        if (view === VIEWS.VIEW) {
-          setView(VIEWS.LIST)
-          setSelected(null)
-        }
-      } else if (confirm.mode === 'hide') {
-        await api.suspendCategory(target.category_id, true)
-        setSuccess('Category hidden from new campaigns.')
-        setConfirm(null)
-        if (view === VIEWS.VIEW) {
-          const data = await api.listCategories(applied)
-          const list = Array.isArray(data.categories) ? data.categories : []
-          const next = list.find((x) => x.category_id === target.category_id)
-          if (next) setSelected(next)
-        }
-      } else {
-        await api.suspendCategory(target.category_id, false)
-        setSuccess('Category restored.')
-        setConfirm(null)
-        if (view === VIEWS.VIEW) {
-          const data = await api.listCategories(applied)
-          const list = Array.isArray(data.categories) ? data.categories : []
-          const next = list.find((x) => x.category_id === target.category_id)
-          if (next) setSelected(next)
-        }
+      await api.deleteCategory(target.category_id)
+      setSuccess('Category deleted.')
+      setConfirm(null)
+      if (view === VIEWS.VIEW) {
+        setView(VIEWS.LIST)
+        setSelected(null)
       }
       await loadCategories()
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Could not update category.')
+      setError(e?.data?.message || e?.message || 'Could not delete category.')
     } finally {
       setSaving(false)
     }
-  }
-
-  function formatUpdated(value) {
-    if (!value) return '—'
-    try { return new Date(value).toLocaleDateString() } catch { return value }
   }
 
   if (view === VIEWS.CREATE) {
@@ -265,53 +223,23 @@ export default function ManagePlatformPage() {
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
               Edit
             </button>
-            {!suspended ? (
-              <>
-                <button
-                  type="button"
-                  className="btn danger"
-                  onClick={() => setConfirm({ mode: 'hide', category: selected })}
-                >
-                  Hide from browse
-                </button>
-                <button
-                  type="button"
-                  className="btn danger"
-                  onClick={() => setConfirm({ mode: 'hardDelete', category: selected })}
-                >
-                  Delete permanently
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="btn primary"
-                onClick={() => setConfirm({ mode: 'restore', category: selected })}
-              >
-                Restore visibility
-              </button>
-            )}
-            {suspended ? (
-              <button
-                type="button"
-                className="btn danger"
-                onClick={() => setConfirm({ mode: 'hardDelete', category: selected })}
-              >
-                Delete permanently
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="btn danger"
+              onClick={() => setConfirm({ mode: 'hardDelete', category: selected })}
+            >
+              Delete permanently
+            </button>
           </div>
         </div>
         <div className="card">
           <div className="card-section">
             <h2 className="card-title">Category details</h2>
             <dl className="detail-list" style={{ marginTop: '1rem' }}>
-              <dt>ID</dt>
+              <dt>Category ID</dt>
               <dd>{String(selected.category_id).padStart(3, '0')}</dd>
               <dt>Name</dt>
               <dd>{selected.category_name}</dd>
-              <dt>Code</dt>
-              <dd>{selected.code || '—'}</dd>
               <dt>Description</dt>
               <dd>{selected.description || '—'}</dd>
               <dt>Status</dt>
@@ -320,35 +248,15 @@ export default function ManagePlatformPage() {
                   {suspended ? 'Hidden' : 'Active'}
                 </span>
               </dd>
-              <dt>Last updated</dt>
-              <dd>{formatUpdated(selected.updated_at || selected.created_at)}</dd>
             </dl>
           </div>
         </div>
         <ConfirmModal
           open={Boolean(confirm)}
-          variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
-          title={
-            confirm?.mode === 'hardDelete'
-              ? 'Permanently delete category?'
-              : confirm?.mode === 'hide'
-                ? 'Hide category?'
-                : 'Restore category?'
-          }
-          message={
-            confirm?.mode === 'hardDelete'
-              ? 'Removes the row only if no fundraising activities use this category. Otherwise you will see an error.'
-              : confirm?.mode === 'hide'
-                ? 'The category will no longer appear when browsing or creating campaigns.'
-                : 'The category will be available for new campaigns again.'
-          }
-          confirmLabel={
-            confirm?.mode === 'hardDelete'
-              ? 'Delete permanently'
-              : confirm?.mode === 'hide'
-                ? 'Hide'
-                : 'Restore'
-          }
+          variant="danger"
+          title="Permanently delete category?"
+          message="Removes the row only if no fundraising activities use this category. Otherwise you will see an error."
+          confirmLabel="Delete permanently"
           busy={saving}
           onCancel={() => setConfirm(null)}
           onConfirm={performConfirm}
@@ -383,7 +291,7 @@ export default function ManagePlatformPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setApplied(search.trim()) }}
-              placeholder="Search by name / code / description…"
+              placeholder="Search by name / description…"
             />
           </div>
           <button type="button" className="btn" onClick={() => setApplied(search.trim())} disabled={loading}>
@@ -403,11 +311,10 @@ export default function ManagePlatformPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="category-id-col">Category ID</th>
                 <th>Name</th>
-                <th>Code</th>
                 <th>Description</th>
                 <th>Status</th>
-                <th>Updated</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -416,15 +323,16 @@ export default function ManagePlatformPage() {
                 const suspended = Boolean(c.is_suspended)
                 return (
                   <tr key={c.category_id}>
+                    <td className="muted category-id-col">
+                      {c.category_id != null ? String(c.category_id).padStart(3, '0') : '—'}
+                    </td>
                     <td>{c.category_name}</td>
-                    <td className="muted">{c.code || '—'}</td>
                     <td className="muted">{c.description ? c.description.slice(0, 60) + (c.description.length > 60 ? '…' : '') : '—'}</td>
                     <td>
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
                         {suspended ? 'Hidden' : 'Active'}
                       </span>
                     </td>
-                    <td className="muted">{formatUpdated(c.updated_at || c.created_at)}</td>
                     <td className="actions">
                       <button
                         type="button"
@@ -440,23 +348,6 @@ export default function ManagePlatformPage() {
                       >
                         Edit
                       </button>
-                      {!suspended ? (
-                        <button
-                          type="button"
-                          className="btn-link danger"
-                          onClick={() => setConfirm({ mode: 'hide', category: c })}
-                        >
-                          Hide
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-link"
-                          onClick={() => setConfirm({ mode: 'restore', category: c })}
-                        >
-                          Restore
-                        </button>
-                      )}
                       <button
                         type="button"
                         className="btn-link danger"
@@ -479,28 +370,10 @@ export default function ManagePlatformPage() {
 
       <ConfirmModal
         open={Boolean(confirm)}
-        variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
-        title={
-          confirm?.mode === 'hardDelete'
-            ? 'Permanently delete category?'
-            : confirm?.mode === 'hide'
-              ? 'Hide category?'
-              : 'Restore category?'
-        }
-        message={
-          confirm?.mode === 'hardDelete'
-            ? 'Removes the row only if no fundraising activities use this category. Otherwise you will see an error.'
-            : confirm?.mode === 'hide'
-              ? 'The category will no longer appear when browsing or creating campaigns.'
-              : 'The category will be available for new campaigns again.'
-        }
-        confirmLabel={
-          confirm?.mode === 'hardDelete'
-            ? 'Delete permanently'
-            : confirm?.mode === 'hide'
-              ? 'Hide'
-              : 'Restore'
-        }
+        variant="danger"
+        title="Permanently delete category?"
+        message="Removes the row only if no fundraising activities use this category. Otherwise you will see an error."
+        confirmLabel="Delete permanently"
         busy={saving}
         onCancel={() => setConfirm(null)}
         onConfirm={performConfirm}

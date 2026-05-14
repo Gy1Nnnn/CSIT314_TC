@@ -1,1 +1,8 @@
 @import './UserAccountPage.css';
+
+.data-table th.category-id-col,
+.data-table td.category-id-col {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: 1%;
+}

@@ -90,12 +90,6 @@ export class ApiClient {
   updateCategory(categoryId, payload) {
     return this.request(`/api/categories/${categoryId}`, { method: 'PUT', body: payload })
   }
-  suspendCategory(categoryId, suspend) {
-    return this.request(`/api/categories/${categoryId}/suspend`, {
-      method: 'POST',
-      body: { suspend },
-    })
-  }
   deleteCategory(categoryId) {
     return this.request(`/api/categories/${categoryId}`, { method: 'DELETE' })
   }
@@ -157,12 +151,6 @@ export class ApiClient {
   updateActivity(activityId, payload) {
     return this.request(`/api/fundraising-activities/${activityId}`, { method: 'PUT', body: payload })
   }
-  suspendActivity(activityId, payload) {
-    return this.request(`/api/fundraising-activities/${activityId}/suspend`, {
-      method: 'POST',
-      body: payload,
-    })
-  }
   deleteActivity(activityId, accountId) {
     return this.request(`/api/fundraising-activities/${activityId}`, {
       method: 'DELETE',
@@ -215,12 +203,12 @@ export class ApiClient {
       },
     })
   }
-  recordDoneeDonation({ accountId, activityId, amount, donatedAt }) {
+  recordDoneeDonation({ accountId, activityId, amount, donatedAt } = {}) {
     const body = {
-      account_id: accountId,
       activity_id: activityId,
       amount,
     }
+    if (accountId != null) body.account_id = accountId
     if (donatedAt) body.donated_at = donatedAt
     return this.request('/api/donee/donations', { method: 'POST', body })
   }

@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import Logo from './Logo.jsx'
-import CategoryIcon from './CategoryIcon.jsx'
-import { api } from '../api/ApiClient.js'
 import './Logo.css'
 import './NavBar.css'
 
@@ -39,68 +37,20 @@ function MenuLink({ to, end, children }) {
   )
 }
 
-function HeartLeafIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="100%"
-      height="100%"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M12 19s-6-3.7-6-9a3.5 3.5 0 0 1 6-2.45A3.5 3.5 0 0 1 18 10c0 5.3-6 9-6 9z"
-        stroke="#1f6f4a"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function DonateDropdown() {
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState('menu')
-  const [cats, setCats] = useState([])
-  const [loaded, setLoaded] = useState(false)
-  const [err, setErr] = useState(null)
   const ref = useRef(null)
-
-  useEffect(() => {
-    if (!open || loaded) return
-    let cancelled = false
-    api
-      .listCategoriesWithActivities()
-      .then((data) => {
-        if (cancelled) return
-        const list = Array.isArray(data.categories) ? data.categories : []
-        setCats(list.filter((c) => !c.is_suspended))
-        setLoaded(true)
-      })
-      .catch((e) => {
-        if (cancelled) return
-        setErr(e?.data?.message || e?.message || 'Could not load categories.')
-        setLoaded(true)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [open, loaded])
 
   useEffect(() => {
     function handler(e) {
       if (!open) return
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false)
-        setView('menu')
       }
     }
     function keyHandler(e) {
       if (e.key === 'Escape') {
         setOpen(false)
-        setView('menu')
       }
     }
     window.addEventListener('mousedown', handler)
@@ -112,16 +62,11 @@ function DonateDropdown() {
   }, [open])
 
   function toggle() {
-    setOpen((v) => {
-      const next = !v
-      if (!next) setView('menu')
-      return next
-    })
+    setOpen((v) => !v)
   }
 
   function closeAll() {
     setOpen(false)
-    setView('menu')
   }
 
   return (
@@ -138,63 +83,18 @@ function DonateDropdown() {
       </button>
       {open ? (
         <div className="topbar-donate-menu" role="menu">
-          <div className="topbar-donate-header">
-            <span className="topbar-donate-header-icon" aria-hidden="true">
-              <HeartLeafIcon />
+          <Link
+            to={{ pathname: '/', search: '', hash: 'browse' }}
+            className="topbar-donate-row"
+            role="menuitem"
+            onClick={closeAll}
+          >
+            <span className="topbar-donate-row-text">
+              <span className="topbar-donate-row-title">Categories</span>
+              <span className="topbar-donate-row-sub">Browse fundraisers by category</span>
             </span>
-            <span className="topbar-donate-header-text">Discover fundraisers to support</span>
-          </div>
-
-          {view === 'menu' ? (
-            <button
-              type="button"
-              role="menuitem"
-              className="topbar-donate-row"
-              onClick={() => setView('categories')}
-              aria-haspopup="true"
-              aria-expanded={false}
-            >
-              <span className="topbar-donate-row-text">
-                <span className="topbar-donate-row-title">Categories</span>
-                <span className="topbar-donate-row-sub">Browse fundraisers by category</span>
-              </span>
-              <span className="topbar-donate-row-caret" aria-hidden="true">›</span>
-            </button>
-          ) : (
-            <div className="topbar-donate-cats">
-              <button
-                type="button"
-                className="topbar-donate-back"
-                onClick={() => setView('menu')}
-              >
-                ‹ Back
-              </button>
-              {!loaded ? (
-                <div className="topbar-donate-empty">Loading…</div>
-              ) : err ? (
-                <div className="topbar-donate-empty">{err}</div>
-              ) : cats.length === 0 ? (
-                <div className="topbar-donate-empty">No categories yet.</div>
-              ) : (
-                <div className="topbar-donate-grid">
-                  {cats.map((c, i) => (
-                    <Link
-                      key={c.category_id}
-                      to={`/?cat=${c.category_id}#browse`}
-                      className="topbar-donate-item"
-                      role="menuitem"
-                      onClick={closeAll}
-                    >
-                      <span className="topbar-donate-icon">
-                        <CategoryIcon name={c.category_name} index={i} />
-                      </span>
-                      <span className="topbar-donate-label">{c.category_name}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+            <span className="topbar-donate-row-caret" aria-hidden="true">›</span>
+          </Link>
         </div>
       ) : null}
     </div>

@@ -60,19 +60,21 @@ class DoneeDonationBoundary:
         amount_raw = data.get("amount")
         donated_at_raw = (data.get("donated_at") or "").strip()
 
+        account_id = None
+        if account_id_raw is not None and str(account_id_raw).strip() != "":
+            try:
+                account_id = int(account_id_raw)
+            except (TypeError, ValueError):
+                return jsonify({"message": "account_id must be a number."}), 400
+            if account_id <= 0:
+                return jsonify({"message": "account_id must be positive."}), 400
+
         try:
-            account_id = int(account_id_raw)
             activity_id = int(activity_id_raw)
         except (TypeError, ValueError):
-            return (
-                jsonify({"message": "account_id and activity_id are required."}),
-                400,
-            )
-        if account_id <= 0 or activity_id <= 0:
-            return (
-                jsonify({"message": "account_id and activity_id are required."}),
-                400,
-            )
+            return jsonify({"message": "activity_id is required."}), 400
+        if activity_id <= 0:
+            return jsonify({"message": "activity_id is required."}), 400
 
         try:
             amount = float(amount_raw)

@@ -8,6 +8,19 @@ const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
 
 const STATUSES = ['active', 'completed', 'suspended']
 
+/** Raised and goal for list columns (API: amount_raised, target_amount). */
+function formatActivityAmountCell(a) {
+  const raised =
+    a.amount_raised === 0 || a.amount_raised != null ? Number(a.amount_raised) : 0
+  const hasGoal = a.target_amount === 0 || a.target_amount != null
+  const goal = hasGoal ? Number(a.target_amount) : null
+  const raisedStr = Number.isFinite(raised) ? raised.toLocaleString() : '0'
+  if (goal != null && Number.isFinite(goal)) {
+    return `${raisedStr} / ${goal.toLocaleString()}`
+  }
+  return raisedStr
+}
+
 function ActivityForm({ mode, initial, categories, onCancel, onSubmit, busy }) {
   const [name, setName] = useState(initial?.activity_name || '')
   const [categoryId, setCategoryId] = useState(initial?.category_id ? String(initial.category_id) : '')
@@ -180,7 +193,7 @@ export default function FundraiserPage({ user }) {
     suspended: '',
   })
   const [selected, setSelected] = useState(null)
-  const [confirm, setConfirm] = useState(null) // { mode: 'hide'|'hardDelete'|'restore', activity }
+  const [confirm, setConfirm] = useState(null) // { mode: 'hardDelete', activity }
 
   const [histActivities, setHistActivities] = useState([])
   const [histLoading, setHistLoading] = useState(false)
@@ -304,64 +317,22 @@ export default function FundraiserPage({ user }) {
   }
 
   async function performConfirm() {
-    if (!confirm) return
+    if (!confirm || confirm.mode !== 'hardDelete') return
     setSaving(true)
     clearMessages()
     const target = confirm.activity
     try {
-      if (confirm.mode === 'hardDelete') {
-        await api.deleteActivity(target.activity_id, accountId)
-        setSuccess('Campaign permanently removed.')
-        setConfirm(null)
-        if (view === VIEWS.VIEW) {
-          setView(VIEWS.LIST)
-          setSelected(null)
-        }
-      } else if (confirm.mode === 'hide') {
-        await api.suspendActivity(target.activity_id, { account_id: accountId, suspend: true })
-        setSuccess('Campaign hidden from public browse.')
-        setConfirm(null)
-        if (view === VIEWS.VIEW) {
-          const data = await api.listActivities({
-            accountId,
-            search: applied.search || undefined,
-            categoryId: applied.categoryId || undefined,
-            status: applied.status || undefined,
-            dateFrom: applied.dateFrom || undefined,
-            dateTo: applied.dateTo || undefined,
-            suspended: applied.suspended === '' ? undefined : applied.suspended,
-          })
-          const list = Array.isArray(data.activities) ? data.activities : []
-          const next = list.find((x) => x.activity_id === target.activity_id)
-          if (next) setSelected(next)
-          else {
-            setView(VIEWS.LIST)
-            setSelected(null)
-          }
-        }
-      } else {
-        await api.suspendActivity(target.activity_id, { account_id: accountId, suspend: false })
-        setSuccess('Campaign visible to donors again.')
-        setConfirm(null)
-        if (view === VIEWS.VIEW) {
-          const data = await api.listActivities({
-            accountId,
-            search: applied.search || undefined,
-            categoryId: applied.categoryId || undefined,
-            status: applied.status || undefined,
-            dateFrom: applied.dateFrom || undefined,
-            dateTo: applied.dateTo || undefined,
-            suspended: applied.suspended === '' ? undefined : applied.suspended,
-          })
-          const list = Array.isArray(data.activities) ? data.activities : []
-          const next = list.find((x) => x.activity_id === target.activity_id)
-          if (next) setSelected(next)
-        }
+      await api.deleteActivity(target.activity_id, accountId)
+      setSuccess('Campaign permanently removed.')
+      setConfirm(null)
+      if (view === VIEWS.VIEW) {
+        setView(VIEWS.LIST)
+        setSelected(null)
       }
       await loadActivities()
       if (listSection === 'history') await loadHistory()
     } catch (e) {
-      setError(e?.data?.message || e?.message || 'Could not update activity.')
+      setError(e?.data?.message || e?.message || 'Could not delete campaign.')
     } finally {
       setSaving(false)
     }
@@ -450,23 +421,6 @@ export default function FundraiserPage({ user }) {
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
               Edit
             </button>
-            {!suspended ? (
-              <button
-                type="button"
-                className="btn danger"
-                onClick={() => setConfirm({ mode: 'hide', activity: selected })}
-              >
-                Hide from donors
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn primary"
-                onClick={() => setConfirm({ mode: 'restore', activity: selected })}
-              >
-                Restore visibility
-              </button>
-            )}
             <button
               type="button"
               className="btn danger"
@@ -513,28 +467,10 @@ export default function FundraiserPage({ user }) {
         </div>
         <ConfirmModal
           open={Boolean(confirm)}
-          variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
-          title={
-            confirm?.mode === 'hardDelete'
-              ? 'Permanently delete campaign?'
-              : confirm?.mode === 'hide'
-                ? 'Hide from public browse?'
-                : 'Restore visibility?'
-          }
-          message={
-            confirm?.mode === 'hardDelete'
-              ? 'This removes the campaign and its donation/favorite links from the database. It cannot be undone.'
-              : confirm?.mode === 'hide'
-                ? 'Donors will no longer see this campaign until you restore it.'
-                : 'The campaign will appear in public browse again (if still active).'
-          }
-          confirmLabel={
-            confirm?.mode === 'hardDelete'
-              ? 'Delete permanently'
-              : confirm?.mode === 'hide'
-                ? 'Hide'
-                : 'Restore'
-          }
+          variant="danger"
+          title="Permanently delete campaign?"
+          message="This removes the campaign and its donation/favorite links from the database. It cannot be undone."
+          confirmLabel="Delete permanently"
           busy={saving}
           onCancel={() => setConfirm(null)}
           onConfirm={performConfirm}
@@ -551,7 +487,7 @@ export default function FundraiserPage({ user }) {
             <>
               <h1>Fundraising Activities</h1>
               <p className="page-sub">
-                Filter by name, category, workflow status, end dates, or hidden state — then search.
+                Filter by name, category, workflow status, end dates, or public browse — then search.
               </p>
             </>
           ) : (
@@ -746,6 +682,7 @@ export default function FundraiserPage({ user }) {
                 <th className="num">ID</th>
                 <th>Campaign</th>
                 <th>Category</th>
+                <th className="num">Amount</th>
                 <th>Status</th>
                 <th className="num">Views</th>
                 <th className="num">Favorites</th>
@@ -760,6 +697,7 @@ export default function FundraiserPage({ user }) {
                     <td className="muted num">{String(a.activity_id).padStart(3, '0')}</td>
                     <td>{a.activity_name}</td>
                     <td className="muted">{a.category_name || '—'}</td>
+                    <td className="muted num">{formatActivityAmountCell(a)}</td>
                     <td>
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
                         {suspended ? 'Hidden' : a.status || 'Active'}
@@ -782,23 +720,6 @@ export default function FundraiserPage({ user }) {
                       >
                         Edit
                       </button>
-                      {!suspended ? (
-                        <button
-                          type="button"
-                          className="btn-link danger"
-                          onClick={() => setConfirm({ mode: 'hide', activity: a })}
-                        >
-                          Hide
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-link"
-                          onClick={() => setConfirm({ mode: 'restore', activity: a })}
-                        >
-                          Restore
-                        </button>
-                      )}
                       <button
                         type="button"
                         className="btn-link danger"
@@ -923,6 +844,7 @@ export default function FundraiserPage({ user }) {
                 <th className="num">ID</th>
                 <th>Campaign</th>
                 <th>Category</th>
+                <th className="num">Amount</th>
                 <th>End</th>
                 <th className="num">Views</th>
                 <th className="num">Favorites</th>
@@ -930,13 +852,12 @@ export default function FundraiserPage({ user }) {
               </tr>
             </thead>
             <tbody>
-              {histActivities.map((a) => {
-                const suspended = Boolean(a.is_suspended)
-                return (
+              {histActivities.map((a) => (
                   <tr key={`hist-${a.activity_id}`}>
                     <td className="muted num">{String(a.activity_id).padStart(3, '0')}</td>
                     <td>{a.activity_name}</td>
                     <td className="muted">{a.category_name || '—'}</td>
+                    <td className="muted num">{formatActivityAmountCell(a)}</td>
                     <td className="muted">{fmtDate(a.end_date)}</td>
                     <td className="muted num">{Number(a.view_count ?? 0).toLocaleString()}</td>
                     <td className="muted num">{Number(a.favorite_count ?? 0).toLocaleString()}</td>
@@ -955,23 +876,6 @@ export default function FundraiserPage({ user }) {
                       >
                         Edit
                       </button>
-                      {!suspended ? (
-                        <button
-                          type="button"
-                          className="btn-link danger"
-                          onClick={() => setConfirm({ mode: 'hide', activity: a })}
-                        >
-                          Hide
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-link"
-                          onClick={() => setConfirm({ mode: 'restore', activity: a })}
-                        >
-                          Restore
-                        </button>
-                      )}
                       <button
                         type="button"
                         className="btn-link danger"
@@ -981,8 +885,7 @@ export default function FundraiserPage({ user }) {
                       </button>
                     </td>
                   </tr>
-                )
-              })}
+              ))}
             </tbody>
           </table>
           {!histLoading && histActivities.length === 0 ? (
@@ -995,28 +898,10 @@ export default function FundraiserPage({ user }) {
 
       <ConfirmModal
         open={Boolean(confirm)}
-        variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
-        title={
-          confirm?.mode === 'hardDelete'
-            ? 'Permanently delete campaign?'
-            : confirm?.mode === 'hide'
-              ? 'Hide from public browse?'
-              : 'Restore visibility?'
-        }
-        message={
-          confirm?.mode === 'hardDelete'
-            ? 'This removes the campaign and its donation/favorite links from the database. It cannot be undone.'
-            : confirm?.mode === 'hide'
-              ? 'Donors will no longer see this campaign until you restore it.'
-              : 'The campaign will appear in public browse again (if still active).'
-        }
-        confirmLabel={
-          confirm?.mode === 'hardDelete'
-            ? 'Delete permanently'
-            : confirm?.mode === 'hide'
-              ? 'Hide'
-              : 'Restore'
-        }
+        variant="danger"
+        title="Permanently delete campaign?"
+        message="This removes the campaign and its donation/favorite links from the database. It cannot be undone."
+        confirmLabel="Delete permanently"
         busy={saving}
         onCancel={() => setConfirm(null)}
         onConfirm={performConfirm}

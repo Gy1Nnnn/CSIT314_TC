@@ -33,8 +33,38 @@ def apply_fra_completed_past_end_date(conn, account_id=None, activity_id=None):
     conn.execute(sql, params)
 
 
+def apply_fra_completed_goal_reached(conn, account_id=None, activity_id=None):
+    """Set ``status`` to ``completed`` for active FRAs that reached their funding goal.
+
+    Only rows with ``status`` active, ``is_suspended`` 0, positive ``target_amount``,
+    and ``amount_raised >= target_amount`` are updated.
+    """
+    parts = [
+        "is_suspended = 0",
+        "LOWER(TRIM(COALESCE(status, ''))) = 'active'",
+        "target_amount IS NOT NULL",
+        "target_amount > 0",
+        "COALESCE(amount_raised, 0) >= target_amount",
+    ]
+    sql = f"UPDATE FRA SET status = 'completed' WHERE {' AND '.join(parts)}"
+    params: list[object] = []
+    if account_id is not None:
+        sql += " AND account_id = ?"
+        params.append(account_id)
+    if activity_id is not None:
+        sql += " AND activity_id = ?"
+        params.append(activity_id)
+    conn.execute(sql, params)
+
+
+def apply_fra_auto_completed(conn, account_id=None, activity_id=None):
+    """Mark eligible ``active`` FRAs as ``completed`` (past end date or goal reached)."""
+    apply_fra_completed_past_end_date(conn, account_id=account_id, activity_id=activity_id)
+    apply_fra_completed_goal_reached(conn, account_id=account_id, activity_id=activity_id)
+
+
 class FRA:
-    """Fundraising activities: CRUD, public browse, and auto-``completed`` past ``end_date``."""
+    """Fundraising activities: CRUD, public browse, and auto-``completed`` (goal or past ``end_date``)."""
 
     def list_activities(
         self,
@@ -105,6 +135,7 @@ class FRA:
                 fr.start_date,
                 fr.end_date,
                 fr.target_amount,
+                fr.amount_raised,
                 fr.status,
                 fr.account_id,
                 fr.is_suspended,
@@ -118,7 +149,7 @@ class FRA:
 
         conn = get_connection()
         try:
-            apply_fra_completed_past_end_date(conn, account_id=account_id)
+            apply_fra_auto_completed(conn, account_id=account_id)
             rows = conn.execute(sql, params).fetchall()
             return {"activities": [dict(r) for r in rows]}, 200
         finally:
@@ -137,8 +168,8 @@ class FRA:
         Includes every row whose ``status`` is ``completed`` (including
         soft-deleted / ``is_suspended`` records) so the full completed history
         is visible. Rows still ``active`` only because ``end_date`` has passed
-        are updated to ``completed`` by ``apply_fra_completed_past_end_date``
-        before this query runs.
+        or the funding goal has been met are updated to ``completed`` by
+        ``apply_fra_auto_completed`` before this query runs.
 
         ``date_from`` / ``date_to`` filter on ``end_date`` (inclusive) when set;
         rows with empty ``end_date`` are excluded only when a date bound is
@@ -191,6 +222,7 @@ class FRA:
                 fr.start_date,
                 fr.end_date,
                 fr.target_amount,
+                fr.amount_raised,
                 fr.status,
                 fr.account_id,
                 fr.is_suspended,
@@ -204,7 +236,7 @@ class FRA:
 
         conn = get_connection()
         try:
-            apply_fra_completed_past_end_date(conn, account_id=account_id)
+            apply_fra_auto_completed(conn, account_id=account_id)
             rows = conn.execute(sql, params).fetchall()
             return {"activities": [dict(r) for r in rows]}, 200
         finally:
@@ -233,11 +265,12 @@ class FRA:
                     start_date,
                     end_date,
                     target_amount,
+                    amount_raised,
                     status,
                     account_id,
                     is_suspended
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, 0)
                 """,
                 (
                     activity_name,
@@ -252,7 +285,7 @@ class FRA:
             )
             activity_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             conn.commit()
-            apply_fra_completed_past_end_date(conn, activity_id=activity_id)
+            apply_fra_auto_completed(conn, activity_id=activity_id)
             fav_sub = (
                 "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
             )
@@ -267,6 +300,7 @@ class FRA:
                     fr.start_date,
                     fr.end_date,
                     fr.target_amount,
+                    fr.amount_raised,
                     fr.status,
                     fr.account_id,
                     fr.is_suspended,
@@ -330,7 +364,7 @@ class FRA:
                 ),
             )
             conn.commit()
-            apply_fra_completed_past_end_date(conn, activity_id=activity_id)
+            apply_fra_auto_completed(conn, activity_id=activity_id)
             fav_sub = (
                 "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
             )
@@ -345,6 +379,7 @@ class FRA:
                     fr.start_date,
                     fr.end_date,
                     fr.target_amount,
+                    fr.amount_raised,
                     fr.status,
                     fr.account_id,
                     fr.is_suspended,
@@ -422,6 +457,7 @@ class FRA:
                 fr.end_date,
                 fr.duration,
                 fr.target_amount,
+                fr.amount_raised,
                 fr.status,
                 fr.account_id,
                 fr.view_count,
@@ -450,7 +486,7 @@ class FRA:
 
         conn = get_connection()
         try:
-            apply_fra_completed_past_end_date(conn)
+            apply_fra_auto_completed(conn)
             rows = conn.execute(sql, params).fetchall()
             return {"activities": [dict(r) for r in rows]}, 200
         finally:
@@ -474,7 +510,7 @@ class FRA:
                 (activity_id,),
             )
             conn.commit()
-            apply_fra_completed_past_end_date(conn, activity_id=activity_id)
+            apply_fra_auto_completed(conn, activity_id=activity_id)
             row = conn.execute(self._public_activity_by_id_sql(), (activity_id,)).fetchone()
         finally:
             conn.close()
@@ -502,7 +538,7 @@ class FRA:
                 (suspend_val, activity_id, account_id),
             )
             conn.commit()
-            apply_fra_completed_past_end_date(conn, activity_id=activity_id)
+            apply_fra_auto_completed(conn, activity_id=activity_id)
             fav_sub = (
                 "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
             )
@@ -517,6 +553,7 @@ class FRA:
                     fr.start_date,
                     fr.end_date,
                     fr.target_amount,
+                    fr.amount_raised,
                     fr.status,
                     fr.account_id,
                     fr.is_suspended,

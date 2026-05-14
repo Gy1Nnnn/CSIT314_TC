@@ -47,20 +47,22 @@
 .reports-field span {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #444;
+  color: var(--color-text-muted);
 }
 
 .reports-field input {
   padding: 0.45rem 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .reports-range-line {
   margin: 0 0 1rem;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--color-text);
 }
 
 .reports-kpis {
@@ -72,16 +74,16 @@
 
 .reports-kpi {
   padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background: #fafafa;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
 }
 
 .reports-kpi-label {
   display: block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #555;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   margin-bottom: 0.35rem;
@@ -91,7 +93,7 @@
   display: block;
   font-size: 1.35rem;
   font-weight: 700;
-  color: #111;
+  color: var(--color-text);
   line-height: 1.2;
 }
 
@@ -99,7 +101,7 @@
   display: block;
   margin-top: 0.25rem;
   font-size: 0.78rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .reports-section-title {
@@ -110,5 +112,5 @@
 
 .reports-muted {
   margin: 0;
-  color: #666;
+  color: var(--color-text-muted);
 }

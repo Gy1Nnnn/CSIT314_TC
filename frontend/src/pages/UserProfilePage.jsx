@@ -377,10 +377,10 @@ export default function UserProfilePage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="profile-id-col">Profile ID</th>
                 <th>Name</th>
                 <th>Access</th>
                 <th>Status</th>
-                <th>Updated</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -389,15 +389,15 @@ export default function UserProfilePage() {
                 const suspended = Boolean(p.is_suspended)
                 return (
                   <tr key={p.profile_id}>
+                    <td className="muted profile-id-col">
+                      {p.profile_id != null ? String(p.profile_id).padStart(3, '0') : '—'}
+                    </td>
                     <td>{p.profile_name}</td>
                     <td className="muted">{p.access_control || '—'}</td>
                     <td>
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
                         {suspended ? 'Suspended' : 'Active'}
                       </span>
-                    </td>
-                    <td className="muted">
-                      {formatUpdated(p.updated_at || p.created_at)}
                     </td>
                     <td className="actions">
                       <button

@@ -15,6 +15,7 @@ export default function ConfirmModal({
   const [reason, setReason] = useState('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset suspend reason when dialog closes
     if (!open) setReason('')
   }, [open])
 

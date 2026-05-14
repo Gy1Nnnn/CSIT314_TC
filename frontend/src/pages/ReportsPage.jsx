@@ -52,6 +52,7 @@ export default function ReportsPage({ user }) {
   }, [accountId, period, dailyDate, weekRefDate, monthVal])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial and reactive load
     fetchReport()
   }, [fetchReport])
 

@@ -1,8 +1,9 @@
-"""Entity layer: donee donation history (recorded contributions per account)."""
+"""Entity layer: donation records (optional account for anonymous) + campaign totals."""
 
 from typing import Optional
 
 from backend.entity.db import get_connection
+from backend.entity.fra import apply_fra_auto_completed
 from backend.entity.donee_favorite import _is_donee_account
 
 
@@ -73,16 +74,24 @@ class DoneeDonation:
 
     def create_donation(
         self,
-        account_id: int,
+        account_id: Optional[int],
         activity_id: int,
         amount: float,
         donated_at: str,
     ):
-        """``donated_at`` is a non-empty SQLite-friendly timestamp string."""
+        """Record a donation; ``account_id`` None = anonymous. Updates ``FRA.amount_raised``."""
         conn = get_connection()
         try:
-            if not _is_donee_account(conn, account_id):
-                return {"message": "Not a donee account."}, 403
+            if account_id is not None:
+                row_acc = conn.execute(
+                    """
+                    SELECT 1 FROM user_account
+                    WHERE account_id = ? AND COALESCE(is_suspended, 0) = 0
+                    """,
+                    (account_id,),
+                ).fetchone()
+                if not row_acc:
+                    return {"message": "Account not found or suspended."}, 403
 
             row = conn.execute(
                 """
@@ -103,15 +112,24 @@ class DoneeDonation:
                     "message": "Activity not found or not available for contributions.",
                 }, 404
 
-            conn.execute(
+            cur = conn.execute(
                 """
                 INSERT INTO donee_donation (account_id, activity_id, amount, donated_at)
                 VALUES (?, ?, ?, ?)
                 """,
                 (account_id, activity_id, amount, donated_at),
             )
+            donation_id = cur.lastrowid
+            conn.execute(
+                """
+                UPDATE FRA
+                SET amount_raised = COALESCE(amount_raised, 0) + ?
+                WHERE activity_id = ?
+                """,
+                (amount, activity_id),
+            )
+            apply_fra_auto_completed(conn, activity_id=activity_id)
             conn.commit()
-            donation_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             out = conn.execute(
                 """
                 SELECT

@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Brand & surfaces — clean marketplace reference */
+  /* Surfaces — bright marketplace (GoFundMe-style reference) */
   --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-surface-2: #f8f8f8;
@@ -11,10 +11,9 @@
   --color-text: #222222;
   --color-text-muted: #555555;
   --color-text-subtle: #888888;
-  /* Alias used by some components / stubs */
   --color-muted: var(--color-text-muted);
 
-  /* Brand green */
+  /* GoFundMe-style brand green */
   --color-primary: #02a95c;
   --color-primary-hover: #028a4b;
   --color-primary-dark: #015c33;
@@ -24,7 +23,6 @@
   --color-accent: #ffc043;
   --color-accent-soft: #fff8e6;
 
-  /* Status colors */
   --color-success: #117a3d;
   --color-success-bg: #e2f5e9;
   --color-danger: #b42318;
@@ -34,7 +32,6 @@
   --color-info: #0b6db3;
   --color-info-bg: #e1f0fa;
 
-  /* Sizing */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
@@ -44,7 +41,6 @@
   --shadow-md: 0 6px 18px rgba(20, 32, 27, 0.08);
   --shadow-lg: 0 22px 48px rgba(20, 32, 27, 0.14);
 
-  /* Typography */
   --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, 'JetBrains Mono', Consolas, monospace;

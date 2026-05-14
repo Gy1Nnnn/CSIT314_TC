@@ -5,6 +5,41 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parents[1] / "app.sqlite"
 
+
+def _ensure_fra_amount_raised_column(conn):
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(FRA)").fetchall()}
+    if "amount_raised" not in cols:
+        conn.execute(
+            "ALTER TABLE FRA ADD COLUMN amount_raised REAL NOT NULL DEFAULT 0"
+        )
+
+
+def _ensure_donee_donation_nullable_account(conn):
+    cols = conn.execute("PRAGMA table_info(donee_donation)").fetchall()
+    acc = next((c for c in cols if c[1] == "account_id"), None)
+    if acc is None or acc[3] == 0:
+        return
+    conn.execute("PRAGMA foreign_keys=OFF")
+    conn.executescript(
+        """
+        CREATE TABLE donee_donation_mig (
+            donation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER,
+            activity_id INTEGER NOT NULL,
+            amount REAL NOT NULL,
+            donated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (account_id) REFERENCES user_account (account_id),
+            FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
+        );
+        INSERT INTO donee_donation_mig (donation_id, account_id, activity_id, amount, donated_at)
+        SELECT donation_id, account_id, activity_id, amount, donated_at FROM donee_donation;
+        DROP TABLE donee_donation;
+        ALTER TABLE donee_donation_mig RENAME TO donee_donation;
+        """
+    )
+    conn.execute("PRAGMA foreign_keys=ON")
+
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS user_profile (
     profile_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,6 +75,7 @@ CREATE TABLE IF NOT EXISTS FRA (
     end_date TEXT,
     duration TEXT,
     target_amount REAL,
+    amount_raised REAL NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'active',
     account_id INTEGER NOT NULL,
     is_suspended INTEGER NOT NULL DEFAULT 0,
@@ -60,7 +96,7 @@ CREATE TABLE IF NOT EXISTS donee_favorite (
 
 CREATE TABLE IF NOT EXISTS donee_donation (
     donation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    account_id INTEGER NOT NULL,
+    account_id INTEGER,
     activity_id INTEGER NOT NULL,
     amount REAL NOT NULL,
     donated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -243,7 +279,7 @@ def init_db():
             """
             CREATE TABLE IF NOT EXISTS donee_donation (
                 donation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                account_id INTEGER NOT NULL,
+                account_id INTEGER,
                 activity_id INTEGER NOT NULL,
                 amount REAL NOT NULL,
                 donated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -252,10 +288,12 @@ def init_db():
             )
             """
         )
+        _ensure_fra_amount_raised_column(conn)
+        _ensure_donee_donation_nullable_account(conn)
         _ensure_default_data(conn)
-        from backend.entity.fra import apply_fra_completed_past_end_date
+        from backend.entity.fra import apply_fra_auto_completed
 
-        apply_fra_completed_past_end_date(conn)
+        apply_fra_auto_completed(conn)
         conn.commit()
     finally:
         conn.close()

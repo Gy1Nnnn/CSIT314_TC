@@ -17,8 +17,11 @@ class Category:
         if search:
             safe = search.replace("%", r"\%").replace("_", r"\_")
             like = f"%{safe}%"
-            clause = "(category_name LIKE ? ESCAPE '\\')"
-            params.append(like)
+            clause = (
+                "(category_name LIKE ? ESCAPE '\\' "
+                "OR IFNULL(description, '') LIKE ? ESCAPE '\\')"
+            )
+            params.extend([like, like])
             if search.isdigit():
                 clause = f"({clause} OR category_id = ?)"
                 params.append(int(search))
@@ -41,8 +44,7 @@ class Category:
             conn.close()
 
     def list_categories_with_public_activities(self):
-        """Active categories each with non-suspended FRAs (for public home)."""
-        from backend.entity.fra import apply_fra_completed_past_end_date
+        from backend.entity.fra import apply_fra_auto_completed
 
         sql = """
             SELECT
@@ -55,6 +57,7 @@ class Category:
                 fr.start_date,
                 fr.end_date,
                 fr.target_amount,
+                fr.amount_raised,
                 fr.status
             FROM category c
             LEFT JOIN FRA fr
@@ -66,7 +69,7 @@ class Category:
         """
         conn = get_connection()
         try:
-            apply_fra_completed_past_end_date(conn)
+            apply_fra_auto_completed(conn)
             rows = conn.execute(sql).fetchall()
         finally:
             conn.close()
@@ -95,6 +98,7 @@ class Category:
                         "start_date": d["start_date"],
                         "end_date": d["end_date"],
                         "target_amount": d["target_amount"],
+                        "amount_raised": d["amount_raised"],
                         "status": d["status"],
                     }
                 )

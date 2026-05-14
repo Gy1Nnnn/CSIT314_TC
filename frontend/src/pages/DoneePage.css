@@ -3,7 +3,7 @@
 .donee-hint {
   margin-bottom: 1rem;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--color-text-muted);
   line-height: 1.45;
 }
 
@@ -21,7 +21,7 @@
 
 .donee-filter-label {
   font-size: 0.75rem;
-  color: #555;
+  color: var(--color-text-muted);
 }
 
 .donee-history-search {
@@ -32,21 +32,16 @@
 .donee-donation-box {
   margin-top: 1rem;
   padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
 }
 
-.donee-donation-title {
-  margin: 0 0 0.35rem;
-  font-size: 1rem;
-}
-
-.donee-donation-help {
-  margin: 0 0 0.75rem;
-  font-size: 0.875rem;
-  color: #555;
-  line-height: 1.4;
+.data-table th.activity-id-col,
+.data-table td.activity-id-col {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: 1%;
 }
 
 .donee-donation-row {
