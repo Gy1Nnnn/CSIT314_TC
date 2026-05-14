@@ -53,25 +53,6 @@ class UserProfile:
         finally:
             conn.close()
 
-    def view_profile(self, profile_id):
-        """profile_id: int."""
-        conn = get_connection()
-        try:
-            row = conn.execute(
-                """
-                SELECT profile_id, profile_name, description, access_control, is_suspended
-                FROM user_profile
-                WHERE profile_id = ?
-                """,
-                (profile_id,),
-            ).fetchone()
-        finally:
-            conn.close()
-
-        if not row:
-            return {"message": "Profile not found."}, 404
-        return {"profile": dict(row)}, 200
-
     def create_profile(self, profile_name, description, access_control):
         """profile_name: non-empty str. description/access_control: optional."""
         conn = get_connection()

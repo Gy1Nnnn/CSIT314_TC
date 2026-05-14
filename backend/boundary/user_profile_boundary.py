@@ -20,10 +20,6 @@ class UserProfileBoundary:
         body, status = self._service.get_profiles(search)
         return jsonify(body), status
 
-    def view_user_profile(self, profile_id: int):
-        body, status = self._service.view(profile_id)
-        return jsonify(body), status
-
     def create_user_profile(self):
         data = request.get_json(silent=True) or {}
         profile_name = (data.get("profile_name") or "").strip()
@@ -61,11 +57,6 @@ _handler = UserProfileBoundary()
 @user_profile_bp.get("/user-profiles")
 def list_user_profiles():
     return _handler.list_user_profiles()
-
-
-@user_profile_bp.get("/user-profiles/<int:profile_id>")
-def view_user_profile(profile_id: int):
-    return _handler.view_user_profile(profile_id)
 
 
 @user_profile_bp.post("/user-profiles")

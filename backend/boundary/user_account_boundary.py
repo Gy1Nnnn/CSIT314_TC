@@ -21,6 +21,8 @@ class UserAccountBoundary:
         return jsonify(body), status
 
     def view_user_account(self, account_id: int):
+        if account_id <= 0:
+            return jsonify({"message": "Invalid account id."}), 400
         body, status = self._service.view(account_id)
         return jsonify(body), status
 

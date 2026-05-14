@@ -190,7 +190,6 @@ export default function FundraiserPage({ user }) {
       const data = await api.listCategories('')
       setCategories(Array.isArray(data.categories) ? data.categories : [])
     } catch {
-      // ignore
     }
   }
 

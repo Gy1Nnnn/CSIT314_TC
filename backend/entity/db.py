@@ -57,6 +57,16 @@ CREATE TABLE IF NOT EXISTS donee_favorite (
     FOREIGN KEY (account_id) REFERENCES user_account (account_id),
     FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
 );
+
+CREATE TABLE IF NOT EXISTS donee_donation (
+    donation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    activity_id INTEGER NOT NULL,
+    amount REAL NOT NULL,
+    donated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (account_id) REFERENCES user_account (account_id),
+    FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
+);
 """
 
 
@@ -224,6 +234,19 @@ def init_db():
                 activity_id INTEGER NOT NULL,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 UNIQUE(account_id, activity_id),
+                FOREIGN KEY (account_id) REFERENCES user_account (account_id),
+                FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS donee_donation (
+                donation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_id INTEGER NOT NULL,
+                activity_id INTEGER NOT NULL,
+                amount REAL NOT NULL,
+                donated_at TEXT NOT NULL DEFAULT (datetime('now')),
                 FOREIGN KEY (account_id) REFERENCES user_account (account_id),
                 FOREIGN KEY (activity_id) REFERENCES FRA (activity_id)
             )

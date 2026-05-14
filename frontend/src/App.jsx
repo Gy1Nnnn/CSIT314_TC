@@ -1,5 +1,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import NavBar from './components/NavBar.jsx'
 import Footer from './components/Footer.jsx'
@@ -24,7 +32,7 @@ const HERO_BUBBLE_NAMES = [
   'Charity',
 ]
 
-function Home() {
+function Home({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [categories, setCategories] = useState([])
@@ -33,6 +41,14 @@ function Home() {
   const [donatePick, setDonatePick] = useState(null)
   const [viewActivity, setViewActivity] = useState(null)
   const [viewOpeningId, setViewOpeningId] = useState(null)
+  const [supportAmount, setSupportAmount] = useState('')
+  const [supportDate, setSupportDate] = useState('')
+  const [supportSaving, setSupportSaving] = useState(false)
+  const [supportErr, setSupportErr] = useState(null)
+  const [supportOk, setSupportOk] = useState(null)
+
+  const isDonee =
+    user != null && String(user.profile_name || '').toLowerCase() === 'donee'
 
   const selectedCategoryId = useMemo(() => {
     const params = new URLSearchParams(location.search || '')
@@ -88,6 +104,43 @@ function Home() {
     selectedCategoryId == null
       ? null
       : categories.find((x) => x.category_id === selectedCategoryId) || null
+
+  useEffect(() => {
+    if (!donatePick) {
+      setSupportAmount('')
+      setSupportDate('')
+      setSupportErr(null)
+      setSupportOk(null)
+      setSupportSaving(false)
+    }
+  }, [donatePick])
+
+  async function submitHomeContribution() {
+    if (!donatePick || !isDonee || user?.account_id == null) return
+    const amt = Number(String(supportAmount).replace(/,/g, '').trim())
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setSupportErr('Enter an amount greater than zero.')
+      return
+    }
+    setSupportSaving(true)
+    setSupportErr(null)
+    setSupportOk(null)
+    try {
+      await api.recordDoneeDonation({
+        accountId: user.account_id,
+        activityId: donatePick.activity.activity_id,
+        amount: amt,
+        donatedAt: supportDate.trim() || undefined,
+      })
+      setSupportOk('Saved to your donation history. You can review it under Donee → Donation history.')
+      setSupportAmount('')
+      setSupportDate('')
+    } catch (e) {
+      setSupportErr(e?.data?.message || e?.message || 'Could not save.')
+    } finally {
+      setSupportSaving(false)
+    }
+  }
 
   function clearCategory() {
     navigate('/', { replace: false })
@@ -148,9 +201,10 @@ function Home() {
                 Real causes, supported by real people every day on Courage.
               </h2>
               <p className="home-hero-info-desc">
-                Use the <strong>Donate</strong> menu at the top to browse fundraisers by
-                category. Pick a category to see active campaigns, tap a campaign for
-                details, and donate to support the cause.
+                Use the <strong>Donate</strong> menu at the top to browse by category. Open a
+                campaign for details. Courage does not take card payments; if you sign in as a
+                donee you can <strong>log a contribution</strong> after you give elsewhere, so
+                your support stays on record.
               </p>
             </div>
           </section>
@@ -178,8 +232,9 @@ function Home() {
                   <p className="home-campaigns-sub">{selectedCategory.description}</p>
                 ) : (
                   <p className="home-campaigns-sub">
-                    Active campaigns in this category. Use <strong>View</strong> for details,
-                    <strong> Donate</strong> to support, or tap the campaign name.
+                    Active campaigns in this category. Use <strong>View</strong> for details,{' '}
+                    <strong>Support</strong> to log or plan your contribution, or tap the
+                    campaign name.
                   </p>
                 )}
               </div>
@@ -229,7 +284,7 @@ function Home() {
                               })
                             }
                           >
-                            Donate
+                            Support
                           </button>
                         </div>
                       </div>
@@ -257,7 +312,7 @@ function Home() {
             aria-labelledby="home-donate-title"
           >
             <div className="modal-head">
-              <h2 id="home-donate-title">Donate</h2>
+              <h2 id="home-donate-title">Support this campaign</h2>
               <button
                 type="button"
                 className="modal-close"
@@ -267,18 +322,85 @@ function Home() {
                 ×
               </button>
             </div>
-            <p className="modal-body">
-              You are supporting{' '}
-              <strong>{donatePick.activity.activity_name}</strong> under{' '}
-              <strong>{donatePick.categoryName}</strong>.
-            </p>
+            <div className="modal-body home-support-modal">
+              <p className="home-support-lead">
+                <strong>{donatePick.activity.activity_name}</strong>
+                <span className="home-support-meta"> · {donatePick.categoryName}</span>
+              </p>
+              <p className="home-support-note">
+                Payments are not processed in Courage. Use your bank, cash, or the organizer’s
+                preferred channel to give for real—then, if you have a donee account, log what you
+                gave so it appears in your donation history.
+              </p>
+              {isDonee ? (
+                <>
+                  {supportOk ? (
+                    <div className="alert success" role="status">
+                      {supportOk}
+                    </div>
+                  ) : null}
+                  {supportErr ? (
+                    <div className="alert error" role="alert">
+                      {supportErr}
+                    </div>
+                  ) : null}
+                  {!supportOk ? (
+                    <div className="home-support-fields">
+                      <label className="home-support-field">
+                        <span>Amount you gave</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={supportAmount}
+                          onChange={(e) => setSupportAmount(e.target.value)}
+                          placeholder="e.g. 25"
+                          disabled={supportSaving}
+                          aria-label="Contribution amount"
+                        />
+                      </label>
+                      <label className="home-support-field">
+                        <span>Date (optional)</span>
+                        <input
+                          type="date"
+                          value={supportDate}
+                          onChange={(e) => setSupportDate(e.target.value)}
+                          disabled={supportSaving}
+                          aria-label="Contribution date"
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </>
+              ) : user ? (
+                <p className="home-support-guest">
+                  Only accounts with the <strong>Donee</strong> role can save entries to donation history.
+                  Sign out and sign in with a donee account, or ask a User Admin to give your account
+                  the Donee profile.
+                </p>
+              ) : (
+                <p className="home-support-guest">
+                  <Link to="/login">Sign in</Link> with a <strong>Donee</strong> profile to log a
+                  contribution for this campaign.
+                </p>
+              )}
+            </div>
             <div className="modal-actions">
+              {isDonee && !supportOk ? (
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={supportSaving}
+                  onClick={submitHomeContribution}
+                >
+                  {supportSaving ? 'Saving…' : 'Add to my donation history'}
+                </button>
+              ) : null}
               <button
                 type="button"
-                className="btn primary"
+                className={isDonee && !supportOk ? 'btn' : 'btn primary'}
                 onClick={() => setDonatePick(null)}
               >
-                Close
+                {supportOk ? 'Close' : isDonee ? 'Cancel' : 'Close'}
               </button>
             </div>
           </div>
@@ -344,7 +466,7 @@ function Home() {
                   setViewActivity(null)
                 }}
               >
-                Donate
+                Support this campaign
               </button>
             </div>
           </div>
@@ -362,7 +484,6 @@ function App() {
       const raw = localStorage.getItem('auth_user')
       if (raw) setUser(JSON.parse(raw))
     } catch {
-      // ignore
     }
   }, [])
 
@@ -371,7 +492,6 @@ function App() {
     try {
       localStorage.setItem('auth_user', JSON.stringify(u))
     } catch {
-      // ignore
     }
   }
 
@@ -380,7 +500,6 @@ function App() {
     try {
       localStorage.removeItem('auth_user')
     } catch {
-      // ignore
     }
   }
 
@@ -393,7 +512,7 @@ function App() {
           <NavBar user={user} onLogout={handleLogout} />
           <div className="app-shell-main">
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Home user={user} />} />
               <Route
                 path="/login"
                 element={<LoginPage onLogin={handleLogin} user={user} />}
@@ -452,7 +571,7 @@ function App() {
                 path="/platform/reports"
                 element={
                   user && role === 'platform manager' ? (
-                    <ReportsPage />
+                    <ReportsPage user={user} />
                   ) : (
                     <Navigate to="/login" replace />
                   )

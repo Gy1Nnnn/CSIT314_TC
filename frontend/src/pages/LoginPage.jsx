@@ -33,7 +33,7 @@ function messageForProfilesHttpError(status) {
     return 'Profiles API was not found. Use npm run dev (or npm run preview) instead of opening the HTML file directly, and keep the backend running.'
   }
   if (status === 500 || status === 502 || status === 503 || status === 504) {
-    return `Could not reach the backend (HTTP ${status}). Open a second terminal, run: cd backend then python app.py — then click Try again.`
+    return `Could not reach the backend (HTTP ${status}). The Flask API must be running on port 5000. Open a second terminal, cd to the project root (the folder that contains backend and frontend), then run: python -m backend.app Leave that window open and click Try again.`
   }
   return `Could not load profiles (HTTP ${status}).`
 }
@@ -75,7 +75,7 @@ export default function LoginPage({ onLogin }) {
           setProfilesError(
             s != null
               ? messageForProfilesHttpError(s)
-              : 'Network error loading profiles. Start the backend: cd backend → python app.py — then click Try again.',
+              : 'Network error loading profiles. From the project root run: python -m backend.app (port 5000), keep npm run dev running, then click Try again.',
           )
           setProfiles([])
         }

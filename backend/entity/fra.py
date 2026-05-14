@@ -170,42 +170,6 @@ class FRA:
         finally:
             conn.close()
 
-    def get_activity(self, activity_id, account_id):
-        """Single activity for owner ``account_id`` including view and favorite counts."""
-        fav_sub = (
-            "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
-        )
-        conn = get_connection()
-        try:
-            apply_fra_completed_past_end_date(conn, account_id=account_id, activity_id=activity_id)
-            row = conn.execute(
-                f"""
-                SELECT
-                    fr.activity_id,
-                    fr.activity_name,
-                    fr.category_id,
-                    c.category_name,
-                    fr.description,
-                    fr.start_date,
-                    fr.end_date,
-                    fr.target_amount,
-                    fr.status,
-                    fr.account_id,
-                    fr.is_suspended,
-                    fr.view_count,
-                    {fav_sub} AS favorite_count
-                FROM FRA fr
-                LEFT JOIN category c ON c.category_id = fr.category_id
-                WHERE fr.activity_id = ? AND fr.account_id = ?
-                """,
-                (activity_id, account_id),
-            ).fetchone()
-            if not row:
-                return {"message": "Activity not found."}, 404
-            return {"activity": dict(row)}, 200
-        finally:
-            conn.close()
-
     def create_activity(
         self,
         account_id,

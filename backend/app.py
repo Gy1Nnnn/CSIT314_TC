@@ -14,6 +14,8 @@ from backend.boundary.user_account_boundary import user_account_bp
 from backend.boundary.fra_boundary import fra_bp
 from backend.boundary.category_boundary import category_bp
 from backend.boundary.donee_favorite_boundary import donee_favorite_bp
+from backend.boundary.donee_donation_boundary import donee_donation_bp
+from backend.boundary.report_boundary import report_bp
 
 
 def create_app():
@@ -26,6 +28,8 @@ def create_app():
     app.register_blueprint(fra_bp)
     app.register_blueprint(category_bp)
     app.register_blueprint(donee_favorite_bp)
+    app.register_blueprint(donee_donation_bp)
+    app.register_blueprint(report_bp)
     return app
 
 

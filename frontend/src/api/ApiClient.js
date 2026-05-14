@@ -44,9 +44,6 @@ export class ApiClient {
   listUserProfiles(search) {
     return this.request('/api/user-profiles', { query: { search } })
   }
-  viewUserProfile(profileId) {
-    return this.request(`/api/user-profiles/${profileId}`)
-  }
   createUserProfile(payload) {
     return this.request('/api/user-profiles', { method: 'POST', body: payload })
   }
@@ -100,6 +97,18 @@ export class ApiClient {
     })
   }
 
+  // Platform manager — fundraising performance (daily / weekly / monthly)
+  getPlatformFundraisingReport({ accountId, period, date, month } = {}) {
+    return this.request('/api/platform/reports/fundraising', {
+      query: {
+        account_id: accountId,
+        period,
+        date,
+        month,
+      },
+    })
+  }
+
   // FRA
   listActivities({ accountId, search } = {}) {
     return this.request('/api/fundraising-activities', {
@@ -121,12 +130,6 @@ export class ApiClient {
         date_from: dateFrom,
         date_to: dateTo,
       },
-    })
-  }
-  /** Owner detail; includes ``view_count`` and ``favorite_count`` (does not increment views). */
-  viewMyActivity(activityId, accountId) {
-    return this.request(`/api/fundraising-activities/${activityId}`, {
-      query: { account_id: accountId },
     })
   }
   createActivity(payload) {
@@ -167,6 +170,34 @@ export class ApiClient {
       method: 'DELETE',
       query: { account_id: accountId },
     })
+  }
+
+  // Donee donation history
+  listDoneeDonations({
+    accountId,
+    categoryId,
+    dateFrom,
+    dateTo,
+    search,
+  } = {}) {
+    return this.request('/api/donee/donations', {
+      query: {
+        account_id: accountId,
+        category_id: categoryId,
+        date_from: dateFrom,
+        date_to: dateTo,
+        search,
+      },
+    })
+  }
+  recordDoneeDonation({ accountId, activityId, amount, donatedAt }) {
+    const body = {
+      account_id: accountId,
+      activity_id: activityId,
+      amount,
+    }
+    if (donatedAt) body.donated_at = donatedAt
+    return this.request('/api/donee/donations', { method: 'POST', body })
   }
 }
 

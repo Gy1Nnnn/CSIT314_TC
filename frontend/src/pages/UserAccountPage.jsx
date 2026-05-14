@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/ApiClient.js'
 import ConfirmModal from '../components/ConfirmModal.jsx'
 import './UserAccountPage.css'
@@ -161,12 +161,15 @@ export default function UserAccountPage() {
   const [selected, setSelected] = useState(null)
   const [confirm, setConfirm] = useState(null) // {mode:'suspend'|'reinstate', account}
 
+  const [viewDetailLoading, setViewDetailLoading] = useState(false)
+  const [viewDetailError, setViewDetailError] = useState(null)
+  const viewAccountLoadedId = useRef(null)
+
   async function loadProfiles() {
     try {
       const data = await api.listUserProfiles('')
       setProfiles(Array.isArray(data.profiles) ? data.profiles : [])
     } catch {
-      // ignore
     }
   }
 
@@ -192,6 +195,46 @@ export default function UserAccountPage() {
     loadAccounts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applied])
+
+  useEffect(() => {
+    if (view !== VIEWS.VIEW) {
+      viewAccountLoadedId.current = null
+      setViewDetailError(null)
+      setViewDetailLoading(false)
+      return
+    }
+    if (selected?.account_id == null) return
+    const accountId = selected.account_id
+    if (viewAccountLoadedId.current === accountId) return
+
+    let cancelled = false
+    async function loadDetail() {
+      setViewDetailLoading(true)
+      setViewDetailError(null)
+      try {
+        const data = await api.viewUserAccount(accountId)
+        if (cancelled) return
+        if (data?.account) {
+          setSelected(data.account)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setViewDetailError(
+            e?.data?.message || e?.message || 'Could not load account.',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setViewDetailLoading(false)
+          viewAccountLoadedId.current = accountId
+        }
+      }
+    }
+    loadDetail()
+    return () => {
+      cancelled = true
+    }
+  }, [view, selected?.account_id])
 
   function clearMessages() {
     setError(null)
@@ -243,19 +286,20 @@ export default function UserAccountPage() {
       )
       setConfirm(null)
       await loadAccounts()
+      if (view === VIEWS.VIEW && target.account_id != null) {
+        try {
+          const d = await api.viewUserAccount(target.account_id)
+          if (d?.account) {
+            setSelected(d.account)
+            viewAccountLoadedId.current = target.account_id
+          }
+        } catch {
+        }
+      }
     } catch (e) {
       setError(e?.data?.message || e?.message || 'Could not update suspension.')
     } finally {
       setSaving(false)
-    }
-  }
-
-  function formatUpdated(value) {
-    if (!value) return '—'
-    try {
-      return new Date(value).toLocaleDateString()
-    } catch {
-      return value
     }
   }
 
@@ -321,18 +365,28 @@ export default function UserAccountPage() {
     const suspended = Boolean(selected.is_suspended)
     return (
       <main className="page">
-        <button type="button" className="page-back" onClick={() => { setView(VIEWS.LIST); setSelected(null) }}>
+        <button
+          type="button"
+          className="page-back"
+          onClick={() => {
+            viewAccountLoadedId.current = null
+            setView(VIEWS.LIST)
+            setSelected(null)
+            setViewDetailError(null)
+          }}
+        >
           Back to list
         </button>
         <div className="page-header">
           <div>
             <h1>View User Account</h1>
-            <p className="page-sub">Read-only account details.</p>
+            <p className="page-sub">Read-only account details from the server.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               type="button"
               className="btn"
+              disabled={viewDetailLoading}
               onClick={() => setView(VIEWS.UPDATE)}
             >
               Edit
@@ -340,33 +394,39 @@ export default function UserAccountPage() {
             <button
               type="button"
               className={`btn ${suspended ? 'primary' : 'danger'}`}
+              disabled={viewDetailLoading}
               onClick={() => setConfirm({ mode: suspended ? 'reinstate' : 'suspend', account: selected })}
             >
               {suspended ? 'Reinstate' : 'Suspend'}
             </button>
           </div>
         </div>
+        {viewDetailError ? <div className="alert error">{viewDetailError}</div> : null}
         <div className="card">
           <div className="card-section">
             <h2 className="card-title">Account details</h2>
-            <dl className="detail-list" style={{ marginTop: '1rem' }}>
-              <dt>Account ID</dt>
-              <dd>{String(selected.account_id).padStart(3, '0')}</dd>
-              <dt>Username</dt>
-              <dd>{selected.name}</dd>
-              <dt>Email</dt>
-              <dd>{selected.email}</dd>
-              <dt>Profile</dt>
-              <dd>{selected.profile_name || '—'}</dd>
-              <dt>Status</dt>
-              <dd>
-                <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
-                  {suspended ? 'Suspended' : 'Active'}
-                </span>
-              </dd>
-              <dt>Last updated</dt>
-              <dd>{formatUpdated(selected.updated_at || selected.created_at)}</dd>
-            </dl>
+            {viewDetailLoading ? (
+              <p className="field-hint" style={{ marginTop: '1rem' }}>
+                Loading…
+              </p>
+            ) : (
+              <dl className="detail-list" style={{ marginTop: '1rem' }}>
+                <dt>Account ID</dt>
+                <dd>{String(selected.account_id).padStart(3, '0')}</dd>
+                <dt>Username</dt>
+                <dd>{selected.name}</dd>
+                <dt>Email</dt>
+                <dd>{selected.email}</dd>
+                <dt>Profile</dt>
+                <dd>{selected.profile_name || '—'}</dd>
+                <dt>Status</dt>
+                <dd>
+                  <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
+                    {suspended ? 'Suspended' : 'Active'}
+                  </span>
+                </dd>
+              </dl>
+            )}
           </div>
         </div>
         <ConfirmModal
@@ -443,11 +503,11 @@ export default function UserAccountPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>Account ID</th>
                 <th>Username</th>
                 <th>Email</th>
                 <th>Profile</th>
                 <th>Status</th>
-                <th>Updated</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -456,6 +516,7 @@ export default function UserAccountPage() {
                 const suspended = Boolean(a.is_suspended)
                 return (
                   <tr key={a.account_id}>
+                    <td className="muted">{String(a.account_id).padStart(3, '0')}</td>
                     <td>{a.name}</td>
                     <td className="muted">{a.email}</td>
                     <td className="muted">{a.profile_name || '—'}</td>
@@ -463,9 +524,6 @@ export default function UserAccountPage() {
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
                         {suspended ? 'Suspended' : 'Active'}
                       </span>
-                    </td>
-                    <td className="muted">
-                      {formatUpdated(a.updated_at || a.created_at)}
                     </td>
                     <td className="actions">
                       <button

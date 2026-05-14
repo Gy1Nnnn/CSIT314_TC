@@ -8,6 +8,25 @@ export default function DoneePage({ user }) {
 
   const [tab, setTab] = useState('browse')
 
+  const [categories, setCategories] = useState([])
+
+  const [histCat, setHistCat] = useState('')
+  const [histFrom, setHistFrom] = useState('')
+  const [histTo, setHistTo] = useState('')
+  const [histSearch, setHistSearch] = useState('')
+  const [histApplied, setHistApplied] = useState({
+    cat: '',
+    from: '',
+    to: '',
+    search: '',
+  })
+  const [histList, setHistList] = useState([])
+  const [histLoading, setHistLoading] = useState(false)
+
+  const [donationAmount, setDonationAmount] = useState('')
+  const [donationDate, setDonationDate] = useState('')
+  const [donationSaving, setDonationSaving] = useState(false)
+
   const [browseInput, setBrowseInput] = useState('')
   const [browseApplied, setBrowseApplied] = useState('')
   const [browseList, setBrowseList] = useState([])
@@ -39,6 +58,59 @@ export default function DoneePage({ user }) {
   }, [accountId])
 
   useEffect(() => { refreshFavoriteIds() }, [refreshFavoriteIds])
+
+  useEffect(() => {
+    if (accountId == null) return
+    let cancelled = false
+    async function loadCats() {
+      try {
+        const data = await api.listCategories('')
+        if (cancelled) return
+        const list = Array.isArray(data.categories) ? data.categories : []
+        setCategories(list.filter((c) => !c.is_suspended))
+      } catch {
+        if (!cancelled) setCategories([])
+      }
+    }
+    loadCats()
+    return () => { cancelled = true }
+  }, [accountId])
+
+  useEffect(() => {
+    if (accountId == null || tab !== 'history') return
+    let cancelled = false
+    async function load() {
+      setHistLoading(true)
+      setError(null)
+      try {
+        const data = await api.listDoneeDonations({
+          accountId,
+          categoryId: histApplied.cat ? Number(histApplied.cat) : undefined,
+          dateFrom: histApplied.from || undefined,
+          dateTo: histApplied.to || undefined,
+          search: histApplied.search || undefined,
+        })
+        if (cancelled) return
+        setHistList(Array.isArray(data.donations) ? data.donations : [])
+      } catch (e) {
+        if (!cancelled) {
+          setHistList([])
+          setError(e?.data?.message || e?.message || 'Could not load donation history.')
+        }
+      } finally {
+        if (!cancelled) setHistLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [accountId, tab, histApplied])
+
+  useEffect(() => {
+    if (detail == null) {
+      setDonationAmount('')
+      setDonationDate('')
+    }
+  }, [detail])
 
   useEffect(() => {
     if (accountId == null || tab !== 'browse') return
@@ -148,13 +220,76 @@ export default function DoneePage({ user }) {
     try { return new Date(iso + 'T12:00:00').toLocaleDateString() } catch { return iso }
   }
 
+  function fmtDonatedAt(s) {
+    if (!s) return '—'
+    const part = String(s).split(/[T ]/)[0]
+    return fmtDate(part)
+  }
+
+  function fmtMoney(n) {
+    if (n == null || n === '') return '—'
+    const x = Number(n)
+    if (!Number.isFinite(x)) return '—'
+    return x.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  }
+
+  function applyHistFilters() {
+    setHistApplied({
+      cat: histCat,
+      from: histFrom,
+      to: histTo,
+      search: histSearch.trim(),
+    })
+  }
+
+  function clearHistFilters() {
+    setHistCat('')
+    setHistFrom('')
+    setHistTo('')
+    setHistSearch('')
+    setHistApplied({ cat: '', from: '', to: '', search: '' })
+  }
+
+  async function recordDonation() {
+    if (accountId == null || detail == null) return
+    const amt = Number(String(donationAmount).replace(/,/g, '').trim())
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setError('Enter an amount greater than zero.')
+      return
+    }
+    setDonationSaving(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      await api.recordDoneeDonation({
+        accountId,
+        activityId: detail.activity_id,
+        amount: amt,
+        donatedAt: donationDate.trim() || undefined,
+      })
+      setSuccess('Saved to your donation history.')
+      setDonationAmount('')
+      setDonationDate('')
+      if (tab === 'history') {
+        setHistApplied((h) => ({ ...h }))
+      }
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not save contribution.')
+    } finally {
+      setDonationSaving(false)
+    }
+  }
+
   return (
     <main className="page">
       <div className="page-header">
         <div>
-          <h1>Browse Fundraising Activities</h1>
+          <h1>Discover causes & track contributions</h1>
           <p className="page-sub">
-            Search active campaigns, view details, and save the ones you want to support.
+            Search active campaigns, view details, save favourites, and keep a personal record of
+            what you gave. Courage does not process payments—log amounts after you support a cause
+            elsewhere, or from the home page <strong>Support</strong> button. Filter your history by
+            category and date below.
           </p>
         </div>
       </div>
@@ -175,6 +310,14 @@ export default function DoneePage({ user }) {
           onClick={() => { setTab('favorites'); setSuccess(null) }}
         >
           My favourites
+        </button>
+        <button
+          role="tab"
+          aria-selected={tab === 'history'}
+          className={tab === 'history' ? 'active' : ''}
+          onClick={() => { setTab('history'); setSuccess(null) }}
+        >
+          Donation history
         </button>
       </div>
 
@@ -337,6 +480,107 @@ export default function DoneePage({ user }) {
             </div>
           </>
         ) : null}
+
+        {tab === 'history' ? (
+          <>
+            <p className="donee-hint">
+              See everything you have logged. Filter by campaign category and the date of the
+              contribution. To add a row, open any activity (here or from the home page) and use{' '}
+              <strong>Log a contribution</strong>.
+            </p>
+            <div className="toolbar donee-history-toolbar">
+              <label className="donee-filter">
+                <span className="donee-filter-label">Category</span>
+                <select
+                  value={histCat}
+                  onChange={(e) => setHistCat(e.target.value)}
+                  aria-label="Filter by category"
+                >
+                  <option value="">All categories</option>
+                  {categories.map((c) => (
+                    <option key={c.category_id} value={String(c.category_id)}>
+                      {c.category_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="donee-filter">
+                <span className="donee-filter-label">From</span>
+                <input
+                  type="date"
+                  value={histFrom}
+                  onChange={(e) => setHistFrom(e.target.value)}
+                  aria-label="Contributions on or after"
+                />
+              </label>
+              <label className="donee-filter">
+                <span className="donee-filter-label">To</span>
+                <input
+                  type="date"
+                  value={histTo}
+                  onChange={(e) => setHistTo(e.target.value)}
+                  aria-label="Contributions on or before"
+                />
+              </label>
+              <div className="search donee-history-search">
+                <input
+                  value={histSearch}
+                  onChange={(e) => setHistSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') applyHistFilters() }}
+                  placeholder="Search by activity or category…"
+                  aria-label="Search contributions"
+                />
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={applyHistFilters}
+                disabled={histLoading}
+              >
+                Apply filters
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={clearHistFilters}
+                disabled={histLoading}
+              >
+                Clear
+              </button>
+            </div>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount (logged)</th>
+                    <th>Activity</th>
+                    <th>Category</th>
+                    <th>Organizer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {histList.map((d) => (
+                    <tr key={d.donation_id}>
+                      <td className="muted">{fmtDonatedAt(d.donated_at)}</td>
+                      <td>{fmtMoney(d.amount)}</td>
+                      <td>{d.activity_name}</td>
+                      <td className="muted">{d.category_name || '—'}</td>
+                      <td className="muted">{d.organizer_name || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!histLoading && histList.length === 0 ? (
+                <div className="data-empty">
+                  No contributions match these filters. Add one from an activity&apos;s detail view,
+                  try the home page <strong>Support</strong> flow, or widen category or dates.
+                </div>
+              ) : null}
+              {histLoading ? <div className="data-empty">Loading…</div> : null}
+            </div>
+          </>
+        ) : null}
       </div>
 
       {detail != null || detailLoading ? (
@@ -383,6 +627,43 @@ export default function DoneePage({ user }) {
                   <dt>Description</dt>
                   <dd>{detail.description || '—'}</dd>
                 </dl>
+                <div className="donee-donation-box">
+                  <h3 className="donee-donation-title">Log a contribution</h3>
+                  <p className="donee-donation-help">
+                    This app does not move money. After you give through your bank, cash, or another
+                    channel, enter the amount here so it appears in your donation history.
+                  </p>
+                  <div className="donee-donation-row">
+                    <label className="donee-filter">
+                      <span className="donee-filter-label">Amount</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={donationAmount}
+                        onChange={(e) => setDonationAmount(e.target.value)}
+                        placeholder="e.g. 50"
+                        aria-label="Contribution amount"
+                      />
+                    </label>
+                    <label className="donee-filter">
+                      <span className="donee-filter-label">Date (optional)</span>
+                      <input
+                        type="date"
+                        value={donationDate}
+                        onChange={(e) => setDonationDate(e.target.value)}
+                        aria-label="Contribution date"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn primary"
+                      disabled={donationSaving || saving}
+                      onClick={recordDonation}
+                    >
+                      {donationSaving ? 'Saving…' : 'Save to history'}
+                    </button>
+                  </div>
+                </div>
                 <div className="modal-actions">
                   <button type="button" className="btn" onClick={() => setDetail(null)}>
                     Close

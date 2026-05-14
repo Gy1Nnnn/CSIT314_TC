@@ -14,9 +14,6 @@ class UserProfileService:
     def get_profiles(self, search):
         return self._user_profile.list_profiles(search)
 
-    def view(self, profile_id):
-        return self._user_profile.view_profile(profile_id)
-
     def create(self, profile_name, description, access_control):
         return self._user_profile.create_profile(profile_name, description, access_control)
 

@@ -75,19 +75,6 @@ class FRABoundary:
         )
         return jsonify(body), status
 
-    def get_fundraising_activity(self, activity_id: int):
-        """Owner-only detail: includes ``view_count`` and ``favorite_count``."""
-        account_id_raw = (request.args.get("account_id") or "").strip()
-        try:
-            account_id = int(account_id_raw)
-        except (TypeError, ValueError):
-            return jsonify({"message": "account_id is required."}), 400
-        if account_id <= 0:
-            return jsonify({"message": "account_id is required."}), 400
-
-        body, status = self._service.get_activity(activity_id, account_id)
-        return jsonify(body), status
-
     def _parse_activity_payload(self, data):
         """Validate & normalise the body of a create/update request.
 
@@ -234,11 +221,6 @@ def list_fundraising_activities():
 @fra_bp.get("/fundraising-activities/history")
 def list_fundraising_activity_history():
     return _handler.list_completed_history()
-
-
-@fra_bp.get("/fundraising-activities/<int:activity_id>")
-def get_fundraising_activity(activity_id: int):
-    return _handler.get_fundraising_activity(activity_id)
 
 
 @fra_bp.post("/fundraising-activities")

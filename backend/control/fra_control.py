@@ -21,9 +21,6 @@ class FRAService:
             account_id, search, category_id, date_from, date_to
         )
 
-    def get_activity(self, activity_id, account_id):
-        return self._fra.get_activity(activity_id, account_id)
-
     def list_public(self, search):
         return self._fra.list_public_activities(search)
 
