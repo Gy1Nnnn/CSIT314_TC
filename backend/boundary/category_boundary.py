@@ -52,6 +52,10 @@ class CategoryBoundary:
         body, status = self._service.suspend(category_id, suspend)
         return jsonify(body), status
 
+    def delete_category(self, category_id: int):
+        body, status = self._service.delete(category_id)
+        return jsonify(body), status
+
 
 _handler = CategoryBoundary()
 
@@ -79,3 +83,8 @@ def update_category(category_id: int):
 @category_bp.post("/categories/<int:category_id>/suspend")
 def suspend_category(category_id: int):
     return _handler.suspend_category(category_id)
+
+
+@category_bp.delete("/categories/<int:category_id>")
+def delete_category(category_id: int):
+    return _handler.delete_category(category_id)

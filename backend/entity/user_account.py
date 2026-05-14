@@ -1,10 +1,3 @@
-"""Entity layer: user_account.
-
-Receives already-validated, parsed inputs from the Boundary (via the Control
-layer). Only performs DB-level checks (existence, credential matching) here.
-Every method returns ``(body, status)``.
-"""
-
 from backend.entity.db import get_connection
 
 
@@ -21,7 +14,9 @@ class UserAccount:
                     ua.email,
                     ua.profile_id,
                     up.profile_name,
-                    up.access_control
+                    up.access_control,
+                    ua.is_suspended AS account_suspended,
+                    up.is_suspended AS profile_suspended
                 FROM user_account ua
                 JOIN user_profile up ON up.profile_id = ua.profile_id
                 WHERE ua.email = ? AND ua.password = ? AND ua.profile_id = ?
@@ -32,6 +27,15 @@ class UserAccount:
                 return {
                     "message": "Invalid email, password, or profile combination.",
                 }, 401
+
+            if row["profile_suspended"]:
+                return {
+                    "message": "This profile is suspended. Contact a user administrator.",
+                }, 403
+            if row["account_suspended"]:
+                return {
+                    "message": "This account is suspended. Contact a user administrator.",
+                }, 403
 
             user = dict(row)
             return {
@@ -114,7 +118,6 @@ class UserAccount:
         return {"account": dict(row)}, 200
 
     def create_account(self, name, email, password, profile_id):
-        """All inputs already validated and trimmed by the Boundary."""
         conn = get_connection()
         try:
             conn.execute(
@@ -148,7 +151,7 @@ class UserAccount:
         return {"account": dict(row) if row else None}, 201
 
     def update_account(self, account_id, name, email, password, profile_id):
-        """All inputs already validated by the Boundary."""
+        """All inputs already validated by the Boundary. ``password`` may be None to leave unchanged."""
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -158,14 +161,24 @@ class UserAccount:
             if not existing:
                 return {"message": "Account not found."}, 404
 
-            conn.execute(
-                """
-                UPDATE user_account
-                SET name = ?, email = ?, password = ?, profile_id = ?
-                WHERE account_id = ?
-                """,
-                (name, email, password, profile_id, account_id),
-            )
+            if password is None:
+                conn.execute(
+                    """
+                    UPDATE user_account
+                    SET name = ?, email = ?, profile_id = ?
+                    WHERE account_id = ?
+                    """,
+                    (name, email, profile_id, account_id),
+                )
+            else:
+                conn.execute(
+                    """
+                    UPDATE user_account
+                    SET name = ?, email = ?, password = ?, profile_id = ?
+                    WHERE account_id = ?
+                    """,
+                    (name, email, password, profile_id, account_id),
+                )
             conn.commit()
             row = conn.execute(
                 """

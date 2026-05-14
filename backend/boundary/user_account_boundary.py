@@ -58,8 +58,9 @@ class UserAccountBoundary:
             return jsonify({"message": "name is required."}), 400
         if not email:
             return jsonify({"message": "email is required."}), 400
+        password = (data.get("password") or "").strip()
         if not password:
-            return jsonify({"message": "password is required."}), 400
+            password = None
         try:
             profile_id = int(profile_id_raw)
         except (TypeError, ValueError):

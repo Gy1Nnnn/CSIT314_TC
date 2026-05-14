@@ -25,3 +25,6 @@ class CategoryService:
 
     def suspend(self, category_id, suspend):
         return self._category.suspend_category(category_id, suspend)
+
+    def delete(self, category_id):
+        return self._category.delete_category(category_id)

@@ -13,7 +13,6 @@ function AccountForm({ mode, initial, profiles, onCancel, onSubmit, busy }) {
   const [profileId, setProfileId] = useState(
     initial?.profile_id ? String(initial.profile_id) : '',
   )
-  const [suspended, setSuspended] = useState(Boolean(initial?.is_suspended))
 
   const isEdit = mode === 'update'
   const canSubmit =
@@ -34,7 +33,6 @@ function AccountForm({ mode, initial, profiles, onCancel, onSubmit, busy }) {
           profile_id: Number(profileId),
         }
         if (password.trim()) payload.password = password
-        payload.is_suspended = suspended
         onSubmit(payload)
       }}
     >
@@ -109,30 +107,6 @@ function AccountForm({ mode, initial, profiles, onCancel, onSubmit, busy }) {
             ))}
           </select>
         </div>
-
-        <div className="field full">
-          <label className="field-label">Status</label>
-          <div className="status-toggle">
-            <label className={`status-opt ${!suspended ? 'active' : ''}`}>
-              <input
-                type="radio"
-                name="status"
-                checked={!suspended}
-                onChange={() => setSuspended(false)}
-              />
-              Active
-            </label>
-            <label className={`status-opt ${suspended ? 'active' : ''}`}>
-              <input
-                type="radio"
-                name="status"
-                checked={suspended}
-                onChange={() => setSuspended(true)}
-              />
-              Suspended
-            </label>
-          </div>
-        </div>
       </div>
 
       <div className="form-actions">
@@ -170,6 +144,7 @@ export default function UserAccountPage() {
       const data = await api.listUserProfiles('')
       setProfiles(Array.isArray(data.profiles) ? data.profiles : [])
     } catch {
+      void 0
     }
   }
 
@@ -294,6 +269,7 @@ export default function UserAccountPage() {
             viewAccountLoadedId.current = target.account_id
           }
         } catch {
+          void 0
         }
       }
     } catch (e) {

@@ -96,6 +96,9 @@ export class ApiClient {
       body: { suspend },
     })
   }
+  deleteCategory(categoryId) {
+    return this.request(`/api/categories/${categoryId}`, { method: 'DELETE' })
+  }
 
   // Platform manager — fundraising performance (daily / weekly / monthly)
   getPlatformFundraisingReport({ accountId, period, date, month } = {}) {
@@ -110,9 +113,25 @@ export class ApiClient {
   }
 
   // FRA
-  listActivities({ accountId, search } = {}) {
+  listActivities({
+    accountId,
+    search,
+    categoryId,
+    status,
+    dateFrom,
+    dateTo,
+    suspended,
+  } = {}) {
     return this.request('/api/fundraising-activities', {
-      query: { account_id: accountId, search },
+      query: {
+        account_id: accountId,
+        search,
+        category_id: categoryId,
+        status,
+        date_from: dateFrom,
+        date_to: dateTo,
+        suspended,
+      },
     })
   }
   listCompletedActivityHistory({
@@ -142,6 +161,12 @@ export class ApiClient {
     return this.request(`/api/fundraising-activities/${activityId}/suspend`, {
       method: 'POST',
       body: payload,
+    })
+  }
+  deleteActivity(activityId, accountId) {
+    return this.request(`/api/fundraising-activities/${activityId}`, {
+      method: 'DELETE',
+      query: { account_id: accountId },
     })
   }
 

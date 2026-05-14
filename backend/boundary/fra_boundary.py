@@ -23,6 +23,11 @@ class FRABoundary:
     def list_fundraising_activities(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
         search = (request.args.get("search") or "").strip()
+        category_id_raw = (request.args.get("category_id") or "").strip()
+        status_in = (request.args.get("status") or "").strip().lower()
+        date_from_raw = (request.args.get("date_from") or "").strip()
+        date_to_raw = (request.args.get("date_to") or "").strip()
+        suspended_raw = (request.args.get("suspended") or "").strip().lower()
 
         try:
             account_id = int(account_id_raw)
@@ -31,7 +36,48 @@ class FRABoundary:
         if account_id <= 0:
             return jsonify({"message": "account_id is required."}), 400
 
-        body, status = self._service.get_activities(account_id, search)
+        category_id = None
+        if category_id_raw:
+            try:
+                category_id = int(category_id_raw)
+            except (TypeError, ValueError):
+                return jsonify({"message": "category_id must be a number."}), 400
+            if category_id <= 0:
+                return jsonify({"message": "category_id must be positive."}), 400
+
+        status_filter = None
+        if status_in:
+            if status_in not in STATUSES:
+                return jsonify({"message": "Invalid status."}), 400
+            status_filter = status_in
+
+        date_from = None
+        date_to = None
+        try:
+            if date_from_raw:
+                date_from = date.fromisoformat(date_from_raw).isoformat()
+            if date_to_raw:
+                date_to = date.fromisoformat(date_to_raw).isoformat()
+        except ValueError:
+            return jsonify({"message": "Invalid date_from or date_to."}), 400
+        if date_from and date_to and date_from > date_to:
+            return jsonify({"message": "date_from must be <= date_to."}), 400
+
+        suspended_filter = None
+        if suspended_raw in ("0", "false", "no"):
+            suspended_filter = False
+        elif suspended_raw in ("1", "true", "yes"):
+            suspended_filter = True
+
+        body, status = self._service.get_activities(
+            account_id,
+            search,
+            category_id,
+            status_filter,
+            date_from,
+            date_to,
+            suspended_filter,
+        )
         return jsonify(body), status
 
     def list_completed_history(self):
@@ -190,6 +236,18 @@ class FRABoundary:
         body, status = self._service.suspend(activity_id, account_id, suspend)
         return jsonify(body), status
 
+    def delete_fundraising_activity(self, activity_id: int):
+        account_id_raw = (request.args.get("account_id") or "").strip()
+        try:
+            account_id = int(account_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"message": "account_id is required."}), 400
+        if account_id <= 0:
+            return jsonify({"message": "account_id is required."}), 400
+
+        body, status = self._service.delete_activity(activity_id, account_id)
+        return jsonify(body), status
+
     def list_public_activities(self):
         search = (request.args.get("search") or "").strip()
         body, status = self._service.list_public(search)
@@ -236,3 +294,8 @@ def update_fundraising_activity(activity_id: int):
 @fra_bp.post("/fundraising-activities/<int:activity_id>/suspend")
 def suspend_fundraising_activity(activity_id: int):
     return _handler.suspend_fundraising_activity(activity_id)
+
+
+@fra_bp.delete("/fundraising-activities/<int:activity_id>")
+def delete_fundraising_activity(activity_id: int):
+    return _handler.delete_fundraising_activity(activity_id)

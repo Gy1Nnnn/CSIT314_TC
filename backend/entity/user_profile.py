@@ -16,6 +16,7 @@ class UserProfile:
                 """
                 SELECT profile_id, profile_name, description
                 FROM user_profile
+                WHERE is_suspended = 0
                 ORDER BY profile_name COLLATE NOCASE
                 """
             ).fetchall()

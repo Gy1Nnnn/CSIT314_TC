@@ -90,7 +90,7 @@ export default function ManagePlatformPage() {
   const [search, setSearch] = useState('')
   const [applied, setApplied] = useState('')
   const [selected, setSelected] = useState(null)
-  const [confirm, setConfirm] = useState(null) // {mode:'delete'|'reinstate', category}
+  const [confirm, setConfirm] = useState(null) // { mode: 'hide'|'hardDelete'|'restore', category }
 
   async function loadCategories() {
     setLoading(true)
@@ -150,12 +150,36 @@ export default function ManagePlatformPage() {
     setSaving(true)
     clearMessages()
     const target = confirm.category
-    const wantSuspend = confirm.mode === 'delete'
     try {
-      await api.suspendCategory(target.category_id, wantSuspend)
-      setSuccess(wantSuspend ? 'Category deleted.' : 'Category restored.')
-      setConfirm(null)
-      if (view === VIEWS.VIEW) { setView(VIEWS.LIST); setSelected(null) }
+      if (confirm.mode === 'hardDelete') {
+        await api.deleteCategory(target.category_id)
+        setSuccess('Category deleted.')
+        setConfirm(null)
+        if (view === VIEWS.VIEW) {
+          setView(VIEWS.LIST)
+          setSelected(null)
+        }
+      } else if (confirm.mode === 'hide') {
+        await api.suspendCategory(target.category_id, true)
+        setSuccess('Category hidden from new campaigns.')
+        setConfirm(null)
+        if (view === VIEWS.VIEW) {
+          const data = await api.listCategories(applied)
+          const list = Array.isArray(data.categories) ? data.categories : []
+          const next = list.find((x) => x.category_id === target.category_id)
+          if (next) setSelected(next)
+        }
+      } else {
+        await api.suspendCategory(target.category_id, false)
+        setSuccess('Category restored.')
+        setConfirm(null)
+        if (view === VIEWS.VIEW) {
+          const data = await api.listCategories(applied)
+          const list = Array.isArray(data.categories) ? data.categories : []
+          const next = list.find((x) => x.category_id === target.category_id)
+          if (next) setSelected(next)
+        }
+      }
       await loadCategories()
     } catch (e) {
       setError(e?.data?.message || e?.message || 'Could not update category.')
@@ -237,17 +261,45 @@ export default function ManagePlatformPage() {
             <h1>View FRA Category</h1>
             <p className="page-sub">Monitor category data.</p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
               Edit
             </button>
-            <button
-              type="button"
-              className={`btn ${suspended ? 'primary' : 'danger'}`}
-              onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', category: selected })}
-            >
-              {suspended ? 'Restore' : 'Delete'}
-            </button>
+            {!suspended ? (
+              <>
+                <button
+                  type="button"
+                  className="btn danger"
+                  onClick={() => setConfirm({ mode: 'hide', category: selected })}
+                >
+                  Hide from browse
+                </button>
+                <button
+                  type="button"
+                  className="btn danger"
+                  onClick={() => setConfirm({ mode: 'hardDelete', category: selected })}
+                >
+                  Delete permanently
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => setConfirm({ mode: 'restore', category: selected })}
+              >
+                Restore visibility
+              </button>
+            )}
+            {suspended ? (
+              <button
+                type="button"
+                className="btn danger"
+                onClick={() => setConfirm({ mode: 'hardDelete', category: selected })}
+              >
+                Delete permanently
+              </button>
+            ) : null}
           </div>
         </div>
         <div className="card">
@@ -265,7 +317,7 @@ export default function ManagePlatformPage() {
               <dt>Status</dt>
               <dd>
                 <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
-                  {suspended ? 'Deleted' : 'Active'}
+                  {suspended ? 'Hidden' : 'Active'}
                 </span>
               </dd>
               <dt>Last updated</dt>
@@ -275,14 +327,28 @@ export default function ManagePlatformPage() {
         </div>
         <ConfirmModal
           open={Boolean(confirm)}
-          variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
-          title={confirm?.mode === 'delete' ? 'Delete category?' : 'Restore category?'}
-          message={
-            confirm?.mode === 'delete'
-              ? 'This action cannot be undone.'
-              : 'The category will be available for activities again.'
+          variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
+          title={
+            confirm?.mode === 'hardDelete'
+              ? 'Permanently delete category?'
+              : confirm?.mode === 'hide'
+                ? 'Hide category?'
+                : 'Restore category?'
           }
-          confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+          message={
+            confirm?.mode === 'hardDelete'
+              ? 'Removes the row only if no fundraising activities use this category. Otherwise you will see an error.'
+              : confirm?.mode === 'hide'
+                ? 'The category will no longer appear when browsing or creating campaigns.'
+                : 'The category will be available for new campaigns again.'
+          }
+          confirmLabel={
+            confirm?.mode === 'hardDelete'
+              ? 'Delete permanently'
+              : confirm?.mode === 'hide'
+                ? 'Hide'
+                : 'Restore'
+          }
           busy={saving}
           onCancel={() => setConfirm(null)}
           onConfirm={performConfirm}
@@ -355,7 +421,7 @@ export default function ManagePlatformPage() {
                     <td className="muted">{c.description ? c.description.slice(0, 60) + (c.description.length > 60 ? '…' : '') : '—'}</td>
                     <td>
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
-                        {suspended ? 'Deleted' : 'Active'}
+                        {suspended ? 'Hidden' : 'Active'}
                       </span>
                     </td>
                     <td className="muted">{formatUpdated(c.updated_at || c.created_at)}</td>
@@ -374,12 +440,29 @@ export default function ManagePlatformPage() {
                       >
                         Edit
                       </button>
+                      {!suspended ? (
+                        <button
+                          type="button"
+                          className="btn-link danger"
+                          onClick={() => setConfirm({ mode: 'hide', category: c })}
+                        >
+                          Hide
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => setConfirm({ mode: 'restore', category: c })}
+                        >
+                          Restore
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className={`btn-link ${suspended ? '' : 'danger'}`}
-                        onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', category: c })}
+                        className="btn-link danger"
+                        onClick={() => setConfirm({ mode: 'hardDelete', category: c })}
                       >
-                        {suspended ? 'Restore' : 'Delete'}
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -396,14 +479,28 @@ export default function ManagePlatformPage() {
 
       <ConfirmModal
         open={Boolean(confirm)}
-        variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
-        title={confirm?.mode === 'delete' ? 'Delete category?' : 'Restore category?'}
-        message={
-          confirm?.mode === 'delete'
-            ? 'This action cannot be undone.'
-            : 'The category will be available for activities again.'
+        variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
+        title={
+          confirm?.mode === 'hardDelete'
+            ? 'Permanently delete category?'
+            : confirm?.mode === 'hide'
+              ? 'Hide category?'
+              : 'Restore category?'
         }
-        confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+        message={
+          confirm?.mode === 'hardDelete'
+            ? 'Removes the row only if no fundraising activities use this category. Otherwise you will see an error.'
+            : confirm?.mode === 'hide'
+              ? 'The category will no longer appear when browsing or creating campaigns.'
+              : 'The category will be available for new campaigns again.'
+        }
+        confirmLabel={
+          confirm?.mode === 'hardDelete'
+            ? 'Delete permanently'
+            : confirm?.mode === 'hide'
+              ? 'Hide'
+              : 'Restore'
+        }
         busy={saving}
         onCancel={() => setConfirm(null)}
         onConfirm={performConfirm}

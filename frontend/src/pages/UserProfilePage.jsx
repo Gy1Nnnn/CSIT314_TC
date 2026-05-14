@@ -26,7 +26,6 @@ function ProfileForm({ mode, initial, onCancel, onSubmit, busy }) {
   const [profileName, setProfileName] = useState(initial?.profile_name || '')
   const [description, setDescription] = useState(initial?.description || '')
   const [access, setAccess] = useState(parseAccessControl(initial?.access_control))
-  const [suspended, setSuspended] = useState(Boolean(initial?.is_suspended))
 
   const isEdit = mode === 'update'
   const canSubmit = profileName.trim().length > 0 && !busy
@@ -40,7 +39,6 @@ function ProfileForm({ mode, initial, onCancel, onSubmit, busy }) {
           profile_name: profileName.trim(),
           description: description.trim(),
           access_control: Array.from(access).join(', '),
-          is_suspended: suspended,
         })
       }}
     >
@@ -57,30 +55,6 @@ function ProfileForm({ mode, initial, onCancel, onSubmit, busy }) {
             placeholder="e.g., User Admin"
             required
           />
-        </div>
-
-        <div className="field">
-          <label className="field-label">Status</label>
-          <div className="status-toggle">
-            <label className={`status-opt ${!suspended ? 'active' : ''}`}>
-              <input
-                type="radio"
-                name="status"
-                checked={!suspended}
-                onChange={() => setSuspended(false)}
-              />
-              Active
-            </label>
-            <label className={`status-opt ${suspended ? 'active' : ''}`}>
-              <input
-                type="radio"
-                name="status"
-                checked={suspended}
-                onChange={() => setSuspended(true)}
-              />
-              Suspended
-            </label>
-          </div>
         </div>
 
         <div className="field full">

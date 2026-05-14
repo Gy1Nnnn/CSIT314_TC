@@ -165,10 +165,22 @@ export default function FundraiserPage({ user }) {
   const [success, setSuccess] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const [search, setSearch] = useState('')
-  const [applied, setApplied] = useState('')
+  const [searchInp, setSearchInp] = useState('')
+  const [catInp, setCatInp] = useState('')
+  const [statusInp, setStatusInp] = useState('')
+  const [fromInp, setFromInp] = useState('')
+  const [toInp, setToInp] = useState('')
+  const [suspInp, setSuspInp] = useState('')
+  const [applied, setApplied] = useState({
+    search: '',
+    categoryId: '',
+    status: '',
+    dateFrom: '',
+    dateTo: '',
+    suspended: '',
+  })
   const [selected, setSelected] = useState(null)
-  const [confirm, setConfirm] = useState(null) // {mode:'delete'|'restore', activity}
+  const [confirm, setConfirm] = useState(null) // { mode: 'hide'|'hardDelete'|'restore', activity }
 
   const [histActivities, setHistActivities] = useState([])
   const [histLoading, setHistLoading] = useState(false)
@@ -190,6 +202,7 @@ export default function FundraiserPage({ user }) {
       const data = await api.listCategories('')
       setCategories(Array.isArray(data.categories) ? data.categories : [])
     } catch {
+      void 0
     }
   }
 
@@ -197,7 +210,15 @@ export default function FundraiserPage({ user }) {
     setLoading(true)
     setError(null)
     try {
-      const data = await api.listActivities({ accountId, search: applied })
+      const data = await api.listActivities({
+        accountId,
+        search: applied.search || undefined,
+        categoryId: applied.categoryId || undefined,
+        status: applied.status || undefined,
+        dateFrom: applied.dateFrom || undefined,
+        dateTo: applied.dateTo || undefined,
+        suspended: applied.suspended === '' ? undefined : applied.suspended,
+      })
       setActivities(Array.isArray(data.activities) ? data.activities : [])
     } catch (e) {
       setError(e?.data?.message || e?.message || 'Could not load activities.')
@@ -287,12 +308,56 @@ export default function FundraiserPage({ user }) {
     setSaving(true)
     clearMessages()
     const target = confirm.activity
-    const wantSuspend = confirm.mode === 'delete'
     try {
-      await api.suspendActivity(target.activity_id, { account_id: accountId, suspend: wantSuspend })
-      setSuccess(wantSuspend ? 'Activity deleted.' : 'Activity restored.')
-      setConfirm(null)
-      if (view === VIEWS.VIEW) { setView(VIEWS.LIST); setSelected(null) }
+      if (confirm.mode === 'hardDelete') {
+        await api.deleteActivity(target.activity_id, accountId)
+        setSuccess('Campaign permanently removed.')
+        setConfirm(null)
+        if (view === VIEWS.VIEW) {
+          setView(VIEWS.LIST)
+          setSelected(null)
+        }
+      } else if (confirm.mode === 'hide') {
+        await api.suspendActivity(target.activity_id, { account_id: accountId, suspend: true })
+        setSuccess('Campaign hidden from public browse.')
+        setConfirm(null)
+        if (view === VIEWS.VIEW) {
+          const data = await api.listActivities({
+            accountId,
+            search: applied.search || undefined,
+            categoryId: applied.categoryId || undefined,
+            status: applied.status || undefined,
+            dateFrom: applied.dateFrom || undefined,
+            dateTo: applied.dateTo || undefined,
+            suspended: applied.suspended === '' ? undefined : applied.suspended,
+          })
+          const list = Array.isArray(data.activities) ? data.activities : []
+          const next = list.find((x) => x.activity_id === target.activity_id)
+          if (next) setSelected(next)
+          else {
+            setView(VIEWS.LIST)
+            setSelected(null)
+          }
+        }
+      } else {
+        await api.suspendActivity(target.activity_id, { account_id: accountId, suspend: false })
+        setSuccess('Campaign visible to donors again.')
+        setConfirm(null)
+        if (view === VIEWS.VIEW) {
+          const data = await api.listActivities({
+            accountId,
+            search: applied.search || undefined,
+            categoryId: applied.categoryId || undefined,
+            status: applied.status || undefined,
+            dateFrom: applied.dateFrom || undefined,
+            dateTo: applied.dateTo || undefined,
+            suspended: applied.suspended === '' ? undefined : applied.suspended,
+          })
+          const list = Array.isArray(data.activities) ? data.activities : []
+          const next = list.find((x) => x.activity_id === target.activity_id)
+          if (next) setSelected(next)
+        }
+      }
       await loadActivities()
       if (listSection === 'history') await loadHistory()
     } catch (e) {
@@ -381,16 +446,33 @@ export default function FundraiserPage({ user }) {
             <h1>View Fundraising Activity</h1>
             <p className="page-sub">Monitor campaign information.</p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
               Edit
             </button>
+            {!suspended ? (
+              <button
+                type="button"
+                className="btn danger"
+                onClick={() => setConfirm({ mode: 'hide', activity: selected })}
+              >
+                Hide from donors
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => setConfirm({ mode: 'restore', activity: selected })}
+              >
+                Restore visibility
+              </button>
+            )}
             <button
               type="button"
-              className={`btn ${suspended ? 'primary' : 'danger'}`}
-              onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', activity: selected })}
+              className="btn danger"
+              onClick={() => setConfirm({ mode: 'hardDelete', activity: selected })}
             >
-              {suspended ? 'Restore' : 'Delete'}
+              Delete permanently
             </button>
           </div>
         </div>
@@ -407,7 +489,7 @@ export default function FundraiserPage({ user }) {
               <dt>Status</dt>
               <dd>
                 <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
-                  {suspended ? 'Deleted' : selected.status || 'Active'}
+                  {suspended ? 'Hidden from browse' : selected.status || 'Active'}
                 </span>
               </dd>
               <dt>Views</dt>
@@ -431,14 +513,28 @@ export default function FundraiserPage({ user }) {
         </div>
         <ConfirmModal
           open={Boolean(confirm)}
-          variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
-          title={confirm?.mode === 'delete' ? 'Delete activity?' : 'Restore activity?'}
-          message={
-            confirm?.mode === 'delete'
-              ? 'This action cannot be undone.'
-              : 'The activity will be visible to donors again.'
+          variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
+          title={
+            confirm?.mode === 'hardDelete'
+              ? 'Permanently delete campaign?'
+              : confirm?.mode === 'hide'
+                ? 'Hide from public browse?'
+                : 'Restore visibility?'
           }
-          confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+          message={
+            confirm?.mode === 'hardDelete'
+              ? 'This removes the campaign and its donation/favorite links from the database. It cannot be undone.'
+              : confirm?.mode === 'hide'
+                ? 'Donors will no longer see this campaign until you restore it.'
+                : 'The campaign will appear in public browse again (if still active).'
+          }
+          confirmLabel={
+            confirm?.mode === 'hardDelete'
+              ? 'Delete permanently'
+              : confirm?.mode === 'hide'
+                ? 'Hide'
+                : 'Restore'
+          }
           busy={saving}
           onCancel={() => setConfirm(null)}
           onConfirm={performConfirm}
@@ -454,7 +550,9 @@ export default function FundraiserPage({ user }) {
           {listSection === 'campaigns' ? (
             <>
               <h1>Fundraising Activities</h1>
-              <p className="page-sub">Browse activities and open one to view, edit, or delete.</p>
+              <p className="page-sub">
+                Filter by name, category, workflow status, end dates, or hidden state — then search.
+              </p>
             </>
           ) : (
             <>
@@ -514,22 +612,127 @@ export default function FundraiserPage({ user }) {
 
       {listSection === 'campaigns' ? (
       <div className="card">
-        <div className="toolbar">
-          <div className="search">
+        <div className="toolbar fra-history-toolbar" style={{ flexWrap: 'wrap' }}>
+          <div className="search fra-history-search">
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') setApplied(search.trim()) }}
-              placeholder="Search by name / status / category…"
+              value={searchInp}
+              onChange={(e) => setSearchInp(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setApplied({
+                    search: searchInp.trim(),
+                    categoryId: catInp,
+                    status: statusInp,
+                    dateFrom: fromInp,
+                    dateTo: toInp,
+                    suspended: suspInp,
+                  })
+                }
+              }}
+              placeholder="Campaign name or ID…"
             />
           </div>
-          <button type="button" className="btn" onClick={() => setApplied(search.trim())} disabled={loading}>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="fra-cat">Category</label>
+            <select
+              id="fra-cat"
+              className="select"
+              value={catInp}
+              onChange={(e) => setCatInp(e.target.value)}
+            >
+              <option value="">All</option>
+              {categories
+                .filter((c) => !c.is_suspended)
+                .map((c) => (
+                  <option key={c.category_id} value={String(c.category_id)}>
+                    {c.category_name}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="fra-status">Workflow status</label>
+            <select
+              id="fra-status"
+              className="select"
+              value={statusInp}
+              onChange={(e) => setStatusInp(e.target.value)}
+            >
+              <option value="">Any</option>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="fra-from">End date from</label>
+            <input
+              id="fra-from"
+              className="input"
+              type="date"
+              value={fromInp}
+              onChange={(e) => setFromInp(e.target.value)}
+            />
+          </div>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="fra-to">End date to</label>
+            <input
+              id="fra-to"
+              className="input"
+              type="date"
+              value={toInp}
+              onChange={(e) => setToInp(e.target.value)}
+            />
+          </div>
+          <div className="field fra-history-field">
+            <label className="field-label" htmlFor="fra-susp">Public browse</label>
+            <select
+              id="fra-susp"
+              className="select"
+              value={suspInp}
+              onChange={(e) => setSuspInp(e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="0">Visible (not hidden)</option>
+              <option value="1">Hidden</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() =>
+              setApplied({
+                search: searchInp.trim(),
+                categoryId: catInp,
+                status: statusInp,
+                dateFrom: fromInp,
+                dateTo: toInp,
+                suspended: suspInp,
+              })
+            }
+            disabled={loading}
+          >
             Search
           </button>
           <button
             type="button"
             className="btn ghost"
-            onClick={() => { setSearch(''); setApplied('') }}
+            onClick={() => {
+              setSearchInp('')
+              setCatInp('')
+              setStatusInp('')
+              setFromInp('')
+              setToInp('')
+              setSuspInp('')
+              setApplied({
+                search: '',
+                categoryId: '',
+                status: '',
+                dateFrom: '',
+                dateTo: '',
+                suspended: '',
+              })
+            }}
             disabled={loading}
           >
             Clear
@@ -559,7 +762,7 @@ export default function FundraiserPage({ user }) {
                     <td className="muted">{a.category_name || '—'}</td>
                     <td>
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
-                        {suspended ? 'Deleted' : a.status || 'Active'}
+                        {suspended ? 'Hidden' : a.status || 'Active'}
                       </span>
                     </td>
                     <td className="muted num">{Number(a.view_count ?? 0).toLocaleString()}</td>
@@ -579,12 +782,29 @@ export default function FundraiserPage({ user }) {
                       >
                         Edit
                       </button>
+                      {!suspended ? (
+                        <button
+                          type="button"
+                          className="btn-link danger"
+                          onClick={() => setConfirm({ mode: 'hide', activity: a })}
+                        >
+                          Hide
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => setConfirm({ mode: 'restore', activity: a })}
+                        >
+                          Restore
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className={`btn-link ${suspended ? '' : 'danger'}`}
-                        onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', activity: a })}
+                        className="btn-link danger"
+                        onClick={() => setConfirm({ mode: 'hardDelete', activity: a })}
                       >
-                        {suspended ? 'Restore' : 'Delete'}
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -735,12 +955,29 @@ export default function FundraiserPage({ user }) {
                       >
                         Edit
                       </button>
+                      {!suspended ? (
+                        <button
+                          type="button"
+                          className="btn-link danger"
+                          onClick={() => setConfirm({ mode: 'hide', activity: a })}
+                        >
+                          Hide
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => setConfirm({ mode: 'restore', activity: a })}
+                        >
+                          Restore
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className={`btn-link ${suspended ? '' : 'danger'}`}
-                        onClick={() => setConfirm({ mode: suspended ? 'restore' : 'delete', activity: a })}
+                        className="btn-link danger"
+                        onClick={() => setConfirm({ mode: 'hardDelete', activity: a })}
                       >
-                        {suspended ? 'Restore' : 'Delete'}
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -758,14 +995,28 @@ export default function FundraiserPage({ user }) {
 
       <ConfirmModal
         open={Boolean(confirm)}
-        variant={confirm?.mode === 'delete' ? 'danger' : 'primary'}
-        title={confirm?.mode === 'delete' ? 'Delete activity?' : 'Restore activity?'}
-        message={
-          confirm?.mode === 'delete'
-            ? 'This action cannot be undone.'
-            : 'The activity will be visible to donors again.'
+        variant={confirm?.mode === 'restore' ? 'primary' : 'danger'}
+        title={
+          confirm?.mode === 'hardDelete'
+            ? 'Permanently delete campaign?'
+            : confirm?.mode === 'hide'
+              ? 'Hide from public browse?'
+              : 'Restore visibility?'
         }
-        confirmLabel={confirm?.mode === 'delete' ? 'Delete' : 'Restore'}
+        message={
+          confirm?.mode === 'hardDelete'
+            ? 'This removes the campaign and its donation/favorite links from the database. It cannot be undone.'
+            : confirm?.mode === 'hide'
+              ? 'Donors will no longer see this campaign until you restore it.'
+              : 'The campaign will appear in public browse again (if still active).'
+        }
+        confirmLabel={
+          confirm?.mode === 'hardDelete'
+            ? 'Delete permanently'
+            : confirm?.mode === 'hide'
+              ? 'Hide'
+              : 'Restore'
+        }
         busy={saving}
         onCancel={() => setConfirm(null)}
         onConfirm={performConfirm}

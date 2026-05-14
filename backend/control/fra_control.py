@@ -11,8 +11,25 @@ class FRAService:
     def __init__(self):
         self._fra = FRA()
 
-    def get_activities(self, account_id, search):
-        return self._fra.list_activities(account_id, search)
+    def get_activities(
+        self,
+        account_id,
+        search,
+        category_id=None,
+        status_filter=None,
+        date_from=None,
+        date_to=None,
+        suspended_filter=None,
+    ):
+        return self._fra.list_activities(
+            account_id,
+            search,
+            category_id,
+            status_filter,
+            date_from,
+            date_to,
+            suspended_filter,
+        )
 
     def list_completed_history(
         self, account_id, search, category_id, date_from, date_to
@@ -75,3 +92,6 @@ class FRAService:
 
     def suspend(self, activity_id, account_id, suspend):
         return self._fra.suspend_activity(activity_id, account_id, suspend)
+
+    def delete_activity(self, activity_id, account_id):
+        return self._fra.delete_activity(activity_id, account_id)

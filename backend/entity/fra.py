@@ -36,10 +36,50 @@ def apply_fra_completed_past_end_date(conn, account_id=None, activity_id=None):
 class FRA:
     """Fundraising activities: CRUD, public browse, and auto-``completed`` past ``end_date``."""
 
-    def list_activities(self, account_id, search):
-        """account_id: int. search: optional trimmed string."""
+    def list_activities(
+        self,
+        account_id,
+        search,
+        category_id=None,
+        status_filter=None,
+        date_from=None,
+        date_to=None,
+        suspended_filter=None,
+    ):
+        """account_id: int. search: optional trimmed string.
+
+        Optional filters: category_id (int), status_filter (active|completed|suspended),
+        date_from/date_to (ISO, inclusive on ``end_date``), suspended_filter
+        (True = only suspended rows, False = only non-suspended, None = all).
+        """
         where: list[str] = ["fr.account_id = ?"]
         params: list[object] = [account_id]
+
+        if category_id is not None:
+            where.append("fr.category_id = ?")
+            params.append(category_id)
+
+        if status_filter:
+            where.append("LOWER(TRIM(COALESCE(fr.status, ''))) = ?")
+            params.append(status_filter.lower())
+
+        if date_from:
+            where.append(
+                "(fr.end_date IS NOT NULL AND TRIM(fr.end_date) != '' "
+                "AND date(fr.end_date) >= date(?))"
+            )
+            params.append(date_from)
+        if date_to:
+            where.append(
+                "(fr.end_date IS NOT NULL AND TRIM(fr.end_date) != '' "
+                "AND date(fr.end_date) <= date(?))"
+            )
+            params.append(date_to)
+
+        if suspended_filter is True:
+            where.append("fr.is_suspended = 1")
+        elif suspended_filter is False:
+            where.append("fr.is_suspended = 0")
 
         if search:
             safe = search.replace("%", r"\%").replace("_", r"\_")
@@ -320,6 +360,28 @@ class FRA:
             conn.close()
 
         return {"activity": dict(row) if row else None}, 200
+
+    def delete_activity(self, activity_id, account_id):
+        """Remove an FRA and dependent favorites/donations (owner must match)."""
+        conn = get_connection()
+        try:
+            existing = conn.execute(
+                "SELECT 1 FROM FRA WHERE activity_id = ? AND account_id = ?",
+                (activity_id, account_id),
+            ).fetchone()
+            if not existing:
+                return {"message": "Activity not found."}, 404
+
+            conn.execute("DELETE FROM donee_favorite WHERE activity_id = ?", (activity_id,))
+            conn.execute("DELETE FROM donee_donation WHERE activity_id = ?", (activity_id,))
+            conn.execute(
+                "DELETE FROM FRA WHERE activity_id = ? AND account_id = ?",
+                (activity_id, account_id),
+            )
+            conn.commit()
+            return {"message": "Activity deleted."}, 200
+        finally:
+            conn.close()
 
     def _public_activity_from_clause(self):
         """JOIN/WHERE for activities visible to donees (active, not suspended)."""

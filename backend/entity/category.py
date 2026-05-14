@@ -189,3 +189,32 @@ class Category:
             conn.close()
 
         return {"category": dict(row) if row else None}, 200
+
+    def delete_category(self, category_id):
+        """Remove a category only if no fundraising activity references it."""
+        conn = get_connection()
+        try:
+            existing = conn.execute(
+                "SELECT 1 FROM category WHERE category_id = ?",
+                (category_id,),
+            ).fetchone()
+            if not existing:
+                return {"message": "Category not found."}, 404
+
+            in_use = conn.execute(
+                "SELECT 1 FROM FRA WHERE category_id = ? LIMIT 1",
+                (category_id,),
+            ).fetchone()
+            if in_use:
+                return {
+                    "message": (
+                        "Cannot delete: one or more fundraising activities use this category. "
+                        "Reassign or delete those activities first."
+                    ),
+                }, 409
+
+            conn.execute("DELETE FROM category WHERE category_id = ?", (category_id,))
+            conn.commit()
+            return {"message": "Category deleted."}, 200
+        finally:
+            conn.close()
