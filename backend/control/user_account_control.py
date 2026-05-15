@@ -7,8 +7,8 @@ class UserAccountService:
     def __init__(self):
         self._user_account = UserAccount()
 
-    def get_accounts(self, search):
-        return self._user_account.list_accounts(search)
+    def get_accounts(self, account_id_or_email):
+        return self._user_account.list_accounts(account_id_or_email)
 
     def view(self, account_id):
         return self._user_account.view_account(account_id)

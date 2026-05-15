@@ -23,21 +23,21 @@ class UserProfile:
         finally:
             conn.close()
 
-    def list_profiles(self, search):
-        where: list[str] = []
+    def list_profiles(self, profile_id_or_profile_name):
         params: list[object] = []
+        where_sql = ""
 
-        if search:
-            safe = search.replace("%", r"\%").replace("_", r"\_")
-            like = f"%{safe}%"
-            clause = "(profile_name LIKE ? ESCAPE '\\')"
-            params.append(like)
-            if search.isdigit():
-                clause = f"({clause} OR profile_id = ?)"
-                params.append(int(search))
-            where.append(clause)
+        if profile_id_or_profile_name:
+            if profile_id_or_profile_name.isdigit():
+                where_sql = "WHERE profile_id = ? OR profile_name LIKE ?"
+                params = [
+                    int(profile_id_or_profile_name),
+                    f"%{profile_id_or_profile_name}%",
+                ]
+            else:
+                where_sql = "WHERE profile_name LIKE ?"
+                params = [f"%{profile_id_or_profile_name}%"]
 
-        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
         sql = f"""
             SELECT profile_id, profile_name, description, access_control, is_suspended
             FROM user_profile
@@ -65,7 +65,7 @@ class UserProfile:
             ).fetchone()
         finally:
             conn.close()
-
+            
         if not row:
             return {"message": "Profile not found."}, 404
         return {"profile": dict(row)}, 200

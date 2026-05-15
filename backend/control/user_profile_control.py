@@ -7,8 +7,8 @@ class UserProfileService:
     def __init__(self):
         self._user_profile = UserProfile()
 
-    def search_profiles(self, search):
-        return self._user_profile.list_profiles(search)
+    def search_profiles(self, profile_id_or_profile_name):
+        return self._user_profile.list_profiles(profile_id_or_profile_name)
 
     def view(self, profile_id):
         return self._user_profile.view_profile(profile_id)

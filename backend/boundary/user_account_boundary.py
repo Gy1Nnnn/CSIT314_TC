@@ -12,8 +12,8 @@ class UserAccountBoundary:
         self._service = UserAccountService()
 
     def list_user_accounts(self):
-        search = (request.args.get("search") or "").strip()
-        body, status = self._service.get_accounts(search)
+        account_id_or_email = (request.args.get("search") or "").strip()
+        body, status = self._service.get_accounts(account_id_or_email)
         return jsonify(body), status
 
     def view_user_account(self, account_id: int):

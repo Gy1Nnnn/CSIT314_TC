@@ -52,22 +52,19 @@ class UserAccount:
         finally:
             conn.close()
 
-    def list_accounts(self, search):
-        """search: optional string (already trimmed)."""
-        where: list[str] = []
+    def list_accounts(self, account_id_or_email):
+        """account_id_or_email: optional string (already trimmed)."""
         params: list[object] = []
+        where_sql = ""
 
-        if search:
-            safe = search.replace("%", r"\%").replace("_", r"\_")
-            like = f"%{safe}%"
-            clause = "(ua.name LIKE ? ESCAPE '\\' OR ua.email LIKE ? ESCAPE '\\')"
-            params.extend([like, like])
-            if search.isdigit():
-                clause = f"({clause} OR ua.account_id = ?)"
-                params.append(int(search))
-            where.append(clause)
+        if account_id_or_email:
+            if account_id_or_email.isdigit():
+                where_sql = "WHERE ua.account_id = ? OR ua.email LIKE ?"
+                params = [int(account_id_or_email), f"%{account_id_or_email}%"]
+            else:
+                where_sql = "WHERE ua.email LIKE ?"
+                params = [f"%{account_id_or_email}%"]
 
-        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
         sql = f"""
             SELECT
                 ua.account_id,

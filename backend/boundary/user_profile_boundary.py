@@ -12,13 +12,11 @@ class UserProfileBoundary:
         self._service = UserProfileService()
 
     def list_user_profiles(self):
-        search = (request.args.get("search") or "").strip()
-        body, status = self._service.search_profiles(search)
+        profile_id_or_profile_name = (request.args.get("search") or "").strip()
+        body, status = self._service.search_profiles(profile_id_or_profile_name)
         return jsonify(body), status
 
     def view_user_profile(self, profile_id: int):
-        if profile_id <= 0:
-            return jsonify({"message": "Invalid profile id."}), 400
         body, status = self._service.view(profile_id)
         return jsonify(body), status
 
