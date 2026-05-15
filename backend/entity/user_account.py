@@ -151,7 +151,6 @@ class UserAccount:
         return {"account": dict(row) if row else None}, 201
 
     def update_account(self, account_id, name, email, password, profile_id):
-        """All inputs already validated by the Boundary. ``password`` may be None to leave unchanged."""
         conn = get_connection()
         try:
             existing = conn.execute(

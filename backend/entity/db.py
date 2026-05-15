@@ -170,7 +170,36 @@ def _ensure_default_data(conn):
             ("Demo Donee", "donee@gmail.com", "qwertyui", donee_profile_id),
         )
 
-    # Categories are managed by Platform Manager (no auto-seeding).
+
+def _ensure_user_profile_unique_normalized_name_index(conn):
+    """Enforce unique profile names (trim + case-insensitive) at the DB layer."""
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+        ("ux_user_profile_name_normalized",),
+    ).fetchone():
+        return
+    dup = conn.execute(
+        """
+        SELECT 1 FROM (
+            SELECT lower(trim(profile_name)) AS n
+            FROM user_profile
+            GROUP BY lower(trim(profile_name))
+            HAVING COUNT(*) > 1
+        )
+        LIMIT 1
+        """
+    ).fetchone()
+    if dup:
+        return
+    try:
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX ux_user_profile_name_normalized
+            ON user_profile (lower(trim(profile_name)))
+            """
+        )
+    except sqlite3.OperationalError:
+        return
 
 
 def init_db():
@@ -291,10 +320,10 @@ def init_db():
         _ensure_fra_amount_raised_column(conn)
         _ensure_donee_donation_nullable_account(conn)
         _ensure_default_data(conn)
+        _ensure_user_profile_unique_normalized_name_index(conn)
         from backend.entity.fra import apply_fra_auto_completed
 
         apply_fra_auto_completed(conn)
         conn.commit()
     finally:
         conn.close()
-

@@ -44,6 +44,9 @@ export class ApiClient {
   listUserProfiles(search) {
     return this.request('/api/user-profiles', { query: { search } })
   }
+  getUserProfile(profileId) {
+    return this.request(`/api/user-profiles/${profileId}`)
+  }
   createUserProfile(payload) {
     return this.request('/api/user-profiles', { method: 'POST', body: payload })
   }

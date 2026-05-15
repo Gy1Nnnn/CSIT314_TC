@@ -1,14 +1,13 @@
-"""Entity layer: user_profile.
+"""Entity layer: user_profile."""
 
-Receives already-validated, parsed inputs from the Boundary (via the Control
-layer). Only performs DB-level checks here. Every method returns
-``(body, status)``.
-"""
+import sqlite3
 
 from backend.entity.db import get_connection
 
 
 class UserProfile:
+    _error_message = "This profile's name already exists. Choose another name"
+
     def list_profiles_for_login(self):
         conn = get_connection()
         try:
@@ -25,7 +24,6 @@ class UserProfile:
             conn.close()
 
     def list_profiles(self, search):
-        """search: optional string (already trimmed)."""
         where: list[str] = []
         params: list[object] = []
 
@@ -54,8 +52,25 @@ class UserProfile:
         finally:
             conn.close()
 
+    def view_profile(self, profile_id):
+        conn = get_connection()
+        try:
+            row = conn.execute(
+                """
+                SELECT profile_id, profile_name, description, access_control, is_suspended
+                FROM user_profile
+                WHERE profile_id = ?
+                """,
+                (profile_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return {"message": "Profile not found."}, 404
+        return {"profile": dict(row)}, 200
+
     def create_profile(self, profile_name, description, access_control):
-        """profile_name: non-empty str. description/access_control: optional."""
         conn = get_connection()
         try:
             conn.execute(
@@ -75,13 +90,15 @@ class UserProfile:
                 """,
                 (profile_id,),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return {"message": self._error_message}, 400
         finally:
             conn.close()
 
         return {"profile": dict(row) if row else None}, 201
 
     def update_profile(self, profile_id, profile_name, description, access_control):
-        """All inputs already validated by the Boundary."""
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -108,13 +125,16 @@ class UserProfile:
                 """,
                 (profile_id,),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return {"message": self._error_message}, 400
         finally:
             conn.close()
 
         return {"profile": dict(row) if row else None}, 200
 
     def suspend_profile(self, profile_id, suspend):
-        """profile_id: int, suspend: bool."""
+
         suspend_val = 1 if suspend else 0
         conn = get_connection()
         try:

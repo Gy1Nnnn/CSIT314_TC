@@ -1,8 +1,4 @@
-"""Control layer: user profile use-cases.
-
-Per the BCE pattern: the controller forwards already-validated inputs from the
-boundary to the entity, and returns the entity's response unchanged.
-"""
+"""Control layer: user profile use-cases."""
 
 from backend.entity.user_profile import UserProfile
 
@@ -11,8 +7,11 @@ class UserProfileService:
     def __init__(self):
         self._user_profile = UserProfile()
 
-    def get_profiles(self, search):
+    def search_profiles(self, search):
         return self._user_profile.list_profiles(search)
+
+    def view(self, profile_id):
+        return self._user_profile.view_profile(profile_id)
 
     def create(self, profile_name, description, access_control):
         return self._user_profile.create_profile(profile_name, description, access_control)

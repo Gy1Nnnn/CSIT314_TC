@@ -1,8 +1,4 @@
-"""Control layer: category use-cases.
-
-Per the BCE pattern: the controller forwards already-validated inputs from the
-boundary to the entity, and returns the entity's response unchanged.
-"""
+"""Control layer: category use-cases."""
 
 from backend.entity.category import Category
 

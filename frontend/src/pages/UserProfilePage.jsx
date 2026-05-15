@@ -120,6 +120,7 @@ export default function UserProfilePage() {
   const [applied, setApplied] = useState('')
   const [selected, setSelected] = useState(null)
   const [confirm, setConfirm] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   async function loadProfiles() {
     setLoading(true)
@@ -141,6 +142,20 @@ export default function UserProfilePage() {
   }, [applied])
 
   function clearMessages() { setError(null); setSuccess(null) }
+
+  async function openProfileView(profileId) {
+    clearMessages()
+    setDetailLoading(true)
+    try {
+      const data = await api.getUserProfile(profileId)
+      setSelected(data.profile)
+      setView(VIEWS.VIEW)
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not load profile.')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
 
   async function handleCreate(payload) {
     setSaving(true)
@@ -344,6 +359,7 @@ export default function UserProfilePage() {
 
       {error ? <div className="alert error">{error}</div> : null}
       {success ? <div className="alert success">{success}</div> : null}
+      {detailLoading ? <div className="data-empty">Loading profile…</div> : null}
 
       <div className="card">
         <div className="toolbar">
@@ -353,13 +369,14 @@ export default function UserProfilePage() {
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setApplied(search.trim()) }}
               placeholder="Search by name / status…"
+              disabled={detailLoading}
             />
           </div>
           <button
             type="button"
             className="btn"
             onClick={() => setApplied(search.trim())}
-            disabled={loading}
+            disabled={loading || detailLoading}
           >
             Search
           </button>
@@ -367,7 +384,7 @@ export default function UserProfilePage() {
             type="button"
             className="btn ghost"
             onClick={() => { setSearch(''); setApplied('') }}
-            disabled={loading}
+            disabled={loading || detailLoading}
           >
             Clear
           </button>
@@ -403,7 +420,8 @@ export default function UserProfilePage() {
                       <button
                         type="button"
                         className="btn-link"
-                        onClick={() => { setSelected(p); setView(VIEWS.VIEW) }}
+                        disabled={detailLoading}
+                        onClick={() => { void openProfileView(p.profile_id) }}
                       >
                         View
                       </button>

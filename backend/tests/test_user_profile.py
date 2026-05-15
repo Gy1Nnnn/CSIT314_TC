@@ -7,7 +7,7 @@ Test Case ID format: test_{story_id}_sprint{N}_{step}_{description}.
 
 BCE flow under test:
     #1 Create profile  -> BCE #45  -> POST /api/user-profiles
-    #2 View profile    -> BCE #53  -> GET  /api/user-profiles
+    #2 View profile    -> BCE #53  -> GET  /api/user-profiles, GET /api/user-profiles/<id>
     #3 Update profile  -> BCE #61  -> PUT  /api/user-profiles/<id>
     #4 Suspend profile -> BCE #69  -> POST /api/user-profiles/<id>/suspend
     #5 Search profile  -> BCE #77  -> GET  /api/user-profiles?search=
@@ -77,6 +77,24 @@ def test_2_sprint1_2_view_returns_full_fields(client):
     sample = body["profiles"][0]
     for field in ("profile_id", "profile_name", "is_suspended"):
         assert field in sample
+
+
+def test_2_sprint1_3_view_single_profile_by_id(client, admin_profile_id):
+    """2-Sprint1-3: GET one profile by id -> 200, same fields as list row."""
+    response = client.get(f"/api/user-profiles/{admin_profile_id}")
+    assert response.status_code == 200
+    body = response.get_json()
+    assert "profile" in body
+    prof = body["profile"]
+    for field in ("profile_id", "profile_name", "description", "access_control", "is_suspended"):
+        assert field in prof
+    assert prof["profile_id"] == admin_profile_id
+
+
+def test_2_sprint1_4_view_nonexistent_profile(client):
+    """2-Sprint1-4: GET profile id that does not exist -> 404."""
+    response = client.get("/api/user-profiles/999999")
+    assert response.status_code == 404
 
 
 # ---------------------------------------------------------------------------

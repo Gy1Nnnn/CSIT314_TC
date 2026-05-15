@@ -1,9 +1,4 @@
-"""Entity layer: category.
-
-Receives already-validated, parsed inputs from the Boundary (via the Control
-layer). Only performs DB-level checks here. Every method returns
-``(body, status)``.
-"""
+"""Entity layer: category."""
 
 from backend.entity.db import get_connection
 

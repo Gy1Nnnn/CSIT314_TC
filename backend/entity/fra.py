@@ -1,9 +1,4 @@
-"""Entity layer: fundraising activity (FRA).
-
-Receives already-validated, parsed inputs from the Boundary (via the Control
-layer). Only performs DB-level checks (record exists, belongs to account)
-here. Every method returns ``(body, status)``.
-"""
+"""Entity layer: fundraising activity (FRA)."""
 
 from backend.entity.db import get_connection
 

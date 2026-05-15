@@ -1,8 +1,4 @@
-"""Control layer: fundraising activity (FRA) use-cases.
-
-Per the BCE pattern: the controller forwards already-validated inputs from the
-boundary to the entity, and returns the entity's response unchanged.
-"""
+"""Control layer: fundraising activity (FRA) use-cases."""
 
 from backend.entity.fra import FRA
 

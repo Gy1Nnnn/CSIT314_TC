@@ -3,7 +3,6 @@
 
 from backend.entity.db import get_connection
 
-
 def _is_donee_account(conn, account_id: int) -> bool:
     row = conn.execute(
         """

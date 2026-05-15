@@ -1,8 +1,4 @@
-"""Boundary layer: category HTTP routes (Flask).
-
-Performs input/format validation (presence) before calling the controller.
-DB-level validation lives in the entity.
-"""
+"""Boundary layer: category HTTP routes (Flask)."""
 
 from flask import Blueprint, jsonify, request
 

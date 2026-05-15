@@ -1,8 +1,4 @@
-"""Boundary layer: manage user account HTTP routes (Flask).
-
-Performs input/format validation (presence + type) before calling the
-controller. DB-level validation lives in the entity.
-"""
+"""Boundary layer: manage user account HTTP routes (Flask)."""
 
 from flask import Blueprint, jsonify, request
 

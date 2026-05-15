@@ -1,8 +1,4 @@
-"""Control layer: authentication use-cases.
-
-Per the BCE pattern: the controller forwards already-validated inputs from the
-boundary to the entity, and returns the entity's response unchanged.
-"""
+"""Control layer: authentication use-cases."""
 
 from backend.entity.user_account import UserAccount
 from backend.entity.user_profile import UserProfile
