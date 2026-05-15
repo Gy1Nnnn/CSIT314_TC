@@ -124,7 +124,8 @@ class FRABoundary:
     def _parse_activity_payload(self, data):
         """Validate & normalise the body of a create/update request.
 
-        Returns ``(error_response, parsed_dict)`` where exactly one is None.
+        Returns either ``(error_body, http_status)`` on validation failure, or a
+        ``dict`` of parsed fields on success (never ``None``).
         """
         account_id_raw = data.get("account_id")
         activity_name = (data.get("activity_name") or "").strip()
@@ -138,18 +139,18 @@ class FRABoundary:
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return ({"message": "account_id is required."}, 400), None
+            return ({"message": "account_id is required."}, 400)
         if account_id <= 0:
-            return ({"message": "account_id is required."}, 400), None
+            return ({"message": "account_id is required."}, 400)
 
         if not activity_name:
-            return ({"message": "activity_name is required."}, 400), None
+            return ({"message": "activity_name is required."}, 400)
         if status_in not in STATUSES:
-            return ({"message": "Invalid status."}, 400), None
+            return ({"message": "Invalid status."}, 400)
         try:
             category_id = int(category_id_raw)
         except (TypeError, ValueError):
-            return ({"message": "category_id is required."}, 400), None
+            return ({"message": "category_id is required."}, 400)
 
         start_date = None
         end_date = None
@@ -159,20 +160,20 @@ class FRABoundary:
             if end_date_raw:
                 end_date = date.fromisoformat(end_date_raw).isoformat()
         except ValueError:
-            return ({"message": "Invalid start_date or end_date."}, 400), None
+            return ({"message": "Invalid start_date or end_date."}, 400)
         if start_date and end_date and start_date > end_date:
-            return ({"message": "start_date must be <= end_date."}, 400), None
+            return ({"message": "start_date must be <= end_date."}, 400)
 
         target_amount = None
         if target_amount_raw not in (None, ""):
             try:
                 target_amount = float(target_amount_raw)
             except (TypeError, ValueError):
-                return ({"message": "target_amount must be a number."}, 400), None
+                return ({"message": "target_amount must be a number."}, 400)
             if target_amount < 0:
-                return ({"message": "target_amount must be >= 0."}, 400), None
+                return ({"message": "target_amount must be >= 0."}, 400)
 
-        return None, {
+        return {
             "account_id": account_id,
             "activity_name": activity_name,
             "category_id": category_id,
@@ -185,9 +186,9 @@ class FRABoundary:
 
     def create_fundraising_activity(self):
         data = request.get_json(silent=True) or {}
-        error, parsed = self._parse_activity_payload(data)
-        if error is not None:
-            body, status = error
+        parsed = self._parse_activity_payload(data)
+        if isinstance(parsed, tuple):
+            body, status = parsed
             return jsonify(body), status
 
         body, status = self._service.create(
@@ -204,9 +205,9 @@ class FRABoundary:
 
     def update_fundraising_activity(self, activity_id: int):
         data = request.get_json(silent=True) or {}
-        error, parsed = self._parse_activity_payload(data)
-        if error is not None:
-            body, status = error
+        parsed = self._parse_activity_payload(data)
+        if isinstance(parsed, tuple):
+            body, status = parsed
             return jsonify(body), status
 
         body, status = self._service.update(
