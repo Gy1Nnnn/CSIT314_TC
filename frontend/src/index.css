@@ -1,30 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Surfaces — bright marketplace (GoFundMe-style reference) */
-  --color-bg: #ffffff;
+  /* Surfaces — warm neutral base */
+  --color-bg: #faf6f0;
   --color-surface: #ffffff;
-  --color-surface-2: #f8f8f8;
-  --color-surface-3: #f0f0f0;
-  --color-border: #e8e8e8;
-  --color-border-strong: #d0d0d0;
+  --color-surface-2: #f3ebe0;
+  --color-surface-3: #e8ddd0;
+  --color-border: #e0d4c4;
+  --color-border-strong: #c9b89e;
   --color-text: #222222;
   --color-text-muted: #555555;
   --color-text-subtle: #888888;
   --color-muted: var(--color-text-muted);
 
-  /* GoFundMe-style brand green */
-  --color-primary: #02a95c;
-  --color-primary-hover: #028a4b;
-  --color-primary-dark: #015c33;
-  --color-primary-soft: #e8f7ef;
-  --color-primary-ring: rgba(2, 169, 92, 0.28);
+  /* Warm brown/beige brand theme */
+  --color-primary: #8b6b3e;
+  --color-primary-hover: #7a5d34;
+  --color-primary-dark: #5b4125;
+  --color-primary-soft: #f6ebdd;
+  --color-primary-ring: rgba(139, 107, 62, 0.28);
 
   --color-accent: #ffc043;
   --color-accent-soft: #fff8e6;
 
-  --color-success: #117a3d;
-  --color-success-bg: #e2f5e9;
+  --color-success: #6b4f2a;
+  --color-success-bg: #f0e4d4;
   --color-danger: #b42318;
   --color-danger-bg: #fdecea;
   --color-warning: #b45309;
@@ -37,9 +37,9 @@
   --radius-lg: 18px;
   --radius-xl: 26px;
 
-  --shadow-sm: 0 1px 2px rgba(20, 32, 27, 0.05);
-  --shadow-md: 0 6px 18px rgba(20, 32, 27, 0.08);
-  --shadow-lg: 0 22px 48px rgba(20, 32, 27, 0.14);
+  --shadow-sm: 0 1px 2px rgba(42, 33, 24, 0.06);
+  --shadow-md: 0 6px 18px rgba(42, 33, 24, 0.1);
+  --shadow-lg: 0 22px 48px rgba(42, 33, 24, 0.14);
 
   --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
@@ -60,28 +60,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0f1714;
-    --color-surface: #161e1a;
-    --color-surface-2: #1c2622;
-    --color-surface-3: #25312c;
-    --color-border: #2a3530;
-    --color-border-strong: #3a4641;
-    --color-text: #ecefe9;
-    --color-text-muted: #a3b0aa;
-    --color-text-subtle: #788580;
+    --color-bg: #1a1510;
+    --color-surface: #221c16;
+    --color-surface-2: #2b241c;
+    --color-surface-3: #352d24;
+    --color-border: #3d342a;
+    --color-border-strong: #52463a;
+    --color-text: #f5efe6;
+    --color-text-muted: #c4b8a8;
+    --color-text-subtle: #9a8d7c;
     --color-muted: var(--color-text-muted);
 
-    --color-primary: #4fd190;
-    --color-primary-hover: #66dba1;
-    --color-primary-dark: #2ea36a;
-    --color-primary-soft: #163325;
-    --color-primary-ring: rgba(79, 209, 144, 0.35);
+    --color-primary: #d2b48c;
+    --color-primary-hover: #e0c29a;
+    --color-primary-dark: #a67c4e;
+    --color-primary-soft: #3b2a1b;
+    --color-primary-ring: rgba(210, 180, 140, 0.35);
 
     --color-accent: #ffd06c;
     --color-accent-soft: #3a2d10;
 
-    --color-success: #4ade80;
-    --color-success-bg: #173225;
+    --color-success: #d2b48c;
+    --color-success-bg: #3b2f22;
     --color-danger: #fca5a5;
     --color-danger-bg: #3a1a1a;
     --color-warning: #fbbf24;

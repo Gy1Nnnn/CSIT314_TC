@@ -20,7 +20,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--color-bg);
 }
 
 /* =========================================================

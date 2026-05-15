@@ -24,9 +24,9 @@
 }
 
 .reports-period-tabs button.active {
-  border-color: #1f6f4a;
-  background: #e8f5ee;
-  color: #145236;
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
   font-weight: 600;
 }
 
