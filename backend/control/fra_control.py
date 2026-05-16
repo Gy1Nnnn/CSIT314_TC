@@ -10,28 +10,26 @@ class FRAControl:
     def get_activities(
         self,
         account_id,
-        search,
+        activity_id_or_activity_name,
         category_id=None,
         status_filter=None,
         date_from=None,
         date_to=None,
-        suspended_filter=None,
     ):
         return self._fra.list_activities(
             account_id,
-            search,
+            activity_id_or_activity_name,
             category_id,
             status_filter,
             date_from,
             date_to,
-            suspended_filter,
         )
 
     def list_completed_history(
-        self, account_id, search, category_id, date_from, date_to
+        self, account_id, activity_id_or_activity_name, category_id, date_from, date_to
     ):
         return self._fra.list_completed_history(
-            account_id, search, category_id, date_from, date_to
+            account_id, activity_id_or_activity_name, category_id, date_from, date_to
         )
 
     def list_public(self, search):

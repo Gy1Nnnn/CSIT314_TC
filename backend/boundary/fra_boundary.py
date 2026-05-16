@@ -22,12 +22,11 @@ class FRABoundary:
 
     def list_fundraising_activities(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
-        search = (request.args.get("search") or "").strip()
+        activity_id_or_activity_name = (request.args.get("search") or "").strip()
         category_id_raw = (request.args.get("category_id") or "").strip()
         status_in = (request.args.get("status") or "").strip().lower()
         date_from_raw = (request.args.get("date_from") or "").strip()
         date_to_raw = (request.args.get("date_to") or "").strip()
-        suspended_raw = (request.args.get("suspended") or "").strip().lower()
 
         try:
             account_id = int(account_id_raw)
@@ -63,27 +62,20 @@ class FRABoundary:
         if date_from and date_to and date_from > date_to:
             return jsonify({"message": "date_from must be <= date_to."}), 400
 
-        suspended_filter = None
-        if suspended_raw in ("0", "false", "no"):
-            suspended_filter = False
-        elif suspended_raw in ("1", "true", "yes"):
-            suspended_filter = True
-
         body, status = self._control.get_activities(
             account_id,
-            search,
+            activity_id_or_activity_name,
             category_id,
             status_filter,
             date_from,
             date_to,
-            suspended_filter,
         )
         return jsonify(body), status
 
     def list_completed_history(self):
         """Completed FRAs for owner with optional category + end-date range + name search."""
         account_id_raw = (request.args.get("account_id") or "").strip()
-        search = (request.args.get("search") or "").strip()
+        activity_id_or_activity_name = (request.args.get("search") or "").strip()
         category_id_raw = (request.args.get("category_id") or "").strip()
         date_from_raw = (request.args.get("date_from") or "").strip()
         date_to_raw = (request.args.get("date_to") or "").strip()
@@ -117,7 +109,7 @@ class FRABoundary:
             return jsonify({"message": "date_from must be <= date_to."}), 400
 
         body, status = self._control.list_completed_history(
-            account_id, search, category_id, date_from, date_to
+            account_id, activity_id_or_activity_name, category_id, date_from, date_to
         )
         return jsonify(body), status
 

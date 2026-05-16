@@ -52,12 +52,11 @@ class FRA:
     def list_activities(
         self,
         account_id,
-        search,
+        activity_id_or_activity_name,
         category_id=None,
         status_filter=None,
         date_from=None,
         date_to=None,
-        suspended_filter=None,
     ):
         where: list[str] = ["fr.account_id = ?"]
         params: list[object] = [account_id]
@@ -83,20 +82,18 @@ class FRA:
             )
             params.append(date_to)
 
-        if suspended_filter is True:
-            where.append("fr.is_suspended = 1")
-        elif suspended_filter is False:
-            where.append("fr.is_suspended = 0")
-
-        if search:
-            safe = search.replace("%", r"\%").replace("_", r"\_")
-            like = f"%{safe}%"
-            clause = "(fr.activity_name LIKE ? ESCAPE '\\')"
-            params.append(like)
-            if search.isdigit():
-                clause = f"({clause} OR fr.activity_id = ?)"
-                params.append(int(search))
-            where.append(clause)
+        if activity_id_or_activity_name:
+            if activity_id_or_activity_name.isdigit():
+                where.append("(fr.activity_id = ? OR fr.activity_name LIKE ?)")
+                params.extend(
+                    [
+                        int(activity_id_or_activity_name),
+                        f"%{activity_id_or_activity_name}%",
+                    ]
+                )
+            else:
+                where.append("fr.activity_name LIKE ?")
+                params.append(f"%{activity_id_or_activity_name}%")
 
         fav_sub = (
             "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
@@ -171,7 +168,7 @@ class FRA:
     def list_completed_history(
         self,
         account_id,
-        search,
+        activity_id_or_activity_name,
         category_id,
         date_from,
         date_to,
@@ -186,15 +183,18 @@ class FRA:
             where.append("fr.category_id = ?")
             params.append(category_id)
 
-        if search:
-            safe = search.replace("%", r"\%").replace("_", r"\_")
-            like = f"%{safe}%"
-            clause = "(fr.activity_name LIKE ? ESCAPE '\\')"
-            params.append(like)
-            if search.isdigit():
-                clause = f"({clause} OR fr.activity_id = ?)"
-                params.append(int(search))
-            where.append(clause)
+        if activity_id_or_activity_name:
+            if activity_id_or_activity_name.isdigit():
+                where.append("(fr.activity_id = ? OR fr.activity_name LIKE ?)")
+                params.extend(
+                    [
+                        int(activity_id_or_activity_name),
+                        f"%{activity_id_or_activity_name}%",
+                    ]
+                )
+            else:
+                where.append("fr.activity_name LIKE ?")
+                params.append(f"%{activity_id_or_activity_name}%")
 
         if date_from:
             where.append(

@@ -117,7 +117,6 @@ export class ApiClient {
     status,
     dateFrom,
     dateTo,
-    suspended,
   } = {}) {
     return this.request('/api/fundraising-activities', {
       query: {
@@ -127,7 +126,6 @@ export class ApiClient {
         status,
         date_from: dateFrom,
         date_to: dateTo,
-        suspended,
       },
     })
   }
