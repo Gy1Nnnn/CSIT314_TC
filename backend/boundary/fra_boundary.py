@@ -1,9 +1,4 @@
-"""Boundary layer: fundraising activity (FRA) HTTP routes (Flask).
-
-Performs input/format validation (presence, types, status enum, date format,
-date order, numeric range) before calling the controller. DB-level validation
-(does the activity belong to this account) lives in the entity.
-"""
+"""Boundary layer: fundraising activity (FRA) HTTP routes (Flask)."""
 
 from datetime import date
 
@@ -123,6 +118,18 @@ class FRABoundary:
             return jsonify({"message": "account_id is required."}), 400
 
         body, status = self._control.view(activity_id, account_id)
+        return jsonify(body), status
+
+    def view_completed_activity(self, activity_id: int):
+        account_id_raw = (request.args.get("account_id") or "").strip()
+        try:
+            account_id = int(account_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"message": "account_id is required."}), 400
+        if account_id <= 0:
+            return jsonify({"message": "account_id is required."}), 400
+
+        body, status = self._control.view_completed_activity(activity_id, account_id)
         return jsonify(body), status
 
     def _parse_activity_payload(self, data):
@@ -270,6 +277,11 @@ def list_fundraising_activities():
 @fra_bp.get("/fundraising-activities/history")
 def list_fundraising_activity_history():
     return _handler.list_completed_history()
+
+
+@fra_bp.get("/fundraising-activities/history/<int:activity_id>")
+def view_completed_activity(activity_id: int):
+    return _handler.view_completed_activity(activity_id)
 
 
 @fra_bp.get("/fundraising-activities/<int:activity_id>")

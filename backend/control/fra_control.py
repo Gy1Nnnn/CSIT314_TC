@@ -25,6 +25,7 @@ class FRAControl:
             date_to,
         )
 
+    """ For fundraisers """
     def list_completed_history(
         self, account_id, activity_id_or_activity_name, category_id, date_from, date_to
     ):
@@ -32,6 +33,7 @@ class FRAControl:
             account_id, activity_id_or_activity_name, category_id, date_from, date_to
         )
 
+    """ For donees and public users """
     def list_public(self, search):
         return self._fra.list_public_activities(search)
 
@@ -40,6 +42,9 @@ class FRAControl:
 
     def view(self, activity_id, account_id):
         return self._fra.view_activity(activity_id, account_id)
+
+    def view_completed_activity(self, activity_id, account_id):
+        return self._fra.view_completed_activity(activity_id, account_id)
 
     def create(
         self,

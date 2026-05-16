@@ -293,6 +293,20 @@ export default function FundraiserPage({ user }) {
     }
   }
 
+  async function openCompletedActivityView(activityId) {
+    clearMessages()
+    setSaving(true)
+    try {
+      const data = await api.viewCompletedActivity(activityId, accountId)
+      setSelected(data.activity)
+      setView(VIEWS.VIEW)
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not load completed activity.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleCreate(payload) {
     setSaving(true)
     clearMessages()
@@ -497,9 +511,6 @@ export default function FundraiserPage({ user }) {
           {listSection === 'campaigns' ? (
             <>
               <h1>Fundraising Activities</h1>
-              <p className="page-sub">
-                Filter by name, category, workflow status, end dates, or public browse — then search.
-              </p>
             </>
           ) : (
             <>
@@ -678,8 +689,6 @@ export default function FundraiserPage({ user }) {
                 <th>Category</th>
                 <th className="num">Amount</th>
                 <th>Status</th>
-                <th className="num">Views</th>
-                <th className="num">Favorites</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -697,8 +706,6 @@ export default function FundraiserPage({ user }) {
                         {suspended ? 'Hidden' : a.status || 'Active'}
                       </span>
                     </td>
-                    <td className="muted num">{Number(a.view_count ?? 0).toLocaleString()}</td>
-                    <td className="muted num">{Number(a.favorite_count ?? 0).toLocaleString()}</td>
                     <td className="actions">
                       <button
                         type="button"
@@ -840,8 +847,6 @@ export default function FundraiserPage({ user }) {
                 <th>Category</th>
                 <th className="num">Amount</th>
                 <th>End</th>
-                <th className="num">Views</th>
-                <th className="num">Favorites</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -853,22 +858,13 @@ export default function FundraiserPage({ user }) {
                     <td className="muted">{a.category_name || '—'}</td>
                     <td className="muted num">{formatActivityAmountCell(a)}</td>
                     <td className="muted">{fmtDate(a.end_date)}</td>
-                    <td className="muted num">{Number(a.view_count ?? 0).toLocaleString()}</td>
-                    <td className="muted num">{Number(a.favorite_count ?? 0).toLocaleString()}</td>
                     <td className="actions">
                       <button
                         type="button"
                         className="btn-link"
-                        onClick={() => { void openActivityView(a.activity_id) }}
+                        onClick={() => { void openCompletedActivityView(a.activity_id) }}
                       >
                         View
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-link"
-                        onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
-                      >
-                        Update
                       </button>
                       <button
                         type="button"

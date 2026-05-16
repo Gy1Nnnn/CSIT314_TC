@@ -75,3 +75,84 @@ def test_fundraiser_view_activity_requires_owner_account(client, admin_profile_i
 def test_fundraiser_view_activity_requires_account_id(client):
     response = client.get("/api/fundraising-activities/999999")
     assert response.status_code == 400
+
+
+def test_fundraiser_view_completed_activity(client, admin_profile_id):
+    account_id = _create_fundraiser_account(client, admin_profile_id)
+    category_id = _create_category(client)
+    created = client.post(
+        "/api/fundraising-activities",
+        json={
+            "account_id": account_id,
+            "activity_name": "Completed FRA Detail",
+            "category_id": category_id,
+            "status": "completed",
+        },
+    )
+    assert created.status_code == 201
+    activity_id = created.get_json()["activity"]["activity_id"]
+
+    response = client.get(
+        f"/api/fundraising-activities/history/{activity_id}?account_id={account_id}"
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["activity"]["activity_id"] == activity_id
+    assert body["activity"]["status"] == "completed"
+
+
+def test_fundraiser_view_completed_activity_rejects_active_activity(
+    client, admin_profile_id
+):
+    account_id = _create_fundraiser_account(client, admin_profile_id)
+    category_id = _create_category(client)
+    created = client.post(
+        "/api/fundraising-activities",
+        json={
+            "account_id": account_id,
+            "activity_name": "Active Not History Detail",
+            "category_id": category_id,
+            "status": "active",
+        },
+    )
+    assert created.status_code == 201
+    activity_id = created.get_json()["activity"]["activity_id"]
+
+    response = client.get(
+        f"/api/fundraising-activities/history/{activity_id}?account_id={account_id}"
+    )
+    assert response.status_code == 404
+
+
+def test_fundraiser_view_completed_activity_requires_account_id(client):
+    response = client.get("/api/fundraising-activities/history/999999")
+    assert response.status_code == 400
+
+
+def test_fundraiser_cannot_update_completed_activity(client, admin_profile_id):
+    account_id = _create_fundraiser_account(client, admin_profile_id)
+    category_id = _create_category(client)
+    created = client.post(
+        "/api/fundraising-activities",
+        json={
+            "account_id": account_id,
+            "activity_name": "Completed Cannot Update",
+            "category_id": category_id,
+            "status": "completed",
+        },
+    )
+    assert created.status_code == 201
+    activity_id = created.get_json()["activity"]["activity_id"]
+
+    response = client.put(
+        f"/api/fundraising-activities/{activity_id}",
+        json={
+            "account_id": account_id,
+            "activity_name": "Updated Completed Activity",
+            "category_id": category_id,
+            "status": "active",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["message"] == "Completed activities cannot be updated."

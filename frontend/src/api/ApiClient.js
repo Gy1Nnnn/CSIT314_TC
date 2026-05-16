@@ -154,6 +154,11 @@ export class ApiClient {
       query: { account_id: accountId },
     })
   }
+  viewCompletedActivity(activityId, accountId) {
+    return this.request(`/api/fundraising-activities/history/${activityId}`, {
+      query: { account_id: accountId },
+    })
+  }
   updateActivity(activityId, payload) {
     return this.request(`/api/fundraising-activities/${activityId}`, { method: 'PUT', body: payload })
   }

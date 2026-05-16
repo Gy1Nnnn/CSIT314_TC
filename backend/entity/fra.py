@@ -165,6 +165,44 @@ class FRA:
             return {"message": "Activity not found."}, 404
         return {"activity": dict(row)}, 200
 
+    def view_completed_activity(self, activity_id, account_id):
+        """Single completed owned FRA for fundraiser history detail view."""
+        fav_sub = (
+            "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
+        )
+        sql = f"""
+            SELECT
+                fr.activity_id,
+                fr.activity_name,
+                fr.category_id,
+                c.category_name,
+                fr.description,
+                fr.start_date,
+                fr.end_date,
+                fr.target_amount,
+                fr.amount_raised,
+                fr.status,
+                fr.account_id,
+                fr.is_suspended,
+                fr.view_count,
+                {fav_sub} AS favorite_count
+            FROM FRA fr
+            LEFT JOIN category c ON c.category_id = fr.category_id
+            WHERE fr.activity_id = ?
+              AND fr.account_id = ?
+              AND LOWER(TRIM(COALESCE(fr.status, ''))) = 'completed'
+        """
+        conn = get_connection()
+        try:
+            apply_fra_auto_completed(conn, account_id=account_id, activity_id=activity_id)
+            row = conn.execute(sql, (activity_id, account_id)).fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return {"message": "Completed activity not found."}, 404
+        return {"activity": dict(row)}, 200
+
     def list_completed_history(
         self,
         account_id,
@@ -332,11 +370,13 @@ class FRA:
         conn = get_connection()
         try:
             existing = conn.execute(
-                "SELECT 1 FROM FRA WHERE activity_id = ? AND account_id = ?",
+                "SELECT status FROM FRA WHERE activity_id = ? AND account_id = ?",
                 (activity_id, account_id),
             ).fetchone()
             if not existing:
                 return {"message": "Activity not found."}, 404
+            if (existing["status"] or "").strip().lower() == "completed":
+                return {"message": "Completed activities cannot be updated."}, 400
 
             conn.execute(
                 """
