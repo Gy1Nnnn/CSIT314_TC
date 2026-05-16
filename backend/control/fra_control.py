@@ -40,6 +40,9 @@ class FRAControl:
     def view_public(self, activity_id):
         return self._fra.view_public_activity(activity_id)
 
+    def view(self, activity_id, account_id):
+        return self._fra.view_activity(activity_id, account_id)
+
     def create(
         self,
         account_id,
@@ -86,8 +89,5 @@ class FRAControl:
             status,
         )
 
-    def suspend(self, activity_id, account_id, suspend):
-        return self._fra.suspend_activity(activity_id, account_id, suspend)
-
-    def delete_activity(self, activity_id, account_id):
+    def delete(self, activity_id, account_id):
         return self._fra.delete_activity(activity_id, account_id)

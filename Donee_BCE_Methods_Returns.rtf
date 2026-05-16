@@ -1,0 +1,108 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Arial;}}
+\fs24
+\b Donee BCE Methods and Returns - Stories 20 to 24\b0\par
+\par
+\b Story 20. Search available fundraising activities\b0\par
+User story: As a donee, I want to search for available fundraising activities so that I can find activities relevant to my needs.\par
+\par
+Boundary: FRABoundary.list_public_activities()\par
+Control: FRAControl.list_public(str search)\par
+Entity: FRA.list_public_activities(str search)\par
+Route: GET /api/public/activities?search=...\par
+Return: (activities, 200 OK)\par
+If no match: (empty activities list, 200 OK)\par
+\par
+\b Sequence:\b0\par
+Donee -> FRABoundary: Enter search keyword\par
+FRABoundary -> FRAControl: list_public(search)\par
+FRAControl -> FRA: list_public_activities(search)\par
+FRA -> FRAControl: (activities, 200)\par
+FRAControl -> FRABoundary: (body, status)\par
+FRABoundary -> Donee: Show available activities\par
+\par
+\b Story 21. View details of a fundraising activity\b0\par
+User story: As a donee, I want to view the details of a fundraising activity so that I can know more about that activity.\par
+\par
+Boundary: FRABoundary.view_public_activity(int activity_id)\par
+Control: FRAControl.view_public(int activity_id)\par
+Entity: FRA.view_public_activity(int activity_id)\par
+Route: GET /api/public/activities/<activity_id>\par
+Return: (activity, 200 OK)\par
+Error return: (message, 404 Not Found)\par
+\par
+\b Sequence:\b0\par
+Donee -> FRABoundary: Select activity to view\par
+FRABoundary -> FRAControl: view_public(activity_id)\par
+FRAControl -> FRA: view_public_activity(activity_id)\par
+FRA -> FRAControl: (activity, 200) or (message, 404)\par
+FRAControl -> FRABoundary: (body, status)\par
+FRABoundary -> Donee: Show activity details\par
+\par
+\b Story 22. Save fundraising activity into favorite list\b0\par
+User story: As a donee, I want to save fundraising activities into my favorite list so that I can access them again easily in the future.\par
+\par
+Boundary: DoneeFavoriteBoundary.add_favorite()\par
+Control: DoneeFavoriteControl.add_favorite(int account_id, int activity_id)\par
+Entity: DoneeFavorite.add_favorite(int account_id, int activity_id)\par
+Route: POST /api/donee/favorites\par
+Return: (activity, 201 Created)\par
+Error returns: (message, 400 Bad Request), (message, 403 Forbidden), (message, 404 Not Found), or (message, 409 Conflict)\par
+\par
+\b Sequence:\b0\par
+Donee -> DoneeFavoriteBoundary: Click Save/Favorite activity\par
+DoneeFavoriteBoundary -> DoneeFavoriteControl: add_favorite(account_id, activity_id)\par
+DoneeFavoriteControl -> DoneeFavorite: add_favorite(account_id, activity_id)\par
+DoneeFavorite -> DoneeFavoriteControl: (activity, 201) or (message, error status)\par
+DoneeFavoriteControl -> DoneeFavoriteBoundary: (body, status)\par
+DoneeFavoriteBoundary -> Donee: Show saved/error message\par
+\par
+\b Story 23. Search favorite list\b0\par
+User story: As a donee, I want to search my favorite list for a matching fundraising activity so that I can quickly find a saved campaign.\par
+\par
+Boundary: DoneeFavoriteBoundary.list_favorites()\par
+Control: DoneeFavoriteControl.list_favorites(int account_id, str search)\par
+Entity: DoneeFavorite.list_favorites(int account_id, str search)\par
+Route: GET /api/donee/favorites?account_id=...&search=...\par
+Return: (favorites, 200 OK)\par
+If no match: (empty favorites list, 200 OK)\par
+Error returns: (message, 400 Bad Request) or (message, 403 Forbidden)\par
+\par
+\b Sequence:\b0\par
+Donee -> DoneeFavoriteBoundary: Enter favorite search keyword\par
+DoneeFavoriteBoundary -> DoneeFavoriteControl: list_favorites(account_id, search)\par
+DoneeFavoriteControl -> DoneeFavorite: list_favorites(account_id, search)\par
+DoneeFavorite -> DoneeFavoriteControl: (favorites, 200) or (message, error status)\par
+DoneeFavoriteControl -> DoneeFavoriteBoundary: (body, status)\par
+DoneeFavoriteBoundary -> Donee: Show matching favorites\par
+\par
+\b Story 24. View fundraising activity from favorite list\b0\par
+User story: As a donee, I want to view a fundraising activity from my favorite list so that I can check the details.\par
+\par
+Favorite list method: DoneeFavoriteBoundary.list_favorites() -> DoneeFavoriteControl.list_favorites(...) -> DoneeFavorite.list_favorites(...)\par
+Detail view method: FRABoundary.view_public_activity(int activity_id) -> FRAControl.view_public(int activity_id) -> FRA.view_public_activity(int activity_id)\par
+Routes: GET /api/donee/favorites then GET /api/public/activities/<activity_id>\par
+Return from favorite list: (favorites, 200 OK)\par
+Return from detail view: (activity, 200 OK) or (message, 404 Not Found)\par
+\par
+\b Sequence:\b0\par
+Donee -> DoneeFavoriteBoundary: Open favorite list\par
+DoneeFavoriteBoundary -> DoneeFavoriteControl: list_favorites(account_id, search)\par
+DoneeFavoriteControl -> DoneeFavorite: list_favorites(account_id, search)\par
+DoneeFavorite -> DoneeFavoriteControl: (favorites, 200)\par
+DoneeFavoriteControl -> DoneeFavoriteBoundary: (body, status)\par
+DoneeFavoriteBoundary -> Donee: Show favorite list\par
+Donee -> FRABoundary: Select one favorite activity to view\par
+FRABoundary -> FRAControl: view_public(activity_id)\par
+FRAControl -> FRA: view_public_activity(activity_id)\par
+FRA -> FRAControl: (activity, 200) or (message, 404)\par
+FRAControl -> FRABoundary: (body, status)\par
+FRABoundary -> Donee: Show activity details\par
+\par
+\b Short return labels for diagrams\b0\par
+Story 20 Search available activities: activities list / empty list\par
+Story 21 View activity detail: activity / error message\par
+Story 22 Save favorite: saved activity / error message\par
+Story 23 Search favorite list: favorites list / empty list\par
+Story 24 View from favorite list: favorites list, then selected activity details\par
+}

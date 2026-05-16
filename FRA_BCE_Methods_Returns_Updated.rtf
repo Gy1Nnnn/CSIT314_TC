@@ -1,0 +1,45 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Arial;}}
+\fs24
+\b Updated Fundraiser FRA BCE Methods and Returns\b0\par
+\par
+\b View FRA - New Separate Method\b0\par
+Boundary: FRABoundary.view_fundraising_activity(int activity_id)\par
+Control: FRAControl.view(int activity_id, int account_id)\par
+Entity: FRA.view_activity(int activity_id, int account_id)\par
+Route: GET /api/fundraising-activities/<activity_id>?account_id=...\par
+Return: (activity, 200 OK)\par
+Error return: (message, 400 Bad Request) or (message, 404 Not Found)\par
+\par
+\b Sequence:\b0\par
+Fundraiser -> FRABoundary: Select View on one FRA\par
+FRABoundary -> FRAControl: view(activity_id, account_id)\par
+FRAControl -> FRA: view_activity(activity_id, account_id)\par
+FRA -> FRAControl: (activity, 200) or (message, 404)\par
+FRAControl -> FRABoundary: (body, status)\par
+FRABoundary -> Fundraiser: Show FRA details/error message\par
+\par
+\b Create FRA\b0\par
+Boundary: FRABoundary.create_fundraising_activity()\par
+Control: FRAControl.create(account_id, activity_name, category_id, description, start_date, end_date, target_amount, status)\par
+Entity: FRA.create_activity(account_id, activity_name, category_id, description, start_date, end_date, target_amount, status)\par
+Return: (activity, 201 Created)\par
+\par
+\b Search/List FRA\b0\par
+Boundary: FRABoundary.list_fundraising_activities()\par
+Control: FRAControl.get_activities(account_id, search, category_id, status_filter, date_from, date_to, suspended_filter)\par
+Entity: FRA.list_activities(account_id, search, category_id, status_filter, date_from, date_to, suspended_filter)\par
+Return: (activities, 200 OK)\par
+\par
+\b Update FRA\b0\par
+Boundary: FRABoundary.update_fundraising_activity(activity_id)\par
+Control: FRAControl.update(activity_id, account_id, activity_name, category_id, description, start_date, end_date, target_amount, status)\par
+Entity: FRA.update_activity(activity_id, account_id, activity_name, category_id, description, start_date, end_date, target_amount, status)\par
+Return: (activity, 200 OK)\par
+\par
+\b Delete FRA\b0\par
+Boundary: FRABoundary.delete_fundraising_activity(activity_id)\par
+Control: FRAControl.delete_activity(activity_id, account_id)\par
+Entity: FRA.delete_activity(activity_id, account_id)\par
+Return: (message, 200 OK)\par
+}

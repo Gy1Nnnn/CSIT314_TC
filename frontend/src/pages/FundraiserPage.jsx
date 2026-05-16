@@ -282,6 +282,20 @@ export default function FundraiserPage({ user }) {
 
   function clearMessages() { setError(null); setSuccess(null) }
 
+  async function openActivityView(activityId) {
+    clearMessages()
+    setSaving(true)
+    try {
+      const data = await api.viewActivity(activityId, accountId)
+      setSelected(data.activity)
+      setView(VIEWS.VIEW)
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not load activity.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleCreate(payload) {
     setSaving(true)
     clearMessages()
@@ -709,7 +723,7 @@ export default function FundraiserPage({ user }) {
                       <button
                         type="button"
                         className="btn-link"
-                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                        onClick={() => { void openActivityView(a.activity_id) }}
                       >
                         View
                       </button>
@@ -865,7 +879,7 @@ export default function FundraiserPage({ user }) {
                       <button
                         type="button"
                         className="btn-link"
-                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                        onClick={() => { void openActivityView(a.activity_id) }}
                       >
                         View
                       </button>

@@ -121,6 +121,18 @@ class FRABoundary:
         )
         return jsonify(body), status
 
+    def view_fundraising_activity(self, activity_id: int):
+        account_id_raw = (request.args.get("account_id") or "").strip()
+        try:
+            account_id = int(account_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"message": "account_id is required."}), 400
+        if account_id <= 0:
+            return jsonify({"message": "account_id is required."}), 400
+
+        body, status = self._control.view(activity_id, account_id)
+        return jsonify(body), status
+
     def _parse_activity_payload(self, data):
         """Validate & normalise the body of a create/update request.
 
@@ -223,20 +235,6 @@ class FRABoundary:
         )
         return jsonify(body), status
 
-    def suspend_fundraising_activity(self, activity_id: int):
-        data = request.get_json(silent=True) or {}
-        account_id_raw = data.get("account_id")
-        try:
-            account_id = int(account_id_raw)
-        except (TypeError, ValueError):
-            return jsonify({"message": "account_id is required."}), 400
-        if account_id <= 0:
-            return jsonify({"message": "account_id is required."}), 400
-
-        suspend = bool(data.get("suspend", True))
-        body, status = self._control.suspend(activity_id, account_id, suspend)
-        return jsonify(body), status
-
     def delete_fundraising_activity(self, activity_id: int):
         account_id_raw = (request.args.get("account_id") or "").strip()
         try:
@@ -246,7 +244,7 @@ class FRABoundary:
         if account_id <= 0:
             return jsonify({"message": "account_id is required."}), 400
 
-        body, status = self._control.delete_activity(activity_id, account_id)
+        body, status = self._control.delete(activity_id, account_id)
         return jsonify(body), status
 
     def list_public_activities(self):
@@ -282,6 +280,11 @@ def list_fundraising_activity_history():
     return _handler.list_completed_history()
 
 
+@fra_bp.get("/fundraising-activities/<int:activity_id>")
+def view_fundraising_activity(activity_id: int):
+    return _handler.view_fundraising_activity(activity_id)
+
+
 @fra_bp.post("/fundraising-activities")
 def create_fundraising_activity():
     return _handler.create_fundraising_activity()
@@ -290,11 +293,6 @@ def create_fundraising_activity():
 @fra_bp.put("/fundraising-activities/<int:activity_id>")
 def update_fundraising_activity(activity_id: int):
     return _handler.update_fundraising_activity(activity_id)
-
-
-@fra_bp.post("/fundraising-activities/<int:activity_id>/suspend")
-def suspend_fundraising_activity(activity_id: int):
-    return _handler.suspend_fundraising_activity(activity_id)
 
 
 @fra_bp.delete("/fundraising-activities/<int:activity_id>")

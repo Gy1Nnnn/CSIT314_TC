@@ -151,6 +151,11 @@ export class ApiClient {
   createActivity(payload) {
     return this.request('/api/fundraising-activities', { method: 'POST', body: payload })
   }
+  viewActivity(activityId, accountId) {
+    return this.request(`/api/fundraising-activities/${activityId}`, {
+      query: { account_id: accountId },
+    })
+  }
   updateActivity(activityId, payload) {
     return this.request(`/api/fundraising-activities/${activityId}`, { method: 'PUT', body: payload })
   }

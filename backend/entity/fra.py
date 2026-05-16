@@ -4,12 +4,6 @@ from backend.entity.db import get_connection
 
 
 def apply_fra_completed_past_end_date(conn, account_id=None, activity_id=None):
-    """Set ``status`` to ``completed`` for active FRAs past ``end_date`` (ISO ``YYYY-MM-DD``).
-
-    Only rows with ``status`` active, ``is_suspended`` 0, non-empty ``end_date``,
-    and ``date(end_date) < date('now')`` are updated. Manual ``completed`` /
-    ``suspended`` are left unchanged.
-    """
     parts = [
         "is_suspended = 0",
         "LOWER(TRIM(COALESCE(status, ''))) = 'active'",
@@ -29,11 +23,6 @@ def apply_fra_completed_past_end_date(conn, account_id=None, activity_id=None):
 
 
 def apply_fra_completed_goal_reached(conn, account_id=None, activity_id=None):
-    """Set ``status`` to ``completed`` for active FRAs that reached their funding goal.
-
-    Only rows with ``status`` active, ``is_suspended`` 0, positive ``target_amount``,
-    and ``amount_raised >= target_amount`` are updated.
-    """
     parts = [
         "is_suspended = 0",
         "LOWER(TRIM(COALESCE(status, ''))) = 'active'",
@@ -59,7 +48,6 @@ def apply_fra_auto_completed(conn, account_id=None, activity_id=None):
 
 
 class FRA:
-    """Fundraising activities: CRUD, public browse, and auto-``completed`` (goal or past ``end_date``)."""
 
     def list_activities(
         self,
@@ -71,12 +59,6 @@ class FRA:
         date_to=None,
         suspended_filter=None,
     ):
-        """account_id: int. search: optional trimmed string.
-
-        Optional filters: category_id (int), status_filter (active|completed|suspended),
-        date_from/date_to (ISO, inclusive on ``end_date``), suspended_filter
-        (True = only suspended rows, False = only non-suspended, None = all).
-        """
         where: list[str] = ["fr.account_id = ?"]
         params: list[object] = [account_id]
 
@@ -150,6 +132,42 @@ class FRA:
         finally:
             conn.close()
 
+    def view_activity(self, activity_id, account_id):
+        """Single owned FRA for fundraiser detail view."""
+        fav_sub = (
+            "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
+        )
+        sql = f"""
+            SELECT
+                fr.activity_id,
+                fr.activity_name,
+                fr.category_id,
+                c.category_name,
+                fr.description,
+                fr.start_date,
+                fr.end_date,
+                fr.target_amount,
+                fr.amount_raised,
+                fr.status,
+                fr.account_id,
+                fr.is_suspended,
+                fr.view_count,
+                {fav_sub} AS favorite_count
+            FROM FRA fr
+            LEFT JOIN category c ON c.category_id = fr.category_id
+            WHERE fr.activity_id = ? AND fr.account_id = ?
+        """
+        conn = get_connection()
+        try:
+            apply_fra_auto_completed(conn, account_id=account_id, activity_id=activity_id)
+            row = conn.execute(sql, (activity_id, account_id)).fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return {"message": "Activity not found."}, 404
+        return {"activity": dict(row)}, 200
+
     def list_completed_history(
         self,
         account_id,
@@ -158,18 +176,6 @@ class FRA:
         date_from,
         date_to,
     ):
-        """Completed FRAs for ``account_id`` with optional filters.
-
-        Includes every row whose ``status`` is ``completed`` (including
-        soft-deleted / ``is_suspended`` records) so the full completed history
-        is visible. Rows still ``active`` only because ``end_date`` has passed
-        or the funding goal has been met are updated to ``completed`` by
-        ``apply_fra_auto_completed`` before this query runs.
-
-        ``date_from`` / ``date_to`` filter on ``end_date`` (inclusive) when set;
-        rows with empty ``end_date`` are excluded only when a date bound is
-        applied. ``category_id`` filters by FRA category (service area).
-        """
         where: list[str] = [
             "fr.account_id = ?",
             "LOWER(TRIM(COALESCE(fr.status, ''))) = 'completed'",
@@ -248,7 +254,6 @@ class FRA:
         target_amount,
         status,
     ):
-        """All inputs already validated and parsed by the Boundary."""
         conn = get_connection()
         try:
             conn.execute(
@@ -324,7 +329,6 @@ class FRA:
         target_amount,
         status,
     ):
-        """All inputs already validated by the Boundary."""
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -392,7 +396,6 @@ class FRA:
         return {"activity": dict(row) if row else None}, 200
 
     def delete_activity(self, activity_id, account_id):
-        """Remove an FRA and dependent favorites/donations (owner must match)."""
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -414,7 +417,6 @@ class FRA:
             conn.close()
 
     def _public_activity_from_clause(self):
-        """JOIN/WHERE for activities visible to donees (active, not suspended)."""
         return """
             FROM FRA fr
             INNER JOIN category c
@@ -426,7 +428,6 @@ class FRA:
         """
 
     def _public_activity_by_id_sql(self):
-        """Same public row shape as `_public_activity_select`, without ``status = active`` filter."""
         return (
             self._public_activity_select()
             + """
@@ -460,7 +461,6 @@ class FRA:
         """
 
     def list_public_activities(self, search):
-        """List active, non-suspended FRAs in active categories (optional search)."""
         where_sql = self._public_activity_from_clause()
         params: list[object] = []
         if search:
@@ -488,7 +488,6 @@ class FRA:
             conn.close()
 
     def view_public_activity(self, activity_id):
-        """Single activity if publicly available; else 404. Counts a public view."""
         sql = (
             self._public_activity_select()
             + self._public_activity_from_clause()
@@ -512,55 +511,3 @@ class FRA:
 
         return {"activity": dict(row) if row else None}, 200
 
-    def suspend_activity(self, activity_id, account_id, suspend):
-        """activity_id: int, account_id: int, suspend: bool."""
-        suspend_val = 1 if suspend else 0
-        conn = get_connection()
-        try:
-            existing = conn.execute(
-                "SELECT 1 FROM FRA WHERE activity_id = ? AND account_id = ?",
-                (activity_id, account_id),
-            ).fetchone()
-            if not existing:
-                return {"message": "Activity not found."}, 404
-
-            conn.execute(
-                """
-                UPDATE FRA
-                SET is_suspended = ?
-                WHERE activity_id = ? AND account_id = ?
-                """,
-                (suspend_val, activity_id, account_id),
-            )
-            conn.commit()
-            apply_fra_auto_completed(conn, activity_id=activity_id)
-            fav_sub = (
-                "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
-            )
-            row = conn.execute(
-                f"""
-                SELECT
-                    fr.activity_id,
-                    fr.activity_name,
-                    fr.category_id,
-                    c.category_name,
-                    fr.description,
-                    fr.start_date,
-                    fr.end_date,
-                    fr.target_amount,
-                    fr.amount_raised,
-                    fr.status,
-                    fr.account_id,
-                    fr.is_suspended,
-                    fr.view_count,
-                    {fav_sub} AS favorite_count
-                FROM FRA fr
-                LEFT JOIN category c ON c.category_id = fr.category_id
-                WHERE fr.activity_id = ? AND fr.account_id = ?
-                """,
-                (activity_id, account_id),
-            ).fetchone()
-        finally:
-            conn.close()
-
-        return {"activity": dict(row) if row else None}, 200
