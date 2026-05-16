@@ -16,7 +16,7 @@ class FRAControl:
         date_from=None,
         date_to=None,
     ):
-        return self._fra.list_activities(
+        return self._fra.get_activities(
             account_id,
             activity_id_or_activity_name,
             category_id,
@@ -35,14 +35,14 @@ class FRAControl:
 
     """ For donees and public users """
     def list_public(self, search):
-        return self._fra.list_public_activities(search)
+        return self._fra.list_public(search)
 
     """ To get view count"""
     def view_public(self, activity_id):
-        return self._fra.view_public_activity(activity_id)
+        return self._fra.view_public(activity_id)
 
     def view(self, activity_id, account_id):
-        return self._fra.view_activity(activity_id, account_id)
+        return self._fra.view(activity_id, account_id)
 
     def view_completed_activity(self, activity_id, account_id):
         return self._fra.view_completed_activity(activity_id, account_id)
@@ -58,7 +58,7 @@ class FRAControl:
         target_amount,
         status,
     ):
-        return self._fra.create_activity(
+        return self._fra.create(
             account_id,
             activity_name,
             category_id,
@@ -81,7 +81,7 @@ class FRAControl:
         target_amount,
         status,
     ):
-        return self._fra.update_activity(
+        return self._fra.update(
             activity_id,
             account_id,
             activity_name,
@@ -94,4 +94,4 @@ class FRAControl:
         )
 
     def delete(self, activity_id, account_id):
-        return self._fra.delete_activity(activity_id, account_id)
+        return self._fra.delete(activity_id, account_id)

@@ -2,7 +2,6 @@
 
 from backend.entity.donee_favorite import DoneeFavorite
 
-
 class DoneeFavoriteControl:
     def __init__(self):
         self._favorites = DoneeFavorite()
@@ -15,4 +14,3 @@ class DoneeFavoriteControl:
 
     def remove_favorite(self, account_id, activity_id):
         return self._favorites.remove_favorite(account_id, activity_id)
-

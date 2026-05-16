@@ -4,7 +4,7 @@ from backend.entity.db import get_connection
 
 
 class Category:
-    def list_categories(self, search):
+    def get_categories(self, search):
         """search: optional string (already trimmed)."""
         where: list[str] = []
         params: list[object] = []
@@ -38,7 +38,7 @@ class Category:
         finally:
             conn.close()
 
-    def list_categories_with_public_activities(self):
+    def get_categories_with_public_activities(self):
         from backend.entity.fra import apply_fra_auto_completed
 
         sql = """
@@ -100,7 +100,7 @@ class Category:
 
         return {"categories": out}, 200
 
-    def create_category(self, category_name, description):
+    def create(self, category_name, description):
         """category_name: non-empty str. description: optional."""
         conn = get_connection()
         try:
@@ -126,7 +126,7 @@ class Category:
 
         return {"category": dict(row) if row else None}, 201
 
-    def update_category(self, category_id, category_name, description):
+    def update(self, category_id, category_name, description):
         """All inputs already validated by the Boundary."""
         conn = get_connection()
         try:
@@ -159,7 +159,7 @@ class Category:
 
         return {"category": dict(row) if row else None}, 200
 
-    def suspend_category(self, category_id, suspend):
+    def suspend(self, category_id, suspend):
         """category_id: int, suspend: bool."""
         suspend_val = 1 if suspend else 0
         conn = get_connection()
@@ -189,7 +189,7 @@ class Category:
 
         return {"category": dict(row) if row else None}, 200
 
-    def delete_category(self, category_id):
+    def delete(self, category_id):
         """Remove a category only if no fundraising activity references it."""
         conn = get_connection()
         try:

@@ -15,7 +15,7 @@ class FRABoundary:
     def __init__(self):
         self._control = FRAControl()
 
-    def list_fundraising_activities(self):
+    def get_activities(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
         activity_id_or_activity_name = (request.args.get("search") or "").strip()
         category_id_raw = (request.args.get("category_id") or "").strip()
@@ -108,7 +108,7 @@ class FRABoundary:
         )
         return jsonify(body), status
 
-    def view_fundraising_activity(self, activity_id: int):
+    def view(self, activity_id: int):
         account_id_raw = (request.args.get("account_id") or "").strip()
         try:
             account_id = int(account_id_raw)
@@ -195,7 +195,7 @@ class FRABoundary:
             "status": status_in,
         }
 
-    def create_fundraising_activity(self):
+    def create(self):
         data = request.get_json(silent=True) or {}
         parsed = self._parse_activity_payload(data)
         if isinstance(parsed, tuple):
@@ -214,7 +214,7 @@ class FRABoundary:
         )
         return jsonify(body), status
 
-    def update_fundraising_activity(self, activity_id: int):
+    def update(self, activity_id: int):
         data = request.get_json(silent=True) or {}
         parsed = self._parse_activity_payload(data)
         if isinstance(parsed, tuple):
@@ -234,7 +234,7 @@ class FRABoundary:
         )
         return jsonify(body), status
 
-    def delete_fundraising_activity(self, activity_id: int):
+    def delete(self, activity_id: int):
         account_id_raw = (request.args.get("account_id") or "").strip()
         try:
             account_id = int(account_id_raw)
@@ -246,12 +246,12 @@ class FRABoundary:
         body, status = self._control.delete(activity_id, account_id)
         return jsonify(body), status
 
-    def list_public_activities(self):
+    def list_public(self):
         search = (request.args.get("search") or "").strip()
         body, status = self._control.list_public(search)
         return jsonify(body), status
 
-    def view_public_activity(self, activity_id: int):
+    def view_public(self, activity_id: int):
         body, status = self._control.view_public(activity_id)
         return jsonify(body), status
 
@@ -260,22 +260,22 @@ _handler = FRABoundary()
 
 
 @fra_bp.get("/public/activities")
-def list_public_activities():
-    return _handler.list_public_activities()
+def list_public():
+    return _handler.list_public()
 
 
 @fra_bp.get("/public/activities/<int:activity_id>")
-def view_public_activity(activity_id: int):
-    return _handler.view_public_activity(activity_id)
+def view_public(activity_id: int):
+    return _handler.view_public(activity_id)
 
 
 @fra_bp.get("/fundraising-activities")
-def list_fundraising_activities():
-    return _handler.list_fundraising_activities()
+def get_activities():
+    return _handler.get_activities()
 
 
 @fra_bp.get("/fundraising-activities/history")
-def list_fundraising_activity_history():
+def list_completed_history():
     return _handler.list_completed_history()
 
 
@@ -285,20 +285,20 @@ def view_completed_activity(activity_id: int):
 
 
 @fra_bp.get("/fundraising-activities/<int:activity_id>")
-def view_fundraising_activity(activity_id: int):
-    return _handler.view_fundraising_activity(activity_id)
+def view(activity_id: int):
+    return _handler.view(activity_id)
 
 
 @fra_bp.post("/fundraising-activities")
-def create_fundraising_activity():
-    return _handler.create_fundraising_activity()
+def create():
+    return _handler.create()
 
 
 @fra_bp.put("/fundraising-activities/<int:activity_id>")
-def update_fundraising_activity(activity_id: int):
-    return _handler.update_fundraising_activity(activity_id)
+def update(activity_id: int):
+    return _handler.update(activity_id)
 
 
 @fra_bp.delete("/fundraising-activities/<int:activity_id>")
-def delete_fundraising_activity(activity_id: int):
-    return _handler.delete_fundraising_activity(activity_id)
+def delete(activity_id: int):
+    return _handler.delete(activity_id)

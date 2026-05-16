@@ -60,5 +60,5 @@ _handler = ReportBoundary()
 
 
 @report_bp.get("/platform/reports/fundraising")
-def fundraising_report():
+def fundraising_performance():
     return _handler.fundraising_performance()

@@ -20,7 +20,6 @@ def _is_donee_account(conn, account_id: int) -> bool:
 
 class DoneeFavorite:
     def list_favorites(self, account_id: int, search: str):
-        """Favorites for this donee account, optional search on activity/category/id."""
         conn = get_connection()
         try:
             if not _is_donee_account(conn, account_id):

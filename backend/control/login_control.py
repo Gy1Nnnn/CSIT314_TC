@@ -10,7 +10,7 @@ class LoginControl:
         self._user_profile = UserProfile()
 
     def get_profiles_for_login(self):
-        return self._user_profile.list_profiles_for_login()
+        return self._user_profile.get_profiles_for_login()
 
     def login(self, profile_id, email, password):
         return self._user_account.login(profile_id, email, password)

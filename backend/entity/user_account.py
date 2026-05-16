@@ -51,7 +51,7 @@ class UserAccount:
         finally:
             conn.close()
 
-    def list_accounts(self, account_id_or_email):
+    def get_accounts(self, account_id_or_email):
         """account_id_or_email: optional string (already trimmed)."""
         params: list[object] = []
         where_sql = ""
@@ -86,7 +86,7 @@ class UserAccount:
         finally:
             conn.close()
 
-    def view_account(self, account_id):
+    def view(self, account_id):
         """account_id: int."""
         conn = get_connection()
         try:
@@ -113,7 +113,7 @@ class UserAccount:
             return {"message": "Account not found."}, 404
         return {"account": dict(row)}, 200
 
-    def create_account(self, name, email, password, profile_id):
+    def create(self, name, email, password, profile_id):
         conn = get_connection()
         try:
             conn.execute(
@@ -146,7 +146,7 @@ class UserAccount:
 
         return {"account": dict(row) if row else None}, 201
 
-    def update_account(self, account_id, name, email, password, profile_id):
+    def update(self, account_id, name, email, password, profile_id):
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -196,7 +196,7 @@ class UserAccount:
 
         return {"account": dict(row) if row else None}, 200
 
-    def suspend_account(self, account_id, suspend):
+    def suspend(self, account_id, suspend):
         """account_id: int, suspend: bool."""
         suspend_val = 1 if suspend else 0
         conn = get_connection()

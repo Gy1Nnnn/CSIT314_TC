@@ -62,16 +62,16 @@ _handler = DoneeFavoriteBoundary()
 
 
 @donee_favorite_bp.get("/donee/favorites")
-def list_donee_favorites():
+def list_favorites():
     return _handler.list_favorites()
 
 
 @donee_favorite_bp.post("/donee/favorites")
-def add_donee_favorite():
+def add_favorite():
     return _handler.add_favorite()
 
 
 @donee_favorite_bp.delete("/donee/favorites/<int:activity_id>")
-def remove_donee_favorite(activity_id: int):
+def remove_favorite(activity_id: int):
     return _handler.remove_favorite(activity_id)
 

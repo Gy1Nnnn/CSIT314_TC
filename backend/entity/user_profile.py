@@ -8,7 +8,7 @@ from backend.entity.db import get_connection
 class UserProfile:
     _error_message = "This profile's name already exists. Choose another name"
 
-    def list_profiles_for_login(self):
+    def get_profiles_for_login(self):
         conn = get_connection()
         try:
             rows = conn.execute(
@@ -23,7 +23,7 @@ class UserProfile:
         finally:
             conn.close()
 
-    def list_profiles(self, profile_id_or_profile_name):
+    def search_profiles(self, profile_id_or_profile_name):
         params: list[object] = []
         where_sql = ""
 
@@ -52,7 +52,7 @@ class UserProfile:
         finally:
             conn.close()
 
-    def view_profile(self, profile_id):
+    def view(self, profile_id):
         conn = get_connection()
         try:
             row = conn.execute(
@@ -70,7 +70,7 @@ class UserProfile:
             return {"message": "Profile not found."}, 404
         return {"profile": dict(row)}, 200
 
-    def create_profile(self, profile_name, description, access_control):
+    def create(self, profile_name, description, access_control):
         conn = get_connection()
         try:
             conn.execute(
@@ -98,7 +98,7 @@ class UserProfile:
 
         return {"profile": dict(row) if row else None}, 201
 
-    def update_profile(self, profile_id, profile_name, description, access_control):
+    def update(self, profile_id, profile_name, description, access_control):
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -133,7 +133,7 @@ class UserProfile:
 
         return {"profile": dict(row) if row else None}, 200
 
-    def suspend_profile(self, profile_id, suspend):
+    def suspend(self, profile_id, suspend):
 
         suspend_val = 1 if suspend else 0
         conn = get_connection()

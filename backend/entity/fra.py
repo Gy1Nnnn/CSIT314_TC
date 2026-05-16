@@ -49,7 +49,7 @@ def apply_fra_auto_completed(conn, account_id=None, activity_id=None):
 
 class FRA:
 
-    def list_activities(
+    def get_activities(
         self,
         account_id,
         activity_id_or_activity_name,
@@ -129,7 +129,7 @@ class FRA:
         finally:
             conn.close()
 
-    def view_activity(self, activity_id, account_id):
+    def view(self, activity_id, account_id):
         """Single owned FRA for fundraiser detail view."""
         fav_sub = (
             "(SELECT COUNT(*) FROM donee_favorite df WHERE df.activity_id = fr.activity_id)"
@@ -281,7 +281,7 @@ class FRA:
         finally:
             conn.close()
 
-    def create_activity(
+    def create(
         self,
         account_id,
         activity_name,
@@ -355,7 +355,7 @@ class FRA:
 
         return {"activity": dict(row) if row else None}, 201
 
-    def update_activity(
+    def update(
         self,
         activity_id,
         account_id,
@@ -435,7 +435,7 @@ class FRA:
 
         return {"activity": dict(row) if row else None}, 200
 
-    def delete_activity(self, activity_id, account_id):
+    def delete(self, activity_id, account_id):
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -500,7 +500,7 @@ class FRA:
                 org.name AS organizer_name
         """
 
-    def list_public_activities(self, search):
+    def list_public(self, search):
         where_sql = self._public_activity_from_clause()
         params: list[object] = []
         if search:
@@ -527,7 +527,7 @@ class FRA:
         finally:
             conn.close()
 
-    def view_public_activity(self, activity_id):
+    def view_public(self, activity_id):
         sql = (
             self._public_activity_select()
             + self._public_activity_from_clause()

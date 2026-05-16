@@ -102,10 +102,10 @@ _handler = DoneeDonationBoundary()
 
 
 @donee_donation_bp.get("/donee/donations")
-def list_donee_donations():
+def list_donations():
     return _handler.list_donations()
 
 
 @donee_donation_bp.post("/donee/donations")
-def create_donee_donation():
+def create_donation():
     return _handler.create_donation()

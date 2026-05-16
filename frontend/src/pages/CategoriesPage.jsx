@@ -71,14 +71,21 @@ export default function CategoriesPage({ user }) {
       ? null
       : categories.find((x) => x.category_id === selectedCategoryId) || null
 
-  useEffect(() => {
-    if (!donatePick) {
-      setSupportAmount('')
-      setSupportErr(null)
-      setSupportOk(null)
-      setSupportSaving(false)
-    }
-  }, [donatePick])
+  function openDonateModal(activity, categoryName) {
+    setSupportAmount('')
+    setSupportErr(null)
+    setSupportOk(null)
+    setSupportSaving(false)
+    setDonatePick({ activity, categoryName })
+  }
+
+  function closeDonateModal() {
+    setDonatePick(null)
+    setSupportAmount('')
+    setSupportErr(null)
+    setSupportOk(null)
+    setSupportSaving(false)
+  }
 
   async function refreshCategoriesQuietly() {
     try {
@@ -293,12 +300,7 @@ export default function CategoriesPage({ user }) {
                             <button
                               type="button"
                               className="btn primary sm"
-                              onClick={() =>
-                                setDonatePick({
-                                  activity: a,
-                                  categoryName: selectedCategory.category_name,
-                                })
-                              }
+                              onClick={() => openDonateModal(a, selectedCategory.category_name)}
                             >
                               Donate
                             </button>
@@ -319,7 +321,7 @@ export default function CategoriesPage({ user }) {
           className="modal-root"
           role="presentation"
           onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setDonatePick(null)
+            if (e.target === e.currentTarget) closeDonateModal()
           }}
         >
           <div
@@ -334,7 +336,7 @@ export default function CategoriesPage({ user }) {
                 type="button"
                 className="modal-close"
                 aria-label="Close"
-                onClick={() => setDonatePick(null)}
+                onClick={closeDonateModal}
               >
                 x
               </button>
@@ -377,7 +379,7 @@ export default function CategoriesPage({ user }) {
                 <button
                   type="button"
                   className="btn primary"
-                  onClick={() => setDonatePick(null)}
+                  onClick={closeDonateModal}
                 >
                   Close
                 </button>
@@ -391,7 +393,7 @@ export default function CategoriesPage({ user }) {
                   >
                     {supportSaving ? 'Saving...' : 'Donate'}
                   </button>
-                  <button type="button" className="btn" onClick={() => setDonatePick(null)}>
+                  <button type="button" className="btn" onClick={closeDonateModal}>
                     Cancel
                   </button>
                 </>
@@ -460,10 +462,7 @@ export default function CategoriesPage({ user }) {
                 type="button"
                 className="btn primary"
                 onClick={() => {
-                  setDonatePick({
-                    activity: viewActivity.activity,
-                    categoryName: viewActivity.categoryName,
-                  })
+                  openDonateModal(viewActivity.activity, viewActivity.categoryName)
                   setViewActivity(null)
                 }}
               >

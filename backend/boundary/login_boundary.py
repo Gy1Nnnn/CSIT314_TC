@@ -11,11 +11,11 @@ class LoginBoundary:
     def __init__(self):
         self._control = LoginControl()
 
-    def list_profiles(self):
+    def get_profiles_for_login(self):
         body, status = self._control.get_profiles_for_login()
         return jsonify(body), status
 
-    def do_login(self):
+    def login(self):
         data = request.get_json(silent=True) or {}
         profile_id_raw = data.get("profile_id")
         email = (data.get("email") or "").strip()
@@ -38,10 +38,10 @@ _handler = LoginBoundary()
 
 
 @login_bp.get("/profiles")
-def list_profiles():
-    return _handler.list_profiles()
+def get_profiles_for_login():
+    return _handler.get_profiles_for_login()
 
 
 @login_bp.post("/login")
-def do_login():
-    return _handler.do_login()
+def login():
+    return _handler.login()

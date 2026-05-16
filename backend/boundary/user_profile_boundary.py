@@ -11,16 +11,16 @@ class UserProfileBoundary:
     def __init__(self):
         self._control = UserProfileControl()
 
-    def list_user_profiles(self):
+    def search_profiles(self):
         profile_id_or_profile_name = (request.args.get("search") or "").strip()
         body, status = self._control.search_profiles(profile_id_or_profile_name)
         return jsonify(body), status
 
-    def view_user_profile(self, profile_id: int):
+    def view(self, profile_id: int):
         body, status = self._control.view(profile_id)
         return jsonify(body), status
 
-    def create_user_profile(self):
+    def create(self):
         data = request.get_json(silent=True) or {}
         profile_name = (data.get("profile_name") or "").strip()
         description = (data.get("description") or "").strip() or None
@@ -32,7 +32,7 @@ class UserProfileBoundary:
         body, status = self._control.create(profile_name, description, access_control)
         return jsonify(body), status
 
-    def update_user_profile(self, profile_id: int):
+    def update(self, profile_id: int):
         data = request.get_json(silent=True) or {}
         profile_name = (data.get("profile_name") or "").strip()
         description = (data.get("description") or "").strip() or None
@@ -44,7 +44,7 @@ class UserProfileBoundary:
         body, status = self._control.update(profile_id, profile_name, description, access_control)
         return jsonify(body), status
 
-    def suspend_user_profile(self, profile_id: int):
+    def suspend(self, profile_id: int):
         data = request.get_json(silent=True) or {}
         suspend = bool(data.get("suspend", True))
         body, status = self._control.suspend(profile_id, suspend)
@@ -55,25 +55,25 @@ _handler = UserProfileBoundary()
 
 
 @user_profile_bp.get("/user-profiles")
-def list_user_profiles():
-    return _handler.list_user_profiles()
+def search_profiles():
+    return _handler.search_profiles()
 
 
 @user_profile_bp.get("/user-profiles/<int:profile_id>")
-def view_user_profile(profile_id: int):
-    return _handler.view_user_profile(profile_id)
+def view(profile_id: int):
+    return _handler.view(profile_id)
 
 
 @user_profile_bp.post("/user-profiles")
-def create_user_profile():
-    return _handler.create_user_profile()
+def create():
+    return _handler.create()
 
 
 @user_profile_bp.put("/user-profiles/<int:profile_id>")
-def update_user_profile(profile_id: int):
-    return _handler.update_user_profile(profile_id)
+def update(profile_id: int):
+    return _handler.update(profile_id)
 
 
 @user_profile_bp.post("/user-profiles/<int:profile_id>/suspend")
-def suspend_user_profile(profile_id: int):
-    return _handler.suspend_user_profile(profile_id)
+def suspend(profile_id: int):
+    return _handler.suspend(profile_id)

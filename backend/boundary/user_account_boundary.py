@@ -11,18 +11,18 @@ class UserAccountBoundary:
     def __init__(self):
         self._control = UserAccountControl()
 
-    def list_user_accounts(self):
+    def get_accounts(self):
         account_id_or_email = (request.args.get("search") or "").strip()
         body, status = self._control.get_accounts(account_id_or_email)
         return jsonify(body), status
 
-    def view_user_account(self, account_id: int):
+    def view(self, account_id: int):
         if account_id <= 0:
             return jsonify({"message": "Invalid account id."}), 400
         body, status = self._control.view(account_id)
         return jsonify(body), status
 
-    def create_user_account(self):
+    def create(self):
         data = request.get_json(silent=True) or {}
         name = (data.get("name") or "").strip()
         email = (data.get("email") or "").strip()
@@ -43,7 +43,7 @@ class UserAccountBoundary:
         body, status = self._control.create(name, email, password, profile_id)
         return jsonify(body), status
 
-    def update_user_account(self, account_id: int):
+    def update(self, account_id: int):
         data = request.get_json(silent=True) or {}
         name = (data.get("name") or "").strip()
         email = (data.get("email") or "").strip()
@@ -65,7 +65,7 @@ class UserAccountBoundary:
         body, status = self._control.update(account_id, name, email, password, profile_id)
         return jsonify(body), status
 
-    def suspend_user_account(self, account_id: int):
+    def suspend(self, account_id: int):
         data = request.get_json(silent=True) or {}
         suspend = bool(data.get("suspend", True))
         body, status = self._control.suspend(account_id, suspend)
@@ -76,25 +76,25 @@ _handler = UserAccountBoundary()
 
 
 @user_account_bp.get("/user-accounts")
-def list_user_accounts():
-    return _handler.list_user_accounts()
+def get_accounts():
+    return _handler.get_accounts()
 
 
 @user_account_bp.get("/user-accounts/<int:account_id>")
-def view_user_account(account_id: int):
-    return _handler.view_user_account(account_id)
+def view(account_id: int):
+    return _handler.view(account_id)
 
 
 @user_account_bp.post("/user-accounts")
-def create_user_account():
-    return _handler.create_user_account()
+def create():
+    return _handler.create()
 
 
 @user_account_bp.put("/user-accounts/<int:account_id>")
-def update_user_account(account_id: int):
-    return _handler.update_user_account(account_id)
+def update(account_id: int):
+    return _handler.update(account_id)
 
 
 @user_account_bp.post("/user-accounts/<int:account_id>/suspend")
-def suspend_user_account(account_id: int):
-    return _handler.suspend_user_account(account_id)
+def suspend(account_id: int):
+    return _handler.suspend(account_id)
