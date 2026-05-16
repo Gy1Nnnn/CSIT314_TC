@@ -170,7 +170,7 @@ export default function NavBar({ user, onLogout }) {
                 About
               </Link>
               <Link className="btn btn-signin-pill" to="/login">
-                Sign in
+                Login
               </Link>
             </>
           ) : (
@@ -241,7 +241,7 @@ export default function NavBar({ user, onLogout }) {
             aria-labelledby="logout-title"
           >
             <div className="modal-head">
-              <h2 id="logout-title">Log out?</h2>
+              <h2 id="logout-title">Logout?</h2>
               <button
                 type="button"
                 className="modal-close"
@@ -252,7 +252,7 @@ export default function NavBar({ user, onLogout }) {
               </button>
             </div>
             <p className="modal-body">
-              You will be signed out and returned to the login screen.
+              You will be logged out and returned to the login screen.
             </p>
             <div className="modal-actions">
               <button type="button" className="btn" onClick={() => setConfirmLogout(false)}>

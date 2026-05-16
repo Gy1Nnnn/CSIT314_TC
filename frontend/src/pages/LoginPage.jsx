@@ -7,24 +7,24 @@ import './LoginPage.css'
 
 const ROLE_COPY = {
   default: {
-    title: 'Sign in',
+    title: 'Login',
     sub: 'Choose your profile, then enter your email and password.',
   },
   'user admin': {
     title: 'User Admin Login',
-    sub: 'Sign in to manage user accounts and profiles.',
+    sub: 'Log in to manage user accounts and profiles.',
   },
   fundraiser: {
     title: 'Fundraising Rep Login',
-    sub: 'Sign in to manage fundraising activities.',
+    sub: 'Log in to manage fundraising activities.',
   },
   'platform manager': {
     title: 'Platform Manager Login',
-    sub: 'Sign in to access category management and reports.',
+    sub: 'Log in to access category management and reports.',
   },
   donee: {
     title: 'Donee Login',
-    sub: 'Sign in to browse activities and manage favourites.',
+    sub: 'Log in to browse activities and manage favourites.',
   },
 }
 
@@ -243,7 +243,7 @@ export default function LoginPage({ onLogin }) {
             className="btn primary login-submit"
             disabled={submitting || !canSubmit}
           >
-            {submitting ? 'Signing in…' : 'Sign in'}
+            {submitting ? 'Logging in…' : 'Login'}
           </button>
         </form>
       </div>

@@ -419,7 +419,7 @@ export default function FundraiserPage({ user }) {
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
-              Edit
+              Update
             </button>
             <button
               type="button"
@@ -718,7 +718,7 @@ export default function FundraiserPage({ user }) {
                         className="btn-link"
                         onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
                       >
-                        Edit
+                        Update
                       </button>
                       <button
                         type="button"
@@ -874,7 +874,7 @@ export default function FundraiserPage({ user }) {
                         className="btn-link"
                         onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
                       >
-                        Edit
+                        Update
                       </button>
                       <button
                         type="button"
