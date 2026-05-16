@@ -221,7 +221,7 @@ export default function ManagePlatformPage() {
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
-              Edit
+              Update
             </button>
             <button
               type="button"
@@ -346,7 +346,7 @@ export default function ManagePlatformPage() {
                         className="btn-link"
                         onClick={() => { setSelected(c); setView(VIEWS.UPDATE) }}
                       >
-                        Edit
+                        Update
                       </button>
                       <button
                         type="button"

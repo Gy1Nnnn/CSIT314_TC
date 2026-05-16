@@ -84,7 +84,7 @@ function DonateDropdown() {
       {open ? (
         <div className="topbar-donate-menu" role="menu">
           <Link
-            to={{ pathname: '/', search: '', hash: 'browse' }}
+            to={{ pathname: '/categories', search: '', hash: 'browse' }}
             className="topbar-donate-row"
             role="menuitem"
             onClick={closeAll}

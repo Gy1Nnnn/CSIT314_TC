@@ -253,7 +253,7 @@ export default function UserProfilePage() {
         <div className="page-header">
           <div>
             <h1>Update User Profile</h1>
-            <p className="page-sub">Edit profile details (prefilled).</p>
+            <p className="page-sub">Update profile details (prefilled).</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -286,7 +286,7 @@ export default function UserProfilePage() {
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
-              Edit
+              Update
             </button>
             <button
               type="button"
@@ -430,7 +430,7 @@ export default function UserProfilePage() {
                         className="btn-link"
                         onClick={() => { setSelected(p); setView(VIEWS.UPDATE) }}
                       >
-                        Edit
+                        Update
                       </button>
                       <button
                         type="button"

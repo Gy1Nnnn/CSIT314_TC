@@ -1,38 +1,9 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import {
-  BrowserRouter,
-  Link,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
-import NavBar from './components/NavBar.jsx'
-import Footer from './components/Footer.jsx'
-import LoginPage from './pages/LoginPage.jsx'
-import AdminPage from './pages/AdminPage.jsx'
-import UserProfilePage from './pages/UserProfilePage.jsx'
-import UserAccountPage from './pages/UserAccountPage.jsx'
-import FundraiserPage from './pages/FundraiserPage.jsx'
-import ManagePlatformPage from './pages/ManagePlatformPage.jsx'
-import ReportsPage from './pages/ReportsPage.jsx'
-import DoneePage from './pages/DoneePage.jsx'
-import CategoriesPage from './pages/CategoriesPage.jsx'
-import { api } from './api/ApiClient.js'
-import CategoryIcon from './components/CategoryIcon.jsx'
-import './App.css'
+import { Link, useLocation } from 'react-router-dom'
+import { api } from '../api/ApiClient.js'
+import CategoryIcon from '../components/CategoryIcon.jsx'
 
-const HERO_BUBBLE_NAMES = [
-  'Medical',
-  'Emergency',
-  'Education',
-  'Animal',
-  'Business',
-  'Charity',
-]
-
-function Home({ user }) {
+export default function CategoriesPage({ user }) {
   const location = useLocation()
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -54,7 +25,7 @@ function Home({ user }) {
 
   useEffect(() => {
     const raw = (location.hash || '').replace(/^#/, '')
-    if (raw === 'browse' || raw === 'site-footer') {
+    if (raw === 'browse') {
       window.requestAnimationFrame(() => {
         document.getElementById(raw)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
@@ -172,54 +143,49 @@ function Home({ user }) {
     }
   }
 
-  if (selectedCategoryId != null) {
-    return <Navigate to={`/categories?cat=${selectedCategoryId}#browse`} replace />
-  }
-
   return (
     <main className="home-page">
       {!selectedCategory ? (
-        <>
-          <section className="home-hero-gfm" aria-labelledby="home-hero-title">
-            <div className="home-hero-stage">
-              <div className="home-hero-bubbles" aria-hidden="true">
-                {HERO_BUBBLE_NAMES.map((name, i) => (
-                  <div key={name} className={`home-hero-bubble home-hero-bubble--${i + 1}`}>
-                    <span className="home-hero-bubble-ring">
-                      <span className="home-hero-bubble-icon">
-                        <CategoryIcon name={name} index={i} />
+        <section
+          className="home-browse-categories"
+          id="browse"
+          aria-labelledby="home-browse-title"
+        >
+          <div className="home-browse-inner">
+            <h1 id="home-browse-title" className="home-browse-heading">
+              Browse fundraising categories
+            </h1>
+            <p className="home-browse-sub">
+              Choose a cause to see active campaigns you can explore and support.
+            </p>
+            {error ? (
+              <div className="alert error" role="alert">
+                {error}
+              </div>
+            ) : null}
+            {loading ? <p className="home-muted home-browse-loading">Loading categories...</p> : null}
+            {!loading && !error ? (
+              <div className="home-browse-grid">
+                {categories.length === 0 ? (
+                  <p className="home-muted">No categories yet. Check back soon.</p>
+                ) : (
+                  categories.map((c, i) => (
+                    <Link
+                      key={c.category_id}
+                      to={{ pathname: '/categories', search: `?cat=${c.category_id}`, hash: 'browse' }}
+                      className="home-browse-tile"
+                    >
+                      <span className="home-browse-tile-icon" aria-hidden="true">
+                        <CategoryIcon name={c.category_name} index={i} />
                       </span>
-                    </span>
-                    <span className="home-hero-bubble-tag">{name}</span>
-                  </div>
-                ))}
+                      <span className="home-browse-tile-label">{c.category_name}</span>
+                    </Link>
+                  ))
+                )}
               </div>
-              <div className="home-hero-center">
-                <p className="home-hero-eyebrow">A platform for everyday causes</p>
-                <h1 id="home-hero-title" className="home-hero-title">
-                  Small acts of courage,
-                  <br />
-                  big change for many.
-                </h1>
-              </div>
-            </div>
-          </section>
-
-          <section className="home-hero-info">
-            <div className="home-hero-info-inner">
-              <h2 className="home-hero-info-stat">
-                Real causes, supported by real people every day on Courage.
-              </h2>
-              <p className="home-hero-info-desc">
-                Courage is a community fundraising platform: organisers publish campaigns by cause,
-                and supporters discover work that matters close to home or far away. We focus on
-                clarity and trust—so every story of need and every act of generosity can be seen,
-                shared, and built on together.
-              </p>
-            </div>
-          </section>
-
-        </>
+            ) : null}
+          </div>
+        </section>
       ) : null}
 
       {selectedCategory ? (
@@ -230,17 +196,17 @@ function Home({ user }) {
             </div>
           ) : null}
 
-          {loading ? <p className="home-muted">Loading…</p> : null}
+          {loading ? <p className="home-muted">Loading...</p> : null}
 
           {!loading ? (
             <div className="home-selected-panel home-cat-panel" id={`cat-${selectedCategory.category_id}`}>
               <div className="home-campaigns-intro home-cat-intro">
-                <h2 className="home-campaigns-title">{selectedCategory.category_name}</h2>
+                <h1 className="home-campaigns-title">{selectedCategory.category_name}</h1>
                 {selectedCategory.description ? (
                   <p className="home-campaigns-sub">{selectedCategory.description}</p>
                 ) : (
                   <p className="home-campaigns-sub">
-                    Discover active fundraisers in this category—open a campaign for full details or tap{' '}
+                    Discover active fundraisers in this category. Open a campaign for full details or tap{' '}
                     <strong>Donate</strong> to contribute.
                   </p>
                 )}
@@ -287,7 +253,7 @@ function Home({ user }) {
                                 openActivityDetail(a, selectedCategory.category_name)
                               }
                             >
-                              <h3 className="home-cat-tile-title">{a.activity_name}</h3>
+                              <h2 className="home-cat-tile-title">{a.activity_name}</h2>
                               {desc ? <p className="home-cat-tile-desc">{desc}</p> : null}
                               {goal != null || raisedNum > 0 ? (
                                 <div className="home-cat-tile-goal">
@@ -322,7 +288,7 @@ function Home({ user }) {
                                 openActivityDetail(a, selectedCategory.category_name)
                               }
                             >
-                              {viewOpeningId === a.activity_id ? '…' : 'View'}
+                              {viewOpeningId === a.activity_id ? '...' : 'View'}
                             </button>
                             <button
                               type="button"
@@ -370,13 +336,13 @@ function Home({ user }) {
                 aria-label="Close"
                 onClick={() => setDonatePick(null)}
               >
-                ×
+                x
               </button>
             </div>
             <div className="modal-body home-support-modal">
               <p className="home-support-lead">
                 <strong>{donatePick.activity.activity_name}</strong>
-                <span className="home-support-meta"> · {donatePick.categoryName}</span>
+                <span className="home-support-meta"> - {donatePick.categoryName}</span>
               </p>
               {supportOk ? (
                 <div className="alert success" role="status">
@@ -423,7 +389,7 @@ function Home({ user }) {
                     disabled={supportSaving}
                     onClick={submitDonation}
                   >
-                    {supportSaving ? 'Saving…' : 'Donate'}
+                    {supportSaving ? 'Saving...' : 'Donate'}
                   </button>
                   <button type="button" className="btn" onClick={() => setDonatePick(null)}>
                     Cancel
@@ -457,20 +423,20 @@ function Home({ user }) {
                 aria-label="Close"
                 onClick={() => setViewActivity(null)}
               >
-                ×
+                x
               </button>
             </div>
             <dl className="detail-list" style={{ marginTop: '0.5rem' }}>
               <dt>Category</dt>
               <dd>{viewActivity.categoryName}</dd>
               <dt>Status</dt>
-              <dd>{viewActivity.activity.status || '—'}</dd>
+              <dd>{viewActivity.activity.status || '-'}</dd>
               <dt>Goal</dt>
               <dd>
                 {viewActivity.activity.target_amount === 0 ||
                 viewActivity.activity.target_amount
                   ? Number(viewActivity.activity.target_amount).toLocaleString()
-                  : '—'}
+                  : '-'}
               </dd>
               <dt>Raised</dt>
               <dd>
@@ -480,11 +446,11 @@ function Home({ user }) {
                   : '0'}
               </dd>
               <dt>Start</dt>
-              <dd>{viewActivity.activity.start_date || '—'}</dd>
+              <dd>{viewActivity.activity.start_date || '-'}</dd>
               <dt>End</dt>
-              <dd>{viewActivity.activity.end_date || '—'}</dd>
+              <dd>{viewActivity.activity.end_date || '-'}</dd>
               <dt>Description</dt>
-              <dd>{viewActivity.activity.description || '—'}</dd>
+              <dd>{viewActivity.activity.description || '-'}</dd>
             </dl>
             <div className="modal-actions">
               <button type="button" className="btn" onClick={() => setViewActivity(null)}>
@@ -510,129 +476,3 @@ function Home({ user }) {
     </main>
   )
 }
-
-function App() {
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth_user')
-      if (raw) setUser(JSON.parse(raw))
-    } catch {
-      void 0
-    }
-  }, [])
-
-  function handleLogin(u) {
-    setUser(u)
-    try {
-      localStorage.setItem('auth_user', JSON.stringify(u))
-    } catch {
-      void 0
-    }
-  }
-
-  function handleLogout() {
-    setUser(null)
-    try {
-      localStorage.removeItem('auth_user')
-    } catch {
-      void 0
-    }
-  }
-
-  const role = (user?.profile_name || '').toLowerCase()
-
-  return (
-    <div className="app-root">
-      <BrowserRouter>
-        <div className="app-shell">
-          <NavBar user={user} onLogout={handleLogout} />
-          <div className="app-shell-main">
-            <Routes>
-              <Route path="/" element={<Home user={user} />} />
-              <Route path="/categories" element={<CategoriesPage user={user} />} />
-              <Route
-                path="/login"
-                element={<LoginPage onLogin={handleLogin} />}
-              />
-              <Route
-                path="/admin"
-                element={
-                  user && role === 'user admin' ? (
-                    <AdminPage user={user} />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/admin/user-profiles"
-                element={
-                  user && role === 'user admin' ? (
-                    <UserProfilePage />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/admin/user-accounts"
-                element={
-                  user && role === 'user admin' ? (
-                    <UserAccountPage />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/fundraiser"
-                element={
-                  user && role === 'fundraiser' ? (
-                    <FundraiserPage user={user} />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/platform"
-                element={
-                  user && role === 'platform manager' ? (
-                    <ManagePlatformPage />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/platform/reports"
-                element={
-                  user && role === 'platform manager' ? (
-                    <ReportsPage user={user} />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/donee"
-                element={
-                  user && role === 'donee' ? (
-                    <DoneePage user={user} />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-            </Routes>
-          </div>
-          <Footer />
-        </div>
-      </BrowserRouter>
-    </div>
-  )
-}
-
-export default App

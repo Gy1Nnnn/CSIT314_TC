@@ -284,7 +284,7 @@ export default function DoneePage({ user }) {
           <p className="page-sub">
             Search active campaigns, view details, save favourites, and keep a personal record of
             what you gave. Courage does not process payments—log amounts after you support a cause
-            elsewhere, or from the home page <strong>Donate</strong> button. Filter your history by
+            elsewhere, or from the categories page <strong>Donate</strong> button. Filter your history by
             category and date below.
           </p>
         </div>
@@ -489,7 +489,7 @@ export default function DoneePage({ user }) {
           <>
             <p className="donee-hint">
               See everything you have logged. Filter by campaign category and the date of the
-              contribution. To add a row, open any activity (here or from the home page) and use{' '}
+              contribution. To add a row, open any activity (here or from the categories page) and use{' '}
               <strong>Log a contribution</strong>.
             </p>
             <div className="toolbar donee-history-toolbar">
@@ -582,7 +582,7 @@ export default function DoneePage({ user }) {
               {!histLoading && histList.length === 0 ? (
                 <div className="data-empty">
                   No contributions match these filters. Add one from an activity&apos;s detail view,
-                  try the home page <strong>Donate</strong> flow, or widen category or dates.
+                  try the categories page <strong>Donate</strong> flow, or widen category or dates.
                 </div>
               ) : null}
               {histLoading ? <div className="data-empty">Loading…</div> : null}

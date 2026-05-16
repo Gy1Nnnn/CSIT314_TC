@@ -365,7 +365,7 @@ export default function UserAccountPage() {
               disabled={viewDetailLoading}
               onClick={() => setView(VIEWS.UPDATE)}
             >
-              Edit
+              Update
             </button>
             <button
               type="button"
@@ -514,7 +514,7 @@ export default function UserAccountPage() {
                         className="btn-link"
                         onClick={() => { setSelected(a); setView(VIEWS.UPDATE) }}
                       >
-                        Edit
+                        Update
                       </button>
                       <button
                         type="button"
