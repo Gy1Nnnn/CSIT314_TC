@@ -9,7 +9,7 @@ from datetime import date
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.fra_control import FRAService
+from backend.control.fra_control import FRAControl
 
 fra_bp = Blueprint("fundraising_activity", __name__, url_prefix="/api")
 
@@ -18,7 +18,7 @@ STATUSES = {"active", "completed", "suspended"}
 
 class FRABoundary:
     def __init__(self):
-        self._service = FRAService()
+        self._control = FRAControl()
 
     def list_fundraising_activities(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
@@ -69,7 +69,7 @@ class FRABoundary:
         elif suspended_raw in ("1", "true", "yes"):
             suspended_filter = True
 
-        body, status = self._service.get_activities(
+        body, status = self._control.get_activities(
             account_id,
             search,
             category_id,
@@ -116,7 +116,7 @@ class FRABoundary:
         if date_from and date_to and date_from > date_to:
             return jsonify({"message": "date_from must be <= date_to."}), 400
 
-        body, status = self._service.list_completed_history(
+        body, status = self._control.list_completed_history(
             account_id, search, category_id, date_from, date_to
         )
         return jsonify(body), status
@@ -191,7 +191,7 @@ class FRABoundary:
             body, status = parsed
             return jsonify(body), status
 
-        body, status = self._service.create(
+        body, status = self._control.create(
             parsed["account_id"],
             parsed["activity_name"],
             parsed["category_id"],
@@ -210,7 +210,7 @@ class FRABoundary:
             body, status = parsed
             return jsonify(body), status
 
-        body, status = self._service.update(
+        body, status = self._control.update(
             activity_id,
             parsed["account_id"],
             parsed["activity_name"],
@@ -234,7 +234,7 @@ class FRABoundary:
             return jsonify({"message": "account_id is required."}), 400
 
         suspend = bool(data.get("suspend", True))
-        body, status = self._service.suspend(activity_id, account_id, suspend)
+        body, status = self._control.suspend(activity_id, account_id, suspend)
         return jsonify(body), status
 
     def delete_fundraising_activity(self, activity_id: int):
@@ -246,16 +246,16 @@ class FRABoundary:
         if account_id <= 0:
             return jsonify({"message": "account_id is required."}), 400
 
-        body, status = self._service.delete_activity(activity_id, account_id)
+        body, status = self._control.delete_activity(activity_id, account_id)
         return jsonify(body), status
 
     def list_public_activities(self):
         search = (request.args.get("search") or "").strip()
-        body, status = self._service.list_public(search)
+        body, status = self._control.list_public(search)
         return jsonify(body), status
 
     def view_public_activity(self, activity_id: int):
-        body, status = self._service.view_public(activity_id)
+        body, status = self._control.view_public(activity_id)
         return jsonify(body), status
 
 

@@ -3,7 +3,7 @@
 from backend.entity.fra import FRA
 
 
-class FRAService:
+class FRAControl:
     def __init__(self):
         self._fra = FRA()
 

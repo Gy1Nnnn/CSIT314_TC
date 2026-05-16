@@ -4,14 +4,14 @@ from datetime import date, datetime
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.donee_donation_control import DoneeDonationService
+from backend.control.donee_donation_control import DoneeDonationControl
 
 donee_donation_bp = Blueprint("donee_donation", __name__, url_prefix="/api")
 
 
 class DoneeDonationBoundary:
     def __init__(self):
-        self._service = DoneeDonationService()
+        self._control = DoneeDonationControl()
 
     def list_donations(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
@@ -48,7 +48,7 @@ class DoneeDonationBoundary:
         if date_from and date_to and date_from > date_to:
             return jsonify({"message": "date_from must be <= date_to."}), 400
 
-        body, status = self._service.list_donations(
+        body, status = self._control.list_donations(
             account_id, category_id, date_from, date_to, search
         )
         return jsonify(body), status
@@ -92,7 +92,7 @@ class DoneeDonationBoundary:
         else:
             donated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        body, status = self._service.create_donation(
+        body, status = self._control.create_donation(
             account_id, activity_id, amount, donated_at
         )
         return jsonify(body), status

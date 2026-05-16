@@ -3,7 +3,6 @@ from backend.entity.db import get_connection
 
 class UserAccount:
     def login(self, profile_id, email, password):
-        """profile_id: int, email: str (non-empty), password: str (non-empty)."""
         conn = get_connection()
         try:
             row = conn.execute(
@@ -37,16 +36,16 @@ class UserAccount:
                     "message": "This account is suspended. Contact a user administrator.",
                 }, 403
 
-            user = dict(row)
+            userAccount = dict(row)
             return {
                 "message": "Login successful.",
                 "user": {
-                    "account_id": user["account_id"],
-                    "name": user["name"],
-                    "email": user["email"],
-                    "profile_id": user["profile_id"],
-                    "profile_name": user["profile_name"],
-                    "access_control": user["access_control"],
+                    "account_id": userAccount["account_id"],
+                    "name": userAccount["name"],
+                    "email": userAccount["email"],
+                    "profile_id": userAccount["profile_id"],
+                    "profile_name": userAccount["profile_name"],
+                    "access_control": userAccount["access_control"],
                 },
             }, 200
         finally:

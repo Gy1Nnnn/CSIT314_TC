@@ -3,7 +3,7 @@
 from backend.entity.user_profile import UserProfile
 
 
-class UserProfileService:
+class UserProfileControl:
     def __init__(self):
         self._user_profile = UserProfile()
 

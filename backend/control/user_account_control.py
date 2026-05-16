@@ -3,7 +3,7 @@
 from backend.entity.user_account import UserAccount
 
 
-class UserAccountService:
+class UserAccountControl:
     def __init__(self):
         self._user_account = UserAccount()
 

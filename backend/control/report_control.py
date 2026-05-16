@@ -3,7 +3,7 @@
 from backend.entity.report import Report
 
 
-class ReportService:
+class ReportControl:
     def __init__(self):
         self._reports = Report()
 
