@@ -3,7 +3,7 @@
 from backend.entity.donee_donation import DoneeDonation
 
 
-class DoneeDonationService:
+class DoneeDonationControl:
     def __init__(self):
         self._donations = DoneeDonation()
 

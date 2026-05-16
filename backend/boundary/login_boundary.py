@@ -2,17 +2,17 @@
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.auth_control import AuthService
+from backend.control.login_control import LoginControl
 
-auth_bp = Blueprint("login", __name__, url_prefix="/api")
+login_bp = Blueprint("login", __name__, url_prefix="/api")
 
 
-class AuthBoundary:
+class LoginBoundary:
     def __init__(self):
-        self._service = AuthService()
+        self._control = LoginControl()
 
     def list_profiles(self):
-        body, status = self._service.get_profiles_for_login()
+        body, status = self._control.get_profiles_for_login()
         return jsonify(body), status
 
     def do_login(self):
@@ -30,18 +30,18 @@ class AuthBoundary:
         if not email or not password:
             return jsonify({"message": "Email and password are required."}), 400
 
-        body, status = self._service.login(profile_id, email, password)
+        body, status = self._control.login(profile_id, email, password)
         return jsonify(body), status
 
 
-_handler = AuthBoundary()
+_handler = LoginBoundary()
 
 
-@auth_bp.get("/profiles")
+@login_bp.get("/profiles")
 def list_profiles():
     return _handler.list_profiles()
 
 
-@auth_bp.post("/login")
+@login_bp.post("/login")
 def do_login():
     return _handler.do_login()

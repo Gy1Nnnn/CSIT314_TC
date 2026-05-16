@@ -4,14 +4,14 @@ from datetime import date
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.report_control import ReportService
+from backend.control.report_control import ReportControl
 
 report_bp = Blueprint("report", __name__, url_prefix="/api")
 
 
 class ReportBoundary:
     def __init__(self):
-        self._service = ReportService()
+        self._control = ReportControl()
 
     def fundraising_performance(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
@@ -50,7 +50,7 @@ class ReportBoundary:
         except ValueError:
             return jsonify({"message": "Invalid date or month."}), 400
 
-        body, status = self._service.fundraising_performance(
+        body, status = self._control.fundraising_performance(
             account_id, period, anchor, month_year
         )
         return jsonify(body), status

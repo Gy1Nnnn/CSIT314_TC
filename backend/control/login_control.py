@@ -1,10 +1,10 @@
-"""Control layer: authentication use-cases."""
+"""Control layer: login use-cases."""
 
 from backend.entity.user_account import UserAccount
 from backend.entity.user_profile import UserProfile
 
 
-class AuthService:
+class LoginControl:
     def __init__(self):
         self._user_account = UserAccount()
         self._user_profile = UserProfile()

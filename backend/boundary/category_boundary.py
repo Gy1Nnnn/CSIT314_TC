@@ -2,22 +2,22 @@
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.category_control import CategoryService
+from backend.control.category_control import CategoryControl
 
 category_bp = Blueprint("category", __name__, url_prefix="/api")
 
 
 class CategoryBoundary:
     def __init__(self):
-        self._service = CategoryService()
+        self._control = CategoryControl()
 
     def list_categories(self):
         search = (request.args.get("search") or "").strip()
-        body, status = self._service.get_categories(search)
+        body, status = self._control.get_categories(search)
         return jsonify(body), status
 
     def list_categories_with_public_activities(self):
-        body, status = self._service.get_categories_with_public_activities()
+        body, status = self._control.get_categories_with_public_activities()
         return jsonify(body), status
 
     def create_category(self):
@@ -28,7 +28,7 @@ class CategoryBoundary:
         if not category_name:
             return jsonify({"message": "category_name is required."}), 400
 
-        body, status = self._service.create(category_name, description)
+        body, status = self._control.create(category_name, description)
         return jsonify(body), status
 
     def update_category(self, category_id: int):
@@ -39,17 +39,17 @@ class CategoryBoundary:
         if not category_name:
             return jsonify({"message": "category_name is required."}), 400
 
-        body, status = self._service.update(category_id, category_name, description)
+        body, status = self._control.update(category_id, category_name, description)
         return jsonify(body), status
 
     def suspend_category(self, category_id: int):
         data = request.get_json(silent=True) or {}
         suspend = bool(data.get("suspend", True))
-        body, status = self._service.suspend(category_id, suspend)
+        body, status = self._control.suspend(category_id, suspend)
         return jsonify(body), status
 
     def delete_category(self, category_id: int):
-        body, status = self._service.delete(category_id)
+        body, status = self._control.delete(category_id)
         return jsonify(body), status
 
 

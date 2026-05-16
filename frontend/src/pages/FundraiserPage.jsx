@@ -183,14 +183,12 @@ export default function FundraiserPage({ user }) {
   const [statusInp, setStatusInp] = useState('')
   const [fromInp, setFromInp] = useState('')
   const [toInp, setToInp] = useState('')
-  const [suspInp, setSuspInp] = useState('')
   const [applied, setApplied] = useState({
     search: '',
     categoryId: '',
     status: '',
     dateFrom: '',
     dateTo: '',
-    suspended: '',
   })
   const [selected, setSelected] = useState(null)
   const [confirm, setConfirm] = useState(null) // { mode: 'hardDelete', activity }
@@ -230,7 +228,6 @@ export default function FundraiserPage({ user }) {
         status: applied.status || undefined,
         dateFrom: applied.dateFrom || undefined,
         dateTo: applied.dateTo || undefined,
-        suspended: applied.suspended === '' ? undefined : applied.suspended,
       })
       setActivities(Array.isArray(data.activities) ? data.activities : [])
     } catch (e) {
@@ -281,6 +278,20 @@ export default function FundraiserPage({ user }) {
   }, [accountId, histApplied, listSection])
 
   function clearMessages() { setError(null); setSuccess(null) }
+
+  async function openActivityView(activityId) {
+    clearMessages()
+    setSaving(true)
+    try {
+      const data = await api.viewActivity(activityId, accountId)
+      setSelected(data.activity)
+      setView(VIEWS.VIEW)
+    } catch (e) {
+      setError(e?.data?.message || e?.message || 'Could not load activity.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   async function handleCreate(payload) {
     setSaving(true)
@@ -561,7 +572,6 @@ export default function FundraiserPage({ user }) {
                     status: statusInp,
                     dateFrom: fromInp,
                     dateTo: toInp,
-                    suspended: suspInp,
                   })
                 }
               }}
@@ -620,19 +630,6 @@ export default function FundraiserPage({ user }) {
               onChange={(e) => setToInp(e.target.value)}
             />
           </div>
-          <div className="field fra-history-field">
-            <label className="field-label" htmlFor="fra-susp">Public browse</label>
-            <select
-              id="fra-susp"
-              className="select"
-              value={suspInp}
-              onChange={(e) => setSuspInp(e.target.value)}
-            >
-              <option value="">All</option>
-              <option value="0">Visible (not hidden)</option>
-              <option value="1">Hidden</option>
-            </select>
-          </div>
           <button
             type="button"
             className="btn primary"
@@ -643,7 +640,6 @@ export default function FundraiserPage({ user }) {
                 status: statusInp,
                 dateFrom: fromInp,
                 dateTo: toInp,
-                suspended: suspInp,
               })
             }
             disabled={loading}
@@ -659,14 +655,12 @@ export default function FundraiserPage({ user }) {
               setStatusInp('')
               setFromInp('')
               setToInp('')
-              setSuspInp('')
               setApplied({
                 search: '',
                 categoryId: '',
                 status: '',
                 dateFrom: '',
                 dateTo: '',
-                suspended: '',
               })
             }}
             disabled={loading}
@@ -709,7 +703,7 @@ export default function FundraiserPage({ user }) {
                       <button
                         type="button"
                         className="btn-link"
-                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                        onClick={() => { void openActivityView(a.activity_id) }}
                       >
                         View
                       </button>
@@ -865,7 +859,7 @@ export default function FundraiserPage({ user }) {
                       <button
                         type="button"
                         className="btn-link"
-                        onClick={() => { setSelected(a); setView(VIEWS.VIEW) }}
+                        onClick={() => { void openActivityView(a.activity_id) }}
                       >
                         View
                       </button>

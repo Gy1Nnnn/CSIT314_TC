@@ -3,35 +3,33 @@
 from backend.entity.fra import FRA
 
 
-class FRAService:
+class FRAControl:
     def __init__(self):
         self._fra = FRA()
 
     def get_activities(
         self,
         account_id,
-        search,
+        activity_id_or_activity_name,
         category_id=None,
         status_filter=None,
         date_from=None,
         date_to=None,
-        suspended_filter=None,
     ):
         return self._fra.list_activities(
             account_id,
-            search,
+            activity_id_or_activity_name,
             category_id,
             status_filter,
             date_from,
             date_to,
-            suspended_filter,
         )
 
     def list_completed_history(
-        self, account_id, search, category_id, date_from, date_to
+        self, account_id, activity_id_or_activity_name, category_id, date_from, date_to
     ):
         return self._fra.list_completed_history(
-            account_id, search, category_id, date_from, date_to
+            account_id, activity_id_or_activity_name, category_id, date_from, date_to
         )
 
     def list_public(self, search):
@@ -39,6 +37,9 @@ class FRAService:
 
     def view_public(self, activity_id):
         return self._fra.view_public_activity(activity_id)
+
+    def view(self, activity_id, account_id):
+        return self._fra.view_activity(activity_id, account_id)
 
     def create(
         self,
@@ -86,8 +87,5 @@ class FRAService:
             status,
         )
 
-    def suspend(self, activity_id, account_id, suspend):
-        return self._fra.suspend_activity(activity_id, account_id, suspend)
-
-    def delete_activity(self, activity_id, account_id):
+    def delete(self, activity_id, account_id):
         return self._fra.delete_activity(activity_id, account_id)

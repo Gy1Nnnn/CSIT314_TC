@@ -2,24 +2,22 @@
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.user_profile_control import UserProfileService
+from backend.control.user_profile_control import UserProfileControl
 
 user_profile_bp = Blueprint("manage_user_profile", __name__, url_prefix="/api")
 
 
 class UserProfileBoundary:
     def __init__(self):
-        self._service = UserProfileService()
+        self._control = UserProfileControl()
 
     def list_user_profiles(self):
-        search = (request.args.get("search") or "").strip()
-        body, status = self._service.search_profiles(search)
+        profile_id_or_profile_name = (request.args.get("search") or "").strip()
+        body, status = self._control.search_profiles(profile_id_or_profile_name)
         return jsonify(body), status
 
     def view_user_profile(self, profile_id: int):
-        if profile_id <= 0:
-            return jsonify({"message": "Invalid profile id."}), 400
-        body, status = self._service.view(profile_id)
+        body, status = self._control.view(profile_id)
         return jsonify(body), status
 
     def create_user_profile(self):
@@ -31,7 +29,7 @@ class UserProfileBoundary:
         if not profile_name:
             return jsonify({"message": "profile_name is required."}), 400
 
-        body, status = self._service.create(profile_name, description, access_control)
+        body, status = self._control.create(profile_name, description, access_control)
         return jsonify(body), status
 
     def update_user_profile(self, profile_id: int):
@@ -43,13 +41,13 @@ class UserProfileBoundary:
         if not profile_name:
             return jsonify({"message": "profile_name is required."}), 400
 
-        body, status = self._service.update(profile_id, profile_name, description, access_control)
+        body, status = self._control.update(profile_id, profile_name, description, access_control)
         return jsonify(body), status
 
     def suspend_user_profile(self, profile_id: int):
         data = request.get_json(silent=True) or {}
         suspend = bool(data.get("suspend", True))
-        body, status = self._service.suspend(profile_id, suspend)
+        body, status = self._control.suspend(profile_id, suspend)
         return jsonify(body), status
 
 

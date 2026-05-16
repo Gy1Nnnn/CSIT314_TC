@@ -117,7 +117,6 @@ export class ApiClient {
     status,
     dateFrom,
     dateTo,
-    suspended,
   } = {}) {
     return this.request('/api/fundraising-activities', {
       query: {
@@ -127,7 +126,6 @@ export class ApiClient {
         status,
         date_from: dateFrom,
         date_to: dateTo,
-        suspended,
       },
     })
   }
@@ -150,6 +148,11 @@ export class ApiClient {
   }
   createActivity(payload) {
     return this.request('/api/fundraising-activities', { method: 'POST', body: payload })
+  }
+  viewActivity(activityId, accountId) {
+    return this.request(`/api/fundraising-activities/${activityId}`, {
+      query: { account_id: accountId },
+    })
   }
   updateActivity(activityId, payload) {
     return this.request(`/api/fundraising-activities/${activityId}`, { method: 'PUT', body: payload })

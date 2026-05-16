@@ -8,7 +8,7 @@ BCE flow under test (BCE diagram #125):
     User Admin -> LoginUI -> LoginController -> UserAccount
 
 LoginUI (the React form) is out of scope for backend tests. These tests
-exercise the auth_boundary -> AuthService -> UserAccount entity chain.
+exercise the login_boundary -> LoginControl -> UserAccount entity chain.
 """
 from __future__ import annotations
 

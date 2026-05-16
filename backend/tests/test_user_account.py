@@ -247,8 +247,8 @@ def test_9_sprint1_3_suspend_nonexistent_account(client):
 # Story #10 -- Search user account
 # ---------------------------------------------------------------------------
 
-def test_10_sprint1_1_search_by_name(client, admin_profile_id):
-    """10-Sprint1-1: Search by name substring -> 200, finds match."""
+def test_10_sprint1_1_search_by_name_not_supported(client, admin_profile_id):
+    """10-Sprint1-1: Search only supports account_id/email, not name."""
     client.post(
         "/api/user-accounts",
         json={
@@ -261,8 +261,7 @@ def test_10_sprint1_1_search_by_name(client, admin_profile_id):
 
     response = client.get("/api/user-accounts?search=Searchable-By-Name")
     assert response.status_code == 200
-    names = [a["name"] for a in response.get_json()["accounts"]]
-    assert "Searchable-By-Name" in names
+    assert response.get_json()["accounts"] == []
 
 
 def test_10_sprint1_2_search_by_email(client, admin_profile_id):

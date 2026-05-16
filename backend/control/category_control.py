@@ -3,7 +3,7 @@
 from backend.entity.category import Category
 
 
-class CategoryService:
+class CategoryControl:
     def __init__(self):
         self._category = Category()
 

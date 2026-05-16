@@ -3,7 +3,6 @@ from backend.entity.db import get_connection
 
 class UserAccount:
     def login(self, profile_id, email, password):
-        """profile_id: int, email: str (non-empty), password: str (non-empty)."""
         conn = get_connection()
         try:
             row = conn.execute(
@@ -37,37 +36,34 @@ class UserAccount:
                     "message": "This account is suspended. Contact a user administrator.",
                 }, 403
 
-            user = dict(row)
+            userAccount = dict(row)
             return {
                 "message": "Login successful.",
                 "user": {
-                    "account_id": user["account_id"],
-                    "name": user["name"],
-                    "email": user["email"],
-                    "profile_id": user["profile_id"],
-                    "profile_name": user["profile_name"],
-                    "access_control": user["access_control"],
+                    "account_id": userAccount["account_id"],
+                    "name": userAccount["name"],
+                    "email": userAccount["email"],
+                    "profile_id": userAccount["profile_id"],
+                    "profile_name": userAccount["profile_name"],
+                    "access_control": userAccount["access_control"],
                 },
             }, 200
         finally:
             conn.close()
 
-    def list_accounts(self, search):
-        """search: optional string (already trimmed)."""
-        where: list[str] = []
+    def list_accounts(self, account_id_or_email):
+        """account_id_or_email: optional string (already trimmed)."""
         params: list[object] = []
+        where_sql = ""
 
-        if search:
-            safe = search.replace("%", r"\%").replace("_", r"\_")
-            like = f"%{safe}%"
-            clause = "(ua.name LIKE ? ESCAPE '\\' OR ua.email LIKE ? ESCAPE '\\')"
-            params.extend([like, like])
-            if search.isdigit():
-                clause = f"({clause} OR ua.account_id = ?)"
-                params.append(int(search))
-            where.append(clause)
+        if account_id_or_email:
+            if account_id_or_email.isdigit():
+                where_sql = "WHERE ua.account_id = ? OR ua.email LIKE ?"
+                params = [int(account_id_or_email), f"%{account_id_or_email}%"]
+            else:
+                where_sql = "WHERE ua.email LIKE ?"
+                params = [f"%{account_id_or_email}%"]
 
-        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
         sql = f"""
             SELECT
                 ua.account_id,

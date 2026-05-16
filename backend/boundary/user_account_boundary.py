@@ -2,24 +2,24 @@
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.user_account_control import UserAccountService
+from backend.control.user_account_control import UserAccountControl
 
 user_account_bp = Blueprint("manage_user_account", __name__, url_prefix="/api")
 
 
 class UserAccountBoundary:
     def __init__(self):
-        self._service = UserAccountService()
+        self._control = UserAccountControl()
 
     def list_user_accounts(self):
-        search = (request.args.get("search") or "").strip()
-        body, status = self._service.get_accounts(search)
+        account_id_or_email = (request.args.get("search") or "").strip()
+        body, status = self._control.get_accounts(account_id_or_email)
         return jsonify(body), status
 
     def view_user_account(self, account_id: int):
         if account_id <= 0:
             return jsonify({"message": "Invalid account id."}), 400
-        body, status = self._service.view(account_id)
+        body, status = self._control.view(account_id)
         return jsonify(body), status
 
     def create_user_account(self):
@@ -40,7 +40,7 @@ class UserAccountBoundary:
         except (TypeError, ValueError):
             return jsonify({"message": "profile_id must be an integer."}), 400
 
-        body, status = self._service.create(name, email, password, profile_id)
+        body, status = self._control.create(name, email, password, profile_id)
         return jsonify(body), status
 
     def update_user_account(self, account_id: int):
@@ -62,13 +62,13 @@ class UserAccountBoundary:
         except (TypeError, ValueError):
             return jsonify({"message": "profile_id must be an integer."}), 400
 
-        body, status = self._service.update(account_id, name, email, password, profile_id)
+        body, status = self._control.update(account_id, name, email, password, profile_id)
         return jsonify(body), status
 
     def suspend_user_account(self, account_id: int):
         data = request.get_json(silent=True) or {}
         suspend = bool(data.get("suspend", True))
-        body, status = self._service.suspend(account_id, suspend)
+        body, status = self._control.suspend(account_id, suspend)
         return jsonify(body), status
 
 

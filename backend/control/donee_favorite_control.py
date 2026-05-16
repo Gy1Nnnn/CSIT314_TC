@@ -3,7 +3,7 @@
 from backend.entity.donee_favorite import DoneeFavorite
 
 
-class DoneeFavoriteService:
+class DoneeFavoriteControl:
     def __init__(self):
         self._favorites = DoneeFavorite()
 

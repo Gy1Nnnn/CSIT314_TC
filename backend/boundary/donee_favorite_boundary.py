@@ -2,14 +2,14 @@
 
 from flask import Blueprint, jsonify, request
 
-from backend.control.donee_favorite_control import DoneeFavoriteService
+from backend.control.donee_favorite_control import DoneeFavoriteControl
 
 donee_favorite_bp = Blueprint("donee_favorite", __name__, url_prefix="/api")
 
 
 class DoneeFavoriteBoundary:
     def __init__(self):
-        self._service = DoneeFavoriteService()
+        self._control = DoneeFavoriteControl()
 
     def list_favorites(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
@@ -21,7 +21,7 @@ class DoneeFavoriteBoundary:
         if account_id <= 0:
             return jsonify({"message": "account_id is required."}), 400
 
-        body, status = self._service.list_favorites(account_id, search)
+        body, status = self._control.list_favorites(account_id, search)
         return jsonify(body), status
 
     def add_favorite(self):
@@ -42,7 +42,7 @@ class DoneeFavoriteBoundary:
                 400,
             )
 
-        body, status = self._service.add_favorite(account_id, activity_id)
+        body, status = self._control.add_favorite(account_id, activity_id)
         return jsonify(body), status
 
     def remove_favorite(self, activity_id: int):
@@ -54,7 +54,7 @@ class DoneeFavoriteBoundary:
         if account_id <= 0:
             return jsonify({"message": "account_id is required."}), 400
 
-        body, status = self._service.remove_favorite(account_id, activity_id)
+        body, status = self._control.remove_favorite(account_id, activity_id)
         return jsonify(body), status
 
 
