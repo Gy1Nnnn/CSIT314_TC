@@ -37,6 +37,7 @@ class FRAControl:
     def list_public(self, search):
         return self._fra.list_public_activities(search)
 
+    """ To get view count"""
     def view_public(self, activity_id):
         return self._fra.view_public_activity(activity_id)
 
