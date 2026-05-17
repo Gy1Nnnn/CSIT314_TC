@@ -299,10 +299,8 @@ export default function DoneePage({ user }) {
         <div>
           <h1>Discover causes & track contributions</h1>
           <p className="page-sub">
-            Search active campaigns, view details, save favourites, and keep a personal record of
-            what you gave. Courage does not process payments—log amounts after you support a cause
-            elsewhere, or from the categories page <strong>Donate</strong> button. Filter your history by
-            category and date below.
+            Search active campaigns, save favourites, and log contributions you make outside
+            Courage. Use the history tab to filter past gifts by category and date.
           </p>
         </div>
       </div>

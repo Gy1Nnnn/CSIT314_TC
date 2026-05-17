@@ -23,6 +23,12 @@
   background: var(--color-bg);
 }
 
+/* Admin / platform / fundraiser / donee: full-width warm shell (avoids dark OS gutters) */
+.app-shell-main:has(.page) {
+  --color-bg: #faf6f0;
+  background: #faf6f0;
+}
+
 /* =========================================================
    Home — GoFundMe-style hero
    ========================================================= */

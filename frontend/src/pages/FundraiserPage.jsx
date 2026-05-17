@@ -381,7 +381,9 @@ export default function FundraiserPage({ user }) {
         <div className="page-header">
           <div>
             <h1>Create Fundraising Activity</h1>
-            <p className="page-sub">Start a new campaign.</p>
+            <p className="page-sub">
+              Publish a campaign with category, dates, target amount, and description.
+            </p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -410,7 +412,7 @@ export default function FundraiserPage({ user }) {
         <div className="page-header">
           <div>
             <h1>Update Fundraising Activity</h1>
-            <p className="page-sub">Update campaign information (prefilled).</p>
+            <p className="page-sub">Revise campaign details. The form is prefilled.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -440,7 +442,9 @@ export default function FundraiserPage({ user }) {
         <div className="page-header">
           <div>
             <h1>View Fundraising Activity</h1>
-            <p className="page-sub">Monitor campaign information.</p>
+            <p className="page-sub">
+              Review status, views, and favourites. Update or delete permanently if needed.
+            </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
@@ -511,13 +515,15 @@ export default function FundraiserPage({ user }) {
           {listSection === 'campaigns' ? (
             <>
               <h1>Fundraising Activities</h1>
+              <p className="page-sub">
+                Manage your active campaigns or switch to history for completed ones.
+              </p>
             </>
           ) : (
             <>
               <h1>Completed campaigns (history)</h1>
               <p className="page-sub">
-                Filter by category (service area), campaign end date range, or name — then search
-                to review past completed activities.
+                Filter by category, end date range, or name, then search past campaigns.
               </p>
             </>
           )}

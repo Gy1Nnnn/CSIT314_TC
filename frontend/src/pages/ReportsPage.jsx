@@ -71,8 +71,8 @@ export default function ReportsPage({ user }) {
         <div>
           <h1>Fundraising reports</h1>
           <p className="page-sub">
-            Daily, weekly, and monthly views of logged contributions, favourites, and campaign
-            activity. Totals use donee donation records and dates stored in the platform database.
+            Review daily, weekly, and monthly performance—contributions, favourites, campaigns
+            completed in the period, and totals by category.
           </p>
         </div>
       </div>

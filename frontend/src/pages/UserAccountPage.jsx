@@ -288,7 +288,7 @@ export default function UserAccountPage() {
         <div className="page-header">
           <div>
             <h1>Create User Account</h1>
-            <p className="page-sub">Create credentials for a user.</p>
+            <p className="page-sub">Register a login with name, email, password, and profile.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -317,7 +317,7 @@ export default function UserAccountPage() {
         <div className="page-header">
           <div>
             <h1>Update User Account</h1>
-            <p className="page-sub">Update account credentials (prefilled).</p>
+            <p className="page-sub">Edit account details or password. Fields are prefilled.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -356,7 +356,7 @@ export default function UserAccountPage() {
         <div className="page-header">
           <div>
             <h1>View User Account</h1>
-            <p className="page-sub">Read-only account details from the server.</p>
+            <p className="page-sub">Read-only account summary, including profile and status.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
@@ -430,7 +430,7 @@ export default function UserAccountPage() {
         <div>
           <h1>User Accounts</h1>
           <p className="page-sub">
-            Create, view, update, search, and suspend user accounts.
+            Search, view, update, and suspend logins across the platform.
           </p>
         </div>
         <button

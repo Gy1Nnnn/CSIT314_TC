@@ -8,8 +8,8 @@ export default function AdminPage({ user }) {
         <div>
           <h1>User Admin Dashboard</h1>
           <p className="page-sub">
-            Logged in as <strong>{user?.name || 'User'}</strong>. Manage user
-            accounts and user profiles.
+            Logged in as <strong>{user?.name || 'User'}</strong>. Open an area below to manage
+            accounts or role profiles.
           </p>
         </div>
       </div>

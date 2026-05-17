@@ -160,7 +160,7 @@ export default function ManagePlatformPage() {
         <div className="page-header">
           <div>
             <h1>Create FRA Category</h1>
-            <p className="page-sub">Add a new category.</p>
+            <p className="page-sub">Add a category that groups fundraising activities by cause.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -188,7 +188,7 @@ export default function ManagePlatformPage() {
         <div className="page-header">
           <div>
             <h1>Update FRA Category</h1>
-            <p className="page-sub">Update category information (prefilled).</p>
+            <p className="page-sub">Edit the category name or description. Fields are prefilled.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -217,7 +217,7 @@ export default function ManagePlatformPage() {
         <div className="page-header">
           <div>
             <h1>View FRA Category</h1>
-            <p className="page-sub">Monitor category data.</p>
+            <p className="page-sub">Read-only category details. Update or delete when needed.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
@@ -270,7 +270,9 @@ export default function ManagePlatformPage() {
       <div className="page-header">
         <div>
           <h1>FRA Categories</h1>
-          <p className="page-sub">Browse categories and open one to view, update, or delete.</p>
+          <p className="page-sub">
+            Search categories, then open one to view, update, or delete.
+          </p>
         </div>
         <button
           type="button"

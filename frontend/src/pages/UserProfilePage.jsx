@@ -225,7 +225,7 @@ export default function UserProfilePage() {
         <div className="page-header">
           <div>
             <h1>Create User Profile</h1>
-            <p className="page-sub">Add a new user profile.</p>
+            <p className="page-sub">Define a role profile and its access control for new accounts.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -253,7 +253,7 @@ export default function UserProfilePage() {
         <div className="page-header">
           <div>
             <h1>Update User Profile</h1>
-            <p className="page-sub">Update profile details (prefilled).</p>
+            <p className="page-sub">Change profile name or access control. Fields are prefilled.</p>
           </div>
         </div>
         {error ? <div className="alert error">{error}</div> : null}
@@ -282,7 +282,7 @@ export default function UserProfilePage() {
         <div className="page-header">
           <div>
             <h1>View User Profile</h1>
-            <p className="page-sub">Read-only profile details.</p>
+            <p className="page-sub">Read-only profile details. Update or suspend from here.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button type="button" className="btn" onClick={() => setView(VIEWS.UPDATE)}>
@@ -345,7 +345,7 @@ export default function UserProfilePage() {
         <div>
           <h1>User Profiles</h1>
           <p className="page-sub">
-            Create, view, update, search, and suspend user profiles.
+            Search, view, update, and suspend role profiles used by platform accounts.
           </p>
         </div>
         <button

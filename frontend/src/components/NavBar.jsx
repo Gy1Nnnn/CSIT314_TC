@@ -201,18 +201,6 @@ export default function NavBar({ user, onLogout }) {
                     <button
                       type="button"
                       role="menuitem"
-                      className="topbar-menu-item"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {role === 'fundraiser'
-                        ? 'My account'
-                        : role === 'platform manager'
-                          ? 'Account'
-                          : 'Profile'}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
                       className="topbar-menu-item danger"
                       onClick={handleLogoutClick}
                     >
