@@ -1,5 +1,5 @@
-# CI/CD pipeline — see README "Continuous integration" for test case mapping.
-name: CI
+# CI/CD — tests on every PR; deploy frontend to GitHub Pages on push to main (optional).
+name: CI & CD
 
 on:
   push:
@@ -10,9 +10,6 @@ on:
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-permissions:
-  contents: read
 
 jobs:
   backend-tests:
@@ -59,4 +56,47 @@ jobs:
         run: npm run lint
 
       - name: Production build
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: npm run build
+
+  # Static hosting only — the Flask API must be deployed separately and URL set in repo secret VITE_API_BASE_URL.
+  deploy-gh-pages:
+    name: Deploy frontend (GitHub Pages)
+    needs: [backend-tests, frontend-lint-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install & build
+        working-directory: frontend
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

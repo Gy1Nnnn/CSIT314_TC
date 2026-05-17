@@ -3,12 +3,24 @@
  * Method parameter names mirror backend *semantics* (e.g. activityIdOrActivityName → sent as `search`).
  */
 export class ApiClient {
-  constructor(baseUrl = '') {
-    this.baseUrl = baseUrl
+  /**
+   * When `VITE_API_BASE_URL` is set (production static host), requests go to that origin.
+   * When unset, requests use the current site (dev server Vite proxy or same-origin).
+   */
+  constructor() {
+    const raw = import.meta.env.VITE_API_BASE_URL
+    this.apiBase = typeof raw === 'string' ? raw.trim().replace(/\/$/, '') : ''
+  }
+
+  resolveUrl(path) {
+    if (this.apiBase) {
+      return new URL(`${this.apiBase}${path.startsWith('/') ? path : `/${path}`}`)
+    }
+    return new URL(path, window.location.origin)
   }
 
   async request(path, { method = 'GET', query, body, headers } = {}) {
-    const url = new URL(`${this.baseUrl}${path}`, window.location.origin)
+    const url = this.resolveUrl(path)
     if (query && typeof query === 'object') {
       for (const [k, v] of Object.entries(query)) {
         if (v == null || v === '') continue
@@ -241,5 +253,5 @@ export class ApiClient {
   }
 }
 
-export const api = new ApiClient('')
+export const api = new ApiClient()
 

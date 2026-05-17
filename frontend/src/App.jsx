@@ -545,7 +545,7 @@ function App() {
 
   return (
     <div className="app-root">
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <div className="app-shell">
           <NavBar user={user} onLogout={handleLogout} />
           <div className="app-shell-main">

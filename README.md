@@ -45,34 +45,42 @@ npm run lint
 npm run build
 ```
 
-### Continuous integration (GitHub Actions)
+### Continuous integration & deployment (GitHub Actions)
 
-Workflow: `.github/workflows/ci.yml` (runs on push to `main`, pull requests, and manual **workflow_dispatch**).
+Workflow: `.github/workflows/ci.yml` (**CI & CD**).
 
-| Job | What it runs | Purpose |
-|-----|----------------|--------|
-| **Backend (pytest)** | `python -m pytest backend/tests -v` | API / entity tests (login, user accounts, profiles, categories, FRA, donee, reports, etc.) |
-| **Frontend (ESLint + Vite build)** | `npm ci` → `npm run lint` → `npm run build` | Catch React/JS issues and broken production builds |
+| Job | When | What it does |
+|-----|------|----------------|
+| **Backend (pytest)** | Every push / PR | `pytest backend/tests` |
+| **Frontend (lint + build)** | Every push / PR | `npm run lint` and `npm run build` with `VITE_BASE=/repo-name/` (matches GitHub Pages) |
+| **Deploy frontend (GitHub Pages)** | Push to **`main` only** | Uploads `frontend/dist` to GitHub Pages (static site) |
 
-**CI test case coverage (high level):** all automated tests under `backend/tests/` (e.g. Stories #6–#10 user accounts, login, logout, reports, categories). Add new tests there; CI fails if any test fails or lint/build errors.
+**CI test case coverage:** all tests under `backend/tests/`; frontend must lint and build.
 
-### Continuous deployment (optional)
+#### CD: GitHub Pages (frontend only)
 
-CI here only **builds and tests**. **CD** (deploy to a host) is separate, for example:
+1. In the GitHub repo: **Settings → Pages → Build and deployment → Source:** **GitHub Actions**.
+2. **Deploy the Flask API elsewhere** (Render, Railway, VM, …). The live site cannot use the Vite dev proxy, so the browser must call your API **origin** directly.
+3. In **Settings → Secrets and variables → Actions**, add repository secret **`VITE_API_BASE_URL`**  
+   Example value: `https://your-service.onrender.com` (no trailing slash).  
+   If this secret is missing, the SPA still builds but `fetch` defaults to the Pages host (`/api` will 404 until you set the secret and redeploy).
+4. After a successful run on `main`, the site is at  
+   `https://<user>.github.io/<repo>/` (project site).  
+   `VITE_BASE` is set automatically from the repo name in CI.
 
-| Target | Typical approach |
-|--------|------------------|
-| Static frontend | Build artifact from `npm run build` → deploy `frontend/dist/` to Netlify, Vercel, S3, or GitHub Pages |
-| Backend | Run Flask on Render, Railway, Azure App Service, or a VM; set env vars; use a persistent volume or managed DB for SQLite or migrate to Postgres |
-| Full stack | Docker Compose with Flask + nginx serving `dist/`, or two services in one cloud project |
+See `frontend/.env.example` for local production-style testing.
 
-Add a second workflow (e.g. `.github/workflows/deploy.yml`) that runs **after** CI succeeds on `main`, only if you need automated releases.
+#### Backend CD (not in GitHub Actions)
+
+Host `backend/` with your provider (gunicorn + Flask, SQLite path or Postgres). Enable **CORS** for your Pages origin (this project already uses `flask_cors`). For coursework, running the API on your laptop during demo is fine; Pages can still point at **`ngrok`** or similar if you expose port 5000.
+
+**Step-by-step (Render + Pages):** see **`DEPLOY.md`** — includes `Procfile`, `runtime.txt`, and `backend/requirements.txt` (gunicorn).
 
 ### Status badge (optional)
 
-After the repo is on GitHub, add to this README (replace `OWNER` and `REPO`):
+Replace `OWNER` and `REPO`:
 
 ```markdown
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions)
+[![CI & CD](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions)
 ```
 
