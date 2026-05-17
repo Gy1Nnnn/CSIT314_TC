@@ -20,6 +20,10 @@ class CategoryBoundary:
         body, status = self._control.get_categories_with_public_activities()
         return jsonify(body), status
 
+    def view(self, category_id: int):
+        body, status = self._control.view(category_id)
+        return jsonify(body), status
+
     def create(self):
         data = request.get_json(silent=True) or {}
         category_name = (data.get("category_name") or "").strip()
@@ -42,12 +46,6 @@ class CategoryBoundary:
         body, status = self._control.update(category_id, category_name, description)
         return jsonify(body), status
 
-    def suspend(self, category_id: int):
-        data = request.get_json(silent=True) or {}
-        suspend = bool(data.get("suspend", True))
-        body, status = self._control.suspend(category_id, suspend)
-        return jsonify(body), status
-
     def delete(self, category_id: int):
         body, status = self._control.delete(category_id)
         return jsonify(body), status
@@ -66,6 +64,11 @@ def get_categories_with_public_activities():
     return _handler.get_categories_with_public_activities()
 
 
+@category_bp.get("/categories/<int:category_id>")
+def view(category_id: int):
+    return _handler.view(category_id)
+
+
 @category_bp.post("/categories")
 def create():
     return _handler.create()
@@ -74,11 +77,6 @@ def create():
 @category_bp.put("/categories/<int:category_id>")
 def update(category_id: int):
     return _handler.update(category_id)
-
-
-@category_bp.post("/categories/<int:category_id>/suspend")
-def suspend(category_id: int):
-    return _handler.suspend(category_id)
 
 
 @category_bp.delete("/categories/<int:category_id>")

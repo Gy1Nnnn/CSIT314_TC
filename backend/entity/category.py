@@ -1,25 +1,26 @@
 """Entity layer: category."""
 
+import sqlite3
+
 from backend.entity.db import get_connection
 
 
 class Category:
+    _error_message = "This category's name already exists. Choose another name"
+
     def get_categories(self, search):
-        """search: optional string (already trimmed)."""
         where: list[str] = []
         params: list[object] = []
 
         if search:
             safe = search.replace("%", r"\%").replace("_", r"\_")
             like = f"%{safe}%"
-            clause = (
-                "(category_name LIKE ? ESCAPE '\\' "
-                "OR IFNULL(description, '') LIKE ? ESCAPE '\\')"
-            )
-            params.extend([like, like])
             if search.isdigit():
-                clause = f"({clause} OR category_id = ?)"
-                params.append(int(search))
+                clause = "(category_id = ? OR category_name LIKE ? ESCAPE '\\')"
+                params.extend([int(search), like])
+            else:
+                clause = "category_name LIKE ? ESCAPE '\\'"
+                params.append(like)
             where.append(clause)
 
         where_sql = f"WHERE {' AND '.join(where)}" if where else ""
@@ -37,6 +38,24 @@ class Category:
             return {"categories": [dict(r) for r in rows]}, 200
         finally:
             conn.close()
+
+    def view(self, category_id):
+        conn = get_connection()
+        try:
+            row = conn.execute(
+                """
+                SELECT category_id, category_name, description, is_suspended
+                FROM category
+                WHERE category_id = ?
+                """,
+                (category_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return {"message": "Category not found."}, 404
+        return {"category": dict(row)}, 200
 
     def get_categories_with_public_activities(self):
         from backend.entity.fra import apply_fra_auto_completed
@@ -121,13 +140,15 @@ class Category:
                 """,
                 (category_id,),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return {"message": self._error_message}, 400
         finally:
             conn.close()
 
         return {"category": dict(row) if row else None}, 201
 
     def update(self, category_id, category_name, description):
-        """All inputs already validated by the Boundary."""
         conn = get_connection()
         try:
             existing = conn.execute(
@@ -154,36 +175,9 @@ class Category:
                 """,
                 (category_id,),
             ).fetchone()
-        finally:
-            conn.close()
-
-        return {"category": dict(row) if row else None}, 200
-
-    def suspend(self, category_id, suspend):
-        """category_id: int, suspend: bool."""
-        suspend_val = 1 if suspend else 0
-        conn = get_connection()
-        try:
-            existing = conn.execute(
-                "SELECT 1 FROM category WHERE category_id = ?",
-                (category_id,),
-            ).fetchone()
-            if not existing:
-                return {"message": "Category not found."}, 404
-
-            conn.execute(
-                "UPDATE category SET is_suspended = ? WHERE category_id = ?",
-                (suspend_val, category_id),
-            )
-            conn.commit()
-            row = conn.execute(
-                """
-                SELECT category_id, category_name, description, is_suspended
-                FROM category
-                WHERE category_id = ?
-                """,
-                (category_id,),
-            ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return {"message": self._error_message}, 400
         finally:
             conn.close()
 

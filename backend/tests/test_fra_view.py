@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 
 def _create_category(client):
     response = client.post(
         "/api/categories",
-        json={"category_name": "FRA View Category", "description": "test"},
+        json={"category_name": f"FRA View Category {uuid4().hex[:8]}", "description": "test"},
     )
     assert response.status_code == 201
     return response.get_json()["category"]["category_id"]

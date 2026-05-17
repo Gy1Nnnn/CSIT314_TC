@@ -202,6 +202,37 @@ def _ensure_user_profile_unique_normalized_name_index(conn):
         return
 
 
+def _ensure_category_unique_normalized_name_index(conn):
+    """Enforce unique category names (trim + case-insensitive) at the DB layer."""
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+        ("ux_category_name_normalized",),
+    ).fetchone():
+        return
+    dup = conn.execute(
+        """
+        SELECT 1 FROM (
+            SELECT lower(trim(category_name)) AS n
+            FROM category
+            GROUP BY lower(trim(category_name))
+            HAVING COUNT(*) > 1
+        )
+        LIMIT 1
+        """
+    ).fetchone()
+    if dup:
+        return
+    try:
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX ux_category_name_normalized
+            ON category (lower(trim(category_name)))
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
 def init_db():
     conn = get_connection()
     try:
@@ -321,6 +352,7 @@ def init_db():
         _ensure_donee_donation_nullable_account(conn)
         _ensure_default_data(conn)
         _ensure_user_profile_unique_normalized_name_index(conn)
+        _ensure_category_unique_normalized_name_index(conn)
         from backend.entity.fra import apply_fra_auto_completed
 
         apply_fra_auto_completed(conn)

@@ -87,6 +87,9 @@ export class ApiClient {
   listCategoriesWithActivities() {
     return this.request('/api/categories-with-activities')
   }
+  getCategory(categoryId) {
+    return this.request(`/api/categories/${categoryId}`)
+  }
   createCategory(payload) {
     return this.request('/api/categories', { method: 'POST', body: payload })
   }
