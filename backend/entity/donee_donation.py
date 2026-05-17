@@ -8,6 +8,38 @@ from backend.entity.donee_favorite import _is_donee_account
 
 
 class DoneeDonation:
+    def view_donation(self, account_id, donation_id):
+        conn = get_connection()
+        try:
+            if not _is_donee_account(conn, account_id):
+                return {"message": "Not a donee account."}, 403
+
+            row = conn.execute(
+                """
+                SELECT
+                    dd.donation_id,
+                    dd.amount,
+                    dd.donated_at,
+                    fr.activity_id,
+                    fr.activity_name,
+                    fr.category_id,
+                    c.category_name,
+                    org.name AS organizer_name
+                FROM donee_donation dd
+                JOIN FRA fr ON fr.activity_id = dd.activity_id
+                LEFT JOIN category c ON c.category_id = fr.category_id
+                JOIN user_account org ON org.account_id = fr.account_id
+                WHERE dd.account_id = ? AND dd.donation_id = ?
+                """,
+                (account_id, donation_id),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return {"message": "Donation not found."}, 404
+        return {"donation": dict(row)}, 200
+
     def list_donations(
         self,
         account_id: int,
@@ -16,7 +48,6 @@ class DoneeDonation:
         date_to: str | None,
         search: str,
     ):
-        """List donations for ``account_id`` with optional category and donated-on date range."""
         conn = get_connection()
         try:
             if not _is_donee_account(conn, account_id):

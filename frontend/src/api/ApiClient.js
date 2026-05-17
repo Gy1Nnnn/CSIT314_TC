@@ -214,6 +214,11 @@ export class ApiClient {
       },
     })
   }
+  viewDoneeDonation(accountId, donationId) {
+    return this.request(`/api/donee/donations/${donationId}`, {
+      query: { account_id: accountId },
+    })
+  }
   recordDoneeDonation({ accountId, activityId, amount, donatedAt } = {}) {
     const body = {
       activity_id: activityId,

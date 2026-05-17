@@ -22,6 +22,7 @@ export default function DoneePage({ user }) {
   })
   const [histList, setHistList] = useState([])
   const [histLoading, setHistLoading] = useState(false)
+  const [historyDetail, setHistoryDetail] = useState(null)
 
   const [donationAmount, setDonationAmount] = useState('')
   const [donationSaving, setDonationSaving] = useState(false)
@@ -168,6 +169,22 @@ export default function DoneePage({ user }) {
       setError(e?.data?.message || e?.message || 'Could not load activity details.')
     } finally {
       setDetailLoading(false)
+    }
+  }
+
+  async function openHistoryDetail(donationId) {
+    if (accountId == null) return
+    setHistoryDetail(null)
+    setSaving(true)
+    setError(null)
+    try {
+      const data = await api.viewDoneeDonation(accountId, donationId)
+      setHistoryDetail(data.donation || null)
+    } catch (e) {
+      setHistoryDetail(null)
+      setError(e?.data?.message || e?.message || 'Could not load donation details.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -562,6 +579,7 @@ export default function DoneePage({ user }) {
                     <th>Activity</th>
                     <th>Category</th>
                     <th>Fundraiser</th>
+                    <th className="actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -575,6 +593,16 @@ export default function DoneePage({ user }) {
                       <td>{d.activity_name}</td>
                       <td className="muted">{d.category_name || '—'}</td>
                       <td className="muted">{d.organizer_name || '—'}</td>
+                      <td className="actions">
+                        <button
+                          type="button"
+                          className="btn-link"
+                          disabled={saving}
+                          onClick={() => { void openHistoryDetail(d.donation_id) }}
+                        >
+                          View
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -590,6 +618,58 @@ export default function DoneePage({ user }) {
           </>
         ) : null}
       </div>
+
+      {historyDetail ? (
+        <div
+          className="modal-root"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setHistoryDetail(null) }}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Donation history details"
+          >
+            <div className="modal-head">
+              <h2>Donation history details</h2>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setHistoryDetail(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <dl className="detail-list" style={{ marginTop: '0.5rem' }}>
+              <dt>Donation ID</dt>
+              <dd>{historyDetail.donation_id}</dd>
+              <dt>Date</dt>
+              <dd>{fmtDonatedAt(historyDetail.donated_at)}</dd>
+              <dt>Amount</dt>
+              <dd>{fmtMoney(historyDetail.amount)}</dd>
+              <dt>Activity ID</dt>
+              <dd>
+                {historyDetail.activity_id != null
+                  ? String(historyDetail.activity_id).padStart(3, '0')
+                  : '—'}
+              </dd>
+              <dt>Activity</dt>
+              <dd>{historyDetail.activity_name || '—'}</dd>
+              <dt>Category</dt>
+              <dd>{historyDetail.category_name || '—'}</dd>
+              <dt>Fundraiser</dt>
+              <dd>{historyDetail.organizer_name || '—'}</dd>
+            </dl>
+            <div className="modal-actions">
+              <button type="button" className="btn" onClick={() => setHistoryDetail(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {detail != null || detailLoading ? (
         <div

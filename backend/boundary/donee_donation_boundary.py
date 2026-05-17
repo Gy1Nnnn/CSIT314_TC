@@ -13,6 +13,18 @@ class DoneeDonationBoundary:
     def __init__(self):
         self._control = DoneeDonationControl()
 
+    def view_donation(self, donation_id: int):
+        account_id_raw = (request.args.get("account_id") or "").strip()
+        try:
+            account_id = int(account_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"message": "account_id is required."}), 400
+        if account_id <= 0:
+            return jsonify({"message": "account_id is required."}), 400
+
+        body, status = self._control.view_donation(account_id, donation_id)
+        return jsonify(body), status
+
     def list_donations(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
         category_id_raw = (request.args.get("category_id") or "").strip()
@@ -99,6 +111,11 @@ class DoneeDonationBoundary:
 
 
 _handler = DoneeDonationBoundary()
+
+
+@donee_donation_bp.get("/donee/donations/<int:donation_id>")
+def view_donation(donation_id: int):
+    return _handler.view_donation(donation_id)
 
 
 @donee_donation_bp.get("/donee/donations")

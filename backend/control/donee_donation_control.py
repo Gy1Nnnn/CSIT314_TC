@@ -9,10 +9,11 @@ class DoneeDonationControl:
 
     def list_donations(self, account_id, category_id, date_from, date_to, search):
         return self._donations.list_donations(
-            account_id, category_id, date_from, date_to, search
-        )
+            account_id, category_id, date_from, date_to, search)
+
+    def view_donation(self, account_id, donation_id):
+        return self._donations.view_donation(account_id, donation_id)
 
     def create_donation(self, account_id, activity_id, amount, donated_at):
         return self._donations.create_donation(
-            account_id, activity_id, amount, donated_at
-        )
+            account_id, activity_id, amount, donated_at)
