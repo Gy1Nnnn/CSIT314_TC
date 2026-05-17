@@ -1,3 +1,7 @@
+/**
+ * HTTP client for the Flask API. Query string keys match the backend (e.g. `search`, `account_id`).
+ * Method parameter names mirror backend *semantics* (e.g. activityIdOrActivityName → sent as `search`).
+ */
 export class ApiClient {
   constructor(baseUrl = '') {
     this.baseUrl = baseUrl
@@ -40,9 +44,9 @@ export class ApiClient {
     return this.request('/api/login', { method: 'POST', body: payload })
   }
 
-  // User profiles
-  listUserProfiles(search) {
-    return this.request('/api/user-profiles', { query: { search } })
+  // User profiles (backend: profile_id_or_profile_name ← query `search`)
+  listUserProfiles(profileIdOrProfileName) {
+    return this.request('/api/user-profiles', { query: { search: profileIdOrProfileName } })
   }
   getUserProfile(profileId) {
     return this.request(`/api/user-profiles/${profileId}`)
@@ -60,9 +64,9 @@ export class ApiClient {
     })
   }
 
-  // User accounts
-  listUserAccounts(search) {
-    return this.request('/api/user-accounts', { query: { search } })
+  // User accounts (backend: account_id_or_email ← query `search`)
+  listUserAccounts(accountIdOrEmail) {
+    return this.request('/api/user-accounts', { query: { search: accountIdOrEmail } })
   }
   viewUserAccount(accountId) {
     return this.request(`/api/user-accounts/${accountId}`)
@@ -80,9 +84,9 @@ export class ApiClient {
     })
   }
 
-  // Categories
-  listCategories(search) {
-    return this.request('/api/categories', { query: { search } })
+  // Categories (backend: category_id OR category_name pattern ← query `search`)
+  listCategories(categoryIdOrCategoryName) {
+    return this.request('/api/categories', { query: { search: categoryIdOrCategoryName } })
   }
   listCategoriesWithActivities() {
     return this.request('/api/categories-with-activities')
@@ -116,10 +120,10 @@ export class ApiClient {
       query: { account_id: accountId, month },
     })
   }
-  // FRA
+  // FRA (backend: activity_id_or_activity_name ← query `search`)
   listActivities({
     accountId,
-    search,
+    activityIdOrActivityName,
     categoryId,
     status,
     dateFrom,
@@ -128,7 +132,7 @@ export class ApiClient {
     return this.request('/api/fundraising-activities', {
       query: {
         account_id: accountId,
-        search,
+        search: activityIdOrActivityName,
         category_id: categoryId,
         status,
         date_from: dateFrom,
@@ -138,7 +142,7 @@ export class ApiClient {
   }
   listCompletedActivityHistory({
     accountId,
-    search,
+    activityIdOrActivityName,
     categoryId,
     dateFrom,
     dateTo,
@@ -146,7 +150,7 @@ export class ApiClient {
     return this.request('/api/fundraising-activities/history', {
       query: {
         account_id: accountId,
-        search,
+        search: activityIdOrActivityName,
         category_id: categoryId,
         date_from: dateFrom,
         date_to: dateTo,
@@ -176,18 +180,18 @@ export class ApiClient {
     })
   }
 
-  // Public activities (donee / browse)
-  listPublicActivities(search) {
-    return this.request('/api/public/activities', { query: { search } })
+  // Public activities — donee browse (backend: activity / category filter ← query `search`)
+  listPublicActivities(activityIdOrActivityName) {
+    return this.request('/api/public/activities', { query: { search: activityIdOrActivityName } })
   }
   viewPublicActivity(activityId) {
     return this.request(`/api/public/activities/${activityId}`)
   }
 
-  // Donee favorites
-  listDoneeFavorites(accountId, search) {
+  // Donee favorites (backend: activity_id OR name OR category name ← query `search`)
+  listDoneeFavorites(accountId, activityIdOrNameOrCategory) {
     return this.request('/api/donee/favorites', {
-      query: { account_id: accountId, search },
+      query: { account_id: accountId, search: activityIdOrNameOrCategory },
     })
   }
   addDoneeFavorite(accountId, activityId) {
@@ -203,13 +207,13 @@ export class ApiClient {
     })
   }
 
-  // Donee donation history
+  // Donee donation history (backend: activity_id OR activity_name OR category ← query `search`)
   listDoneeDonations({
     accountId,
     categoryId,
     dateFrom,
     dateTo,
-    search,
+    activityIdOrCategoryName,
   } = {}) {
     return this.request('/api/donee/donations', {
       query: {
@@ -217,7 +221,7 @@ export class ApiClient {
         category_id: categoryId,
         date_from: dateFrom,
         date_to: dateTo,
-        search,
+        search: activityIdOrCategoryName,
       },
     })
   }

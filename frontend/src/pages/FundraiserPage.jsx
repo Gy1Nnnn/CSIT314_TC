@@ -223,7 +223,7 @@ export default function FundraiserPage({ user }) {
     try {
       const data = await api.listActivities({
         accountId,
-        search: applied.search || undefined,
+        activityIdOrActivityName: applied.search || undefined,
         categoryId: applied.categoryId || undefined,
         status: applied.status || undefined,
         dateFrom: applied.dateFrom || undefined,
@@ -245,7 +245,7 @@ export default function FundraiserPage({ user }) {
     try {
       const data = await api.listCompletedActivityHistory({
         accountId,
-        search: histApplied.search || undefined,
+        activityIdOrActivityName: histApplied.search || undefined,
         categoryId: histApplied.categoryId || undefined,
         dateFrom: histApplied.dateFrom || undefined,
         dateTo: histApplied.dateTo || undefined,

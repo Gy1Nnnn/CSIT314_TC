@@ -88,7 +88,7 @@ export default function DoneePage({ user }) {
           categoryId: histApplied.cat ? Number(histApplied.cat) : undefined,
           dateFrom: histApplied.from || undefined,
           dateTo: histApplied.to || undefined,
-          search: histApplied.search || undefined,
+          activityIdOrCategoryName: histApplied.search || undefined,
         })
         if (cancelled) return
         setHistList(Array.isArray(data.donations) ? data.donations : [])
