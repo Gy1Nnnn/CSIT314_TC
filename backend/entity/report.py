@@ -44,7 +44,21 @@ def _date_range(
 
 
 class Report:
-    def fundraising_performance(
+    def get_daily_report(self, account_id: int, anchor: date):
+        return self._fundraising_performance(account_id, "daily", anchor, None)
+
+    def get_weekly_report(self, account_id: int, anchor: date):
+        return self._fundraising_performance(account_id, "weekly", anchor, None)
+
+    def get_monthly_report(self, account_id: int, month_year: Tuple[int, int]):
+        return self._fundraising_performance(
+            account_id,
+            "monthly",
+            date(month_year[0], month_year[1], 1),
+            month_year,
+        )
+
+    def _fundraising_performance(
         self,
         account_id: int,
         period: str,

@@ -101,17 +101,21 @@ export class ApiClient {
   }
 
   // Platform manager — fundraising performance (daily / weekly / monthly)
-  getPlatformFundraisingReport({ accountId, period, date, month } = {}) {
-    return this.request('/api/platform/reports/fundraising', {
-      query: {
-        account_id: accountId,
-        period,
-        date,
-        month,
-      },
+  getDailyFundraisingReport({ accountId, date } = {}) {
+    return this.request('/api/platform/reports/fundraising/daily', {
+      query: { account_id: accountId, date },
     })
   }
-
+  getWeeklyFundraisingReport({ accountId, date } = {}) {
+    return this.request('/api/platform/reports/fundraising/weekly', {
+      query: { account_id: accountId, date },
+    })
+  }
+  getMonthlyFundraisingReport({ accountId, month } = {}) {
+    return this.request('/api/platform/reports/fundraising/monthly', {
+      query: { account_id: accountId, month },
+    })
+  }
   // FRA
   listActivities({
     accountId,

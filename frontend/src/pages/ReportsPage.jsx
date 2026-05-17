@@ -38,10 +38,12 @@ export default function ReportsPage({ user }) {
     setLoading(true)
     setError(null)
     try {
-      const query = { accountId, period }
-      if (period === 'monthly') query.month = monthVal
-      else query.date = period === 'daily' ? dailyDate : weekRefDate
-      const res = await api.getPlatformFundraisingReport(query)
+      const res =
+        period === 'monthly'
+          ? await api.getMonthlyFundraisingReport({ accountId, month: monthVal })
+          : period === 'weekly'
+            ? await api.getWeeklyFundraisingReport({ accountId, date: weekRefDate })
+            : await api.getDailyFundraisingReport({ accountId, date: dailyDate })
       setData(res)
     } catch (e) {
       setData(null)

@@ -13,52 +13,87 @@ class ReportBoundary:
     def __init__(self):
         self._control = ReportControl()
 
-    def fundraising_performance(self):
+    def _parse_account_id(self):
         account_id_raw = (request.args.get("account_id") or "").strip()
-        period = (request.args.get("period") or "").strip().lower()
-        date_raw = (request.args.get("date") or "").strip()
-        month_raw = (request.args.get("month") or "").strip()
-
         try:
             account_id = int(account_id_raw)
         except (TypeError, ValueError):
-            return jsonify({"message": "account_id is required."}), 400
+            return None, ({"message": "account_id is required."}, 400)
         if account_id <= 0:
-            return jsonify({"message": "account_id is required."}), 400
+            return None, ({"message": "account_id is required."}, 400)
+        return account_id, None
 
-        if period not in ("daily", "weekly", "monthly"):
-            return jsonify({"message": "period must be daily, weekly, or monthly."}), 400
-
-        anchor = None
-        month_year = None
+    def _parse_date(self):
+        date_raw = (request.args.get("date") or "").strip()
+        if not date_raw:
+            return None, ({"message": "date is required (YYYY-MM-DD)."}, 400)
         try:
-            if period == "monthly":
-                if not month_raw:
-                    return jsonify({"message": "month is required (YYYY-MM)."}), 400
-                parts = month_raw.split("-", 2)
-                if len(parts) != 2:
-                    return jsonify({"message": "month must be YYYY-MM."}), 400
-                y, m = int(parts[0]), int(parts[1])
-                if y < 1 or m < 1 or m > 12:
-                    return jsonify({"message": "Invalid month."}), 400
-                month_year = (y, m)
-                anchor = date(y, m, 1)
-            else:
-                if not date_raw:
-                    return jsonify({"message": "date is required (YYYY-MM-DD)."}), 400
-                anchor = date.fromisoformat(date_raw)
+            return date.fromisoformat(date_raw), None
         except ValueError:
-            return jsonify({"message": "Invalid date or month."}), 400
+            return None, ({"message": "Invalid date."}, 400)
 
-        body, status = self._control.fundraising_performance(
-            account_id, period, anchor, month_year
-        )
+    def _parse_month(self):
+        month_raw = (request.args.get("month") or "").strip()
+        if not month_raw:
+            return None, ({"message": "month is required (YYYY-MM)."}, 400)
+        try:
+            parts = month_raw.split("-", 2)
+            if len(parts) != 2:
+                return None, ({"message": "month must be YYYY-MM."}, 400)
+            y, m = int(parts[0]), int(parts[1])
+            if y < 1 or m < 1 or m > 12:
+                return None, ({"message": "Invalid month."}, 400)
+            return (y, m), None
+        except ValueError:
+            return None, ({"message": "Invalid month."}, 400)
+
+    def get_daily_report(self):
+        account_id, error = self._parse_account_id()
+        if error:
+            return jsonify(error[0]), error[1]
+        anchor, error = self._parse_date()
+        if error:
+            return jsonify(error[0]), error[1]
+
+        body, status = self._control.get_daily_report(account_id, anchor)
         return jsonify(body), status
 
+    def get_weekly_report(self):
+        account_id, error = self._parse_account_id()
+        if error:
+            return jsonify(error[0]), error[1]
+        anchor, error = self._parse_date()
+        if error:
+            return jsonify(error[0]), error[1]
+
+        body, status = self._control.get_weekly_report(account_id, anchor)
+        return jsonify(body), status
+
+    def get_monthly_report(self):
+        account_id, error = self._parse_account_id()
+        if error:
+            return jsonify(error[0]), error[1]
+        month_year, error = self._parse_month()
+        if error:
+            return jsonify(error[0]), error[1]
+
+        body, status = self._control.get_monthly_report(account_id, month_year)
+        return jsonify(body), status
 
 _handler = ReportBoundary()
 
 
-@report_bp.get("/platform/reports/fundraising")
-def fundraising_performance():
-    return _handler.fundraising_performance()
+@report_bp.get("/platform/reports/fundraising/daily")
+def get_daily_report():
+    return _handler.get_daily_report()
+
+
+@report_bp.get("/platform/reports/fundraising/weekly")
+def get_weekly_report():
+    return _handler.get_weekly_report()
+
+
+@report_bp.get("/platform/reports/fundraising/monthly")
+def get_monthly_report():
+    return _handler.get_monthly_report()
+
