@@ -13,16 +13,17 @@ def _create_category(client):
 
 
 def _create_fundraiser_account(client, admin_profile_id):
+    suffix = uuid4().hex[:8]
     response = client.post(
         "/api/user-accounts",
         json={
-            "name": "FRA View Fundraiser",
-            "email": "fra_view_fundraiser@example.com",
+            "name": f"fra_fundraiser_{suffix}",
+            "email": f"fra_fundraiser_{suffix}@example.com",
             "password": "qwertyui",
             "profile_id": admin_profile_id,
         },
     )
-    assert response.status_code == 201
+    assert response.status_code == 201, response.get_json()
     return response.get_json()["account"]["account_id"]
 
 

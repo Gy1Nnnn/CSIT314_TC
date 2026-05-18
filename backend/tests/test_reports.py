@@ -19,11 +19,12 @@ def _profile_id(client, profile_name):
 
 def _create_platform_manager(client):
     profile_id = _profile_id(client, "Platform Manager")
+    suffix = uuid4().hex[:8]
     response = client.post(
         "/api/user-accounts",
         json={
-            "name": "Report Manager",
-            "email": f"report_manager_{uuid4().hex[:8]}@example.com",
+            "name": f"report_manager_{suffix}",
+            "email": f"report_manager_{suffix}@example.com",
             "password": "qwertyui",
             "profile_id": profile_id,
         },

@@ -264,6 +264,37 @@ def _ensure_user_account_unique_normalized_username_index(conn):
         return
 
 
+def _ensure_fra_unique_normalized_activity_name_index(conn):
+    """Enforce unique campaign names (activity_name, trim + case-insensitive)."""
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+        ("ux_fra_activity_name_normalized",),
+    ).fetchone():
+        return
+    dup = conn.execute(
+        """
+        SELECT 1 FROM (
+            SELECT lower(trim(activity_name)) AS n
+            FROM FRA
+            GROUP BY lower(trim(activity_name))
+            HAVING COUNT(*) > 1
+        )
+        LIMIT 1
+        """
+    ).fetchone()
+    if dup:
+        return
+    try:
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX ux_fra_activity_name_normalized
+            ON FRA (lower(trim(activity_name)))
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
 def _ensure_category_unique_normalized_name_index(conn):
     """Enforce unique category names (trim + case-insensitive) at the DB layer."""
     if conn.execute(
@@ -416,6 +447,7 @@ def init_db():
         _ensure_user_profile_unique_normalized_name_index(conn)
         _ensure_user_account_unique_normalized_email_index(conn)
         _ensure_user_account_unique_normalized_username_index(conn)
+        _ensure_fra_unique_normalized_activity_name_index(conn)
         _ensure_category_unique_normalized_name_index(conn)
         from backend.entity.fra import apply_fra_auto_completed
 

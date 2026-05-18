@@ -112,17 +112,19 @@ def favorite_search_setup(client, admin_profile_id):
     cat_alpha_id = _create_category(client, f"Alpha Cat {suffix}")
     cat_beta_id = _create_category(client, f"Beta Cat {suffix}")
 
+    alpha_name = f"Fav Search Alpha {suffix}"
+    beta_name = f"Fav Search Beta {suffix}"
     activity_alpha_id = _create_activity(
         client,
         fundraiser_account_id,
         cat_alpha_id,
-        "Fav Search Alpha",
+        alpha_name,
     )
     activity_beta_id = _create_activity(
         client,
         fundraiser_account_id,
         cat_beta_id,
-        "Fav Search Beta",
+        beta_name,
     )
 
     for activity_id in (activity_alpha_id, activity_beta_id):
@@ -136,6 +138,8 @@ def favorite_search_setup(client, admin_profile_id):
         "donee_account_id": donee_account_id,
         "activity_alpha_id": activity_alpha_id,
         "activity_beta_id": activity_beta_id,
+        "alpha_name": alpha_name,
+        "beta_name": beta_name,
     }
 
 
@@ -154,10 +158,18 @@ def test_23_search_favorites_data_driven(
 ):
     """Story #23: parameterized search cases from SEARCH_CASES."""
     account_id = favorite_search_setup["donee_account_id"]
+    alpha_name = favorite_search_setup["alpha_name"]
+    beta_name = favorite_search_setup["beta_name"]
 
-    if step_id == "23-Sprint1-4":
+    if step_id == "23-Sprint1-1":
+        expected_names = {alpha_name, beta_name}
+    elif step_id == "23-Sprint1-2":
+        expected_names = {alpha_name}
+    elif step_id == "23-Sprint1-3":
+        expected_names = {beta_name}
+    elif step_id == "23-Sprint1-4":
         search = str(favorite_search_setup["activity_beta_id"])
-        expected_names = {"Fav Search Beta"}
+        expected_names = {beta_name}
 
     response = client.get(
         f"/api/donee/favorites?account_id={account_id}&search={search}"

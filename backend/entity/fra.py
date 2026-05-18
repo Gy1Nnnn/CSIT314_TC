@@ -1,5 +1,7 @@
 """Entity layer: fundraising activity (FRA)."""
 
+import sqlite3
+
 from backend.entity.db import get_connection
 
 
@@ -48,6 +50,35 @@ def apply_fra_auto_completed(conn, account_id=None, activity_id=None):
 
 
 class FRA:
+    _duplicate_campaign_name_message = (
+        "This campaign name is already in use. Choose a different name."
+    )
+
+    @staticmethod
+    def _activity_name_in_use(
+        conn, activity_name: str, exclude_activity_id: int | None = None
+    ) -> bool:
+        normalized = activity_name.strip().lower()
+        if exclude_activity_id is None:
+            row = conn.execute(
+                """
+                SELECT 1 FROM FRA
+                WHERE lower(trim(activity_name)) = ?
+                LIMIT 1
+                """,
+                (normalized,),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                """
+                SELECT 1 FROM FRA
+                WHERE lower(trim(activity_name)) = ?
+                  AND activity_id != ?
+                LIMIT 1
+                """,
+                (normalized, exclude_activity_id),
+            ).fetchone()
+        return row is not None
 
     def get_activities(
         self,
@@ -294,6 +325,9 @@ class FRA:
     ):
         conn = get_connection()
         try:
+            if self._activity_name_in_use(conn, activity_name):
+                return {"message": self._duplicate_campaign_name_message}, 400
+
             conn.execute(
                 """
                 INSERT INTO FRA (
@@ -350,6 +384,9 @@ class FRA:
                 """,
                 (activity_id,),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return {"message": self._duplicate_campaign_name_message}, 400
         finally:
             conn.close()
 
@@ -377,6 +414,11 @@ class FRA:
                 return {"message": "Activity not found."}, 404
             if (existing["status"] or "").strip().lower() == "completed":
                 return {"message": "Completed activities cannot be updated."}, 400
+
+            if self._activity_name_in_use(
+                conn, activity_name, exclude_activity_id=activity_id
+            ):
+                return {"message": self._duplicate_campaign_name_message}, 400
 
             conn.execute(
                 """
@@ -430,6 +472,9 @@ class FRA:
                 """,
                 (activity_id, account_id),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return {"message": self._duplicate_campaign_name_message}, 400
         finally:
             conn.close()
 
