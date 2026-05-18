@@ -207,15 +207,6 @@ export default function UserProfilePage() {
     }
   }
 
-  function formatUpdated(value) {
-    if (!value) return '—'
-    try {
-      return new Date(value).toLocaleDateString()
-    } catch {
-      return value
-    }
-  }
-
   if (view === VIEWS.CREATE) {
     return (
       <main className="page">
@@ -315,8 +306,6 @@ export default function UserProfilePage() {
                   {suspended ? 'Suspended' : 'Active'}
                 </span>
               </dd>
-              <dt>Last updated</dt>
-              <dd>{formatUpdated(selected.updated_at || selected.created_at)}</dd>
             </dl>
           </div>
         </div>

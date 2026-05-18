@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Logo from '../components/Logo.jsx'
-import '../components/Logo.css'
 import { api } from '../api/ApiClient.js'
 import './LoginPage.css'
 
@@ -138,9 +136,6 @@ export default function LoginPage({ onLogin }) {
   return (
     <main className="login-page">
       <div className="login-card">
-        <div className="login-brand">
-          <Logo size="md" />
-        </div>
         <h1>{copy.title}</h1>
         <p className="login-sub">{copy.sub}</p>
 
