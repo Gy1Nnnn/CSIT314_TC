@@ -693,8 +693,8 @@ export default function FundraiserPage({ user }) {
                 <th className="num">ID</th>
                 <th>Campaign</th>
                 <th>Category</th>
-                <th className="num">Amount</th>
-                <th>Status</th>
+                <th className="num amount-col">Amount</th>
+                <th className="status-col">Status</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -706,8 +706,8 @@ export default function FundraiserPage({ user }) {
                     <td className="muted num">{String(a.activity_id).padStart(3, '0')}</td>
                     <td>{a.activity_name}</td>
                     <td className="muted">{a.category_name || '—'}</td>
-                    <td className="muted num">{formatActivityAmountCell(a)}</td>
-                    <td>
+                    <td className="muted num amount-col">{formatActivityAmountCell(a)}</td>
+                    <td className="status-col">
                       <span className={`pill ${suspended ? 'danger' : 'ok'}`}>
                         {suspended ? 'Hidden' : a.status || 'Active'}
                       </span>
@@ -851,8 +851,8 @@ export default function FundraiserPage({ user }) {
                 <th className="num">ID</th>
                 <th>Campaign</th>
                 <th>Category</th>
-                <th className="num">Amount</th>
-                <th>End</th>
+                <th className="num amount-col">Amount</th>
+                <th className="end-col">End</th>
                 <th className="actions">Actions</th>
               </tr>
             </thead>
@@ -862,8 +862,8 @@ export default function FundraiserPage({ user }) {
                     <td className="muted num">{String(a.activity_id).padStart(3, '0')}</td>
                     <td>{a.activity_name}</td>
                     <td className="muted">{a.category_name || '—'}</td>
-                    <td className="muted num">{formatActivityAmountCell(a)}</td>
-                    <td className="muted">{fmtDate(a.end_date)}</td>
+                    <td className="muted num amount-col">{formatActivityAmountCell(a)}</td>
+                    <td className="muted end-col">{fmtDate(a.end_date)}</td>
                     <td className="actions">
                       <button
                         type="button"

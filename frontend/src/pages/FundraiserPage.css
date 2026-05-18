@@ -8,6 +8,27 @@
   width: 1%;
 }
 
+.data-table th.amount-col,
+.data-table td.amount-col {
+  min-width: 8.5rem;
+  padding-right: 2.25rem;
+}
+
+.data-table th.status-col,
+.data-table td.status-col {
+  min-width: 7rem;
+  padding-left: 1.75rem;
+  padding-right: 1.25rem;
+  white-space: nowrap;
+}
+
+.data-table th.end-col,
+.data-table td.end-col {
+  min-width: 6.5rem;
+  padding-left: 0.5rem;
+  white-space: nowrap;
+}
+
 .fra-history-card {
   margin-top: 0;
 }

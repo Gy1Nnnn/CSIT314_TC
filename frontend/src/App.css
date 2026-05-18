@@ -40,6 +40,19 @@
   min-height: 0;
   width: 100%;
   background: #fff;
+  /* Fixed light theme — white shell must not use OS dark-mode text tokens. */
+  color-scheme: light;
+  --color-text: #2a2118;
+  --color-text-muted: #5c4f3f;
+  --color-text-subtle: #8a7a66;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3ebe0;
+  --color-surface-3: #e8ddd0;
+  --color-border: #e0d4c4;
+  --color-border-strong: #c9b89e;
+  --color-primary: #8b6b3e;
+  --color-primary-hover: #7a5d34;
+  --color-primary-dark: #5b4125;
 }
 
 .home-hero-gfm {
@@ -262,7 +275,7 @@
   font-size: clamp(1.35rem, 3.2vw, 1.75rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--color-text);
+  color: #2a2118;
   line-height: 1.2;
 }
 
@@ -272,7 +285,7 @@
   margin-right: auto;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-text-muted);
+  color: #5c4f3f;
 }
 
 .home-cat-browse-all {
@@ -319,7 +332,7 @@
 
 .home-cat-tile-inner {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr) 7.25rem;
+  grid-template-columns: 7rem minmax(0, 1fr) 7rem;
   align-items: stretch;
   min-height: 6.75rem;
 }
@@ -396,16 +409,17 @@
 .home-cat-tile-goal {
   margin-top: auto;
   padding-top: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(3.75rem, auto) minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.35rem;
+  align-items: baseline;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .home-cat-tile-goal-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: baseline;
-  column-gap: 0.75rem;
-  margin-bottom: 0.35rem;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  display: contents;
 }
 
 .home-cat-tile-goal-label {
@@ -421,12 +435,13 @@
   color: var(--color-text);
   letter-spacing: -0.01em;
   text-align: right;
-  justify-self: end;
+  justify-self: stretch;
 }
 
 .home-cat-tile-track {
+  grid-column: 1 / -1;
   height: 6px;
-  margin-top: 0.35rem;
+  margin-top: 0.1rem;
   border-radius: 999px;
   background: var(--color-surface-3);
   overflow: hidden;

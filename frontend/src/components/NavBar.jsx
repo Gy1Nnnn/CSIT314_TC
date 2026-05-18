@@ -6,7 +6,7 @@ import './NavBar.css'
 
 const ROLE_LABEL = {
   'user admin': 'User Admin',
-  fundraiser: 'Fundraising Rep',
+  fundraiser: 'Fundraiser',
   'platform manager': 'Platform Manager',
   donee: 'Donee',
 }

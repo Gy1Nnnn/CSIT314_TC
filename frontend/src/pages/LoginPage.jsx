@@ -15,7 +15,7 @@ const ROLE_COPY = {
     sub: 'Log in to manage user accounts and profiles.',
   },
   fundraiser: {
-    title: 'Fundraising Rep Login',
+    title: 'Fundraiser Login',
     sub: 'Log in to manage fundraising activities.',
   },
   'platform manager': {
