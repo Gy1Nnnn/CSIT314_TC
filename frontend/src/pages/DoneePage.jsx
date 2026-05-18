@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
+import { useAutoDismiss } from '../hooks/useAutoDismiss.js'
 import './DoneePage.css'
 
 export default function DoneePage({ user }) {
@@ -45,6 +46,8 @@ export default function DoneePage({ user }) {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  useAutoDismiss(success, setSuccess)
 
   const refreshFavoriteIds = useCallback(async () => {
     if (accountId == null) return

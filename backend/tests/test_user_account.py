@@ -78,6 +78,90 @@ def test_6_sprint1_4_create_invalid_profile_id(client):
     assert response.status_code == 400
 
 
+def test_6_sprint1_5_create_duplicate_email(client, admin_profile_id):
+    """6-Sprint1-5: Duplicate email on create -> 400."""
+    payload = {
+        "name": "First User",
+        "email": "duplicate_create@example.com",
+        "password": "qwertyui",
+        "profile_id": admin_profile_id,
+    }
+    assert client.post("/api/user-accounts", json=payload).status_code == 201
+
+    response = client.post(
+        "/api/user-accounts",
+        json={**payload, "name": "Second User"},
+    )
+    assert response.status_code == 400
+    assert "email" in response.get_json()["message"].lower()
+
+
+def test_6_sprint1_6_create_duplicate_email_case_insensitive(client, admin_profile_id):
+    """6-Sprint1-6: Email uniqueness is case-insensitive."""
+    assert client.post(
+        "/api/user-accounts",
+        json={
+            "name": "Case User",
+            "email": "CaseDup@Example.COM",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    ).status_code == 201
+
+    response = client.post(
+        "/api/user-accounts",
+        json={
+            "name": "Case User 2",
+            "email": "casedup@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_6_sprint1_7_create_duplicate_username(client, admin_profile_id):
+    """6-Sprint1-7: Duplicate username on create -> 400."""
+    payload = {
+        "name": "unique_username",
+        "email": "user6_7a@example.com",
+        "password": "qwertyui",
+        "profile_id": admin_profile_id,
+    }
+    assert client.post("/api/user-accounts", json=payload).status_code == 201
+
+    response = client.post(
+        "/api/user-accounts",
+        json={**payload, "email": "user6_7b@example.com"},
+    )
+    assert response.status_code == 400
+    assert "username" in response.get_json()["message"].lower()
+
+
+def test_6_sprint1_8_create_duplicate_username_case_insensitive(client, admin_profile_id):
+    """6-Sprint1-8: Username uniqueness is case-insensitive."""
+    assert client.post(
+        "/api/user-accounts",
+        json={
+            "name": "UniqueUser",
+            "email": "user6_8a@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    ).status_code == 201
+
+    response = client.post(
+        "/api/user-accounts",
+        json={
+            "name": "uniqueuser",
+            "email": "user6_8b@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    )
+    assert response.status_code == 400
+
+
 # ---------------------------------------------------------------------------
 # Story #7 -- View user account
 # ---------------------------------------------------------------------------
@@ -187,6 +271,86 @@ def test_8_sprint1_3_update_nonexistent_account(client, admin_profile_id):
     assert response.status_code == 404
 
 
+def test_8_sprint1_4_update_duplicate_email(client, admin_profile_id):
+    """8-Sprint1-4: Cannot change email to one already used by another account."""
+    first = client.post(
+        "/api/user-accounts",
+        json={
+            "name": "Email Owner",
+            "email": "owner_dup@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    ).get_json()
+    second = client.post(
+        "/api/user-accounts",
+        json={
+            "name": "Other User",
+            "email": "other_dup@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    ).get_json()
+
+    response = client.put(
+        f"/api/user-accounts/{second['account']['account_id']}",
+        json={
+            "name": "Other User",
+            "email": "owner_dup@example.com",
+            "password": "",
+            "profile_id": admin_profile_id,
+        },
+    )
+    assert response.status_code == 400
+    assert "email" in response.get_json()["message"].lower()
+
+    unchanged = client.get(
+        f"/api/user-accounts/{second['account']['account_id']}",
+    ).get_json()
+    assert unchanged["account"]["email"] == "other_dup@example.com"
+    assert first["account"]["email"] == "owner_dup@example.com"
+
+
+def test_8_sprint1_5_update_duplicate_username(client, admin_profile_id):
+    """8-Sprint1-5: Cannot change username to one already used by another account."""
+    first = client.post(
+        "/api/user-accounts",
+        json={
+            "name": "username_owner",
+            "email": "owner_name@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    ).get_json()
+    second = client.post(
+        "/api/user-accounts",
+        json={
+            "name": "other_username",
+            "email": "other_name@example.com",
+            "password": "qwertyui",
+            "profile_id": admin_profile_id,
+        },
+    ).get_json()
+
+    response = client.put(
+        f"/api/user-accounts/{second['account']['account_id']}",
+        json={
+            "name": "username_owner",
+            "email": "other_name@example.com",
+            "password": "",
+            "profile_id": admin_profile_id,
+        },
+    )
+    assert response.status_code == 400
+    assert "username" in response.get_json()["message"].lower()
+
+    unchanged = client.get(
+        f"/api/user-accounts/{second['account']['account_id']}",
+    ).get_json()
+    assert unchanged["account"]["name"] == "other_username"
+    assert first["account"]["name"] == "username_owner"
+
+
 # ---------------------------------------------------------------------------
 # Story #9 -- Suspend user account
 # ---------------------------------------------------------------------------
@@ -247,8 +411,8 @@ def test_9_sprint1_3_suspend_nonexistent_account(client):
 # Story #10 -- Search user account
 # ---------------------------------------------------------------------------
 
-def test_10_sprint1_1_search_by_name_not_supported(client, admin_profile_id):
-    """10-Sprint1-1: Search only supports account_id/email, not name."""
+def test_10_sprint1_1_search_by_username(client, admin_profile_id):
+    """10-Sprint1-1: Search by username (name) substring -> 200, finds match."""
     client.post(
         "/api/user-accounts",
         json={
@@ -259,9 +423,10 @@ def test_10_sprint1_1_search_by_name_not_supported(client, admin_profile_id):
         },
     )
 
-    response = client.get("/api/user-accounts?search=Searchable-By-Name")
+    response = client.get("/api/user-accounts?search=Searchable-By")
     assert response.status_code == 200
-    assert response.get_json()["accounts"] == []
+    names = [a["name"] for a in response.get_json()["accounts"]]
+    assert "Searchable-By-Name" in names
 
 
 def test_10_sprint1_2_search_by_email(client, admin_profile_id):

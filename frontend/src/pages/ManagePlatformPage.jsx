@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
 import ConfirmModal from '../components/ConfirmModal.jsx'
+import { useAutoDismiss } from '../hooks/useAutoDismiss.js'
 import './ManagePlatformPage.css'
 
 const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
@@ -76,6 +77,8 @@ export default function ManagePlatformPage() {
   const [applied, setApplied] = useState('')
   const [selected, setSelected] = useState(null)
   const [confirm, setConfirm] = useState(null) // { mode: 'hardDelete', category }
+
+  useAutoDismiss(success, setSuccess)
 
   async function loadCategories() {
     setLoading(true)

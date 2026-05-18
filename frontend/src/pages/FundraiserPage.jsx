@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
 import ConfirmModal from '../components/ConfirmModal.jsx'
+import { useAutoDismiss } from '../hooks/useAutoDismiss.js'
 import './FundraiserPage.css'
 
 const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
@@ -192,6 +193,8 @@ export default function FundraiserPage({ user }) {
   })
   const [selected, setSelected] = useState(null)
   const [confirm, setConfirm] = useState(null) // { mode: 'hardDelete', activity }
+
+  useAutoDismiss(success, setSuccess)
 
   const [histActivities, setHistActivities] = useState([])
   const [histLoading, setHistLoading] = useState(false)

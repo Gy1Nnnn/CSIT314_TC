@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/ApiClient.js'
 import ConfirmModal from '../components/ConfirmModal.jsx'
+import { useAutoDismiss } from '../hooks/useAutoDismiss.js'
 import './UserProfilePage.css'
 
 const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
@@ -121,6 +122,8 @@ export default function UserProfilePage() {
   const [selected, setSelected] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+
+  useAutoDismiss(success, setSuccess)
 
   async function loadProfiles() {
     setLoading(true)

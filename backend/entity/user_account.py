@@ -1,7 +1,62 @@
+import sqlite3
+
 from backend.entity.db import get_connection
 
 
 class UserAccount:
+    _duplicate_email_message = (
+        "This email is already used by another account. Choose a different email."
+    )
+    _duplicate_username_message = (
+        "This username is already used by another account. Choose a different username."
+    )
+
+    @staticmethod
+    def _username_in_use(conn, name: str, exclude_account_id: int | None = None) -> bool:
+        normalized = name.strip().lower()
+        if exclude_account_id is None:
+            row = conn.execute(
+                """
+                SELECT 1 FROM user_account
+                WHERE lower(trim(name)) = ?
+                LIMIT 1
+                """,
+                (normalized,),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                """
+                SELECT 1 FROM user_account
+                WHERE lower(trim(name)) = ? AND account_id != ?
+                LIMIT 1
+                """,
+                (normalized, exclude_account_id),
+            ).fetchone()
+        return row is not None
+
+    @staticmethod
+    def _email_in_use(conn, email: str, exclude_account_id: int | None = None) -> bool:
+        normalized = email.strip().lower()
+        if exclude_account_id is None:
+            row = conn.execute(
+                """
+                SELECT 1 FROM user_account
+                WHERE lower(trim(email)) = ?
+                LIMIT 1
+                """,
+                (normalized,),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                """
+                SELECT 1 FROM user_account
+                WHERE lower(trim(email)) = ? AND account_id != ?
+                LIMIT 1
+                """,
+                (normalized, exclude_account_id),
+            ).fetchone()
+        return row is not None
+
     def login(self, profile_id, email, password):
         conn = get_connection()
         try:
@@ -52,17 +107,20 @@ class UserAccount:
             conn.close()
 
     def get_accounts(self, account_id_or_email):
-        """account_id_or_email: optional string (already trimmed)."""
+        """Optional search: account_id (numeric), email, or username (name)."""
         params: list[object] = []
         where_sql = ""
 
         if account_id_or_email:
+            like = f"%{account_id_or_email}%"
             if account_id_or_email.isdigit():
-                where_sql = "WHERE ua.account_id = ? OR ua.email LIKE ?"
-                params = [int(account_id_or_email), f"%{account_id_or_email}%"]
+                where_sql = (
+                    "WHERE ua.account_id = ? OR ua.email LIKE ? OR ua.name LIKE ?"
+                )
+                params = [int(account_id_or_email), like, like]
             else:
-                where_sql = "WHERE ua.email LIKE ?"
-                params = [f"%{account_id_or_email}%"]
+                where_sql = "WHERE ua.email LIKE ? OR ua.name LIKE ?"
+                params = [like, like]
 
         sql = f"""
             SELECT
@@ -116,6 +174,11 @@ class UserAccount:
     def create(self, name, email, password, profile_id):
         conn = get_connection()
         try:
+            if self._username_in_use(conn, name):
+                return {"message": self._duplicate_username_message}, 400
+            if self._email_in_use(conn, email):
+                return {"message": self._duplicate_email_message}, 400
+
             conn.execute(
                 """
                 INSERT INTO user_account (name, email, password, profile_id, is_suspended)
@@ -141,6 +204,11 @@ class UserAccount:
                 """,
                 (account_id,),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            if self._username_in_use(conn, name):
+                return {"message": self._duplicate_username_message}, 400
+            return {"message": self._duplicate_email_message}, 400
         finally:
             conn.close()
 
@@ -155,6 +223,11 @@ class UserAccount:
             ).fetchone()
             if not existing:
                 return {"message": "Account not found."}, 404
+
+            if self._username_in_use(conn, name, exclude_account_id=account_id):
+                return {"message": self._duplicate_username_message}, 400
+            if self._email_in_use(conn, email, exclude_account_id=account_id):
+                return {"message": self._duplicate_email_message}, 400
 
             if password is None:
                 conn.execute(
@@ -191,6 +264,11 @@ class UserAccount:
                 """,
                 (account_id,),
             ).fetchone()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            if self._username_in_use(conn, name, exclude_account_id=account_id):
+                return {"message": self._duplicate_username_message}, 400
+            return {"message": self._duplicate_email_message}, 400
         finally:
             conn.close()
 

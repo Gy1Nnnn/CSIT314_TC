@@ -1,7 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+﻿/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/ApiClient.js'
 import ConfirmModal from '../components/ConfirmModal.jsx'
+import { useAutoDismiss } from '../hooks/useAutoDismiss.js'
 import './UserAccountPage.css'
 
 const VIEWS = { LIST: 'list', CREATE: 'create', UPDATE: 'update', VIEW: 'view' }
@@ -138,6 +139,8 @@ export default function UserAccountPage() {
   const [viewDetailLoading, setViewDetailLoading] = useState(false)
   const [viewDetailError, setViewDetailError] = useState(null)
   const viewAccountLoadedId = useRef(null)
+
+  useAutoDismiss(success, setSuccess)
 
   async function loadProfiles() {
     try {
@@ -454,7 +457,7 @@ export default function UserAccountPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') setApplied(search.trim())
               }}
-              placeholder="Search by name, email, or status…"
+              placeholder="Search by username, email, or account ID…"
             />
           </div>
           <button

@@ -202,6 +202,68 @@ def _ensure_user_profile_unique_normalized_name_index(conn):
         return
 
 
+def _ensure_user_account_unique_normalized_email_index(conn):
+    """Enforce unique account emails (trim + case-insensitive) at the DB layer."""
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+        ("ux_user_account_email_normalized",),
+    ).fetchone():
+        return
+    dup = conn.execute(
+        """
+        SELECT 1 FROM (
+            SELECT lower(trim(email)) AS e
+            FROM user_account
+            GROUP BY lower(trim(email))
+            HAVING COUNT(*) > 1
+        )
+        LIMIT 1
+        """
+    ).fetchone()
+    if dup:
+        return
+    try:
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX ux_user_account_email_normalized
+            ON user_account (lower(trim(email)))
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
+def _ensure_user_account_unique_normalized_username_index(conn):
+    """Enforce unique account usernames (name column, trim + case-insensitive)."""
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?",
+        ("ux_user_account_username_normalized",),
+    ).fetchone():
+        return
+    dup = conn.execute(
+        """
+        SELECT 1 FROM (
+            SELECT lower(trim(name)) AS n
+            FROM user_account
+            GROUP BY lower(trim(name))
+            HAVING COUNT(*) > 1
+        )
+        LIMIT 1
+        """
+    ).fetchone()
+    if dup:
+        return
+    try:
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX ux_user_account_username_normalized
+            ON user_account (lower(trim(name)))
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
 def _ensure_category_unique_normalized_name_index(conn):
     """Enforce unique category names (trim + case-insensitive) at the DB layer."""
     if conn.execute(
@@ -352,6 +414,8 @@ def init_db():
         _ensure_donee_donation_nullable_account(conn)
         _ensure_default_data(conn)
         _ensure_user_profile_unique_normalized_name_index(conn)
+        _ensure_user_account_unique_normalized_email_index(conn)
+        _ensure_user_account_unique_normalized_username_index(conn)
         _ensure_category_unique_normalized_name_index(conn)
         from backend.entity.fra import apply_fra_auto_completed
 
