@@ -20,6 +20,21 @@ npm run dev:all
 
 Backend → http://127.0.0.1:5000, frontend → http://localhost:5173. Press `Ctrl+C` to stop both.
 
+## Demo accounts
+
+Use the bundled `backend/app.sqlite` (created on first run if missing). On the login page, **select the profile role first**, then enter email and password.
+
+| Role | Email | Password |
+|------|-------|----------|
+| User Admin | `admin@gmail.com` | `qwertyui` |
+| Fundraiser | `fundraiser@gmail.com` | `qwertyui` |
+| Platform Manager | `abc@gmail.com` | `qwertyui` |
+| Donee | `donee@gmail.com` | `qwertyui |
+
+Bulk-seeded accounts (from `backend/`: `python -m scripts.seed_demo_data`) use password `password123`, e.g. `fundraiser01@gmail.com`, `donee01@gmail.com`, `pm01@gmail.com`.
+
+**Live site:** https://gy1nnnn.github.io/CSIT314_TC/ — requires a deployed API and `VITE_API_BASE_URL` in GitHub Actions secrets.
+
 ## Test
 
 ### Backend (local)
@@ -81,4 +96,6 @@ Replace `OWNER` and `REPO`:
 ```markdown
 [![CI & CD](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions)
 ```
+
+
 
