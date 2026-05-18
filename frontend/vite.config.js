@@ -1,3 +1,5 @@
+import { copyFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -13,9 +15,22 @@ const apiProxy = {
   },
 }
 
+/** GitHub Pages serves 404.html for unknown paths; mirror index.html for client-side routes. */
+function ghPagesSpaFallback() {
+  return {
+    name: 'gh-pages-spa-fallback',
+    closeBundle() {
+      const index = join(process.cwd(), 'dist', 'index.html')
+      if (existsSync(index)) {
+        copyFileSync(index, join(process.cwd(), 'dist', '404.html'))
+      }
+    },
+  }
+}
+
 export default defineConfig({
   base,
-  plugins: [react()],
+  plugins: [react(), ghPagesSpaFallback()],
   server: {
     proxy: apiProxy,
   },

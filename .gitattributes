@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# npm ci on Linux requires LF in lockfiles (Windows checkouts often use CRLF).
+frontend/package.json text eol=lf
+frontend/package-lock.json text eol=lf
