@@ -72,9 +72,7 @@ See `frontend/.env.example` for local production-style testing.
 
 #### Backend CD (not in GitHub Actions)
 
-Host `backend/` with your provider (gunicorn + Flask, SQLite path or Postgres). Enable **CORS** for your Pages origin (this project already uses `flask_cors`). For coursework, running the API on your laptop during demo is fine; Pages can still point at **`ngrok`** or similar if you expose port 5000.
-
-**Step-by-step (Render + Pages):** see **`DEPLOY.md`** — includes `Procfile`, `runtime.txt`, and `backend/requirements.txt` (gunicorn).
+Host `backend/` with your provider (gunicorn + Flask via `Procfile`, SQLite path or Postgres). Enable **CORS** for your Pages origin (this project already uses `flask_cors`). For coursework, running the API on your laptop during demo is fine; Pages can still point at **`ngrok`** or similar if you expose port 5000.
 
 ### Status badge (optional)
 
